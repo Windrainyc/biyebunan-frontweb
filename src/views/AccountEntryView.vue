@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { writeAttempt } from '../api/attempt';
 import { computed, onBeforeUnmount, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { acceptSession, request, errorText } from '../api/client';
@@ -12,7 +13,9 @@ const phone = ref(''),
   name = ref(''),
   code = ref(''),
   challenge = ref(''),
-  token = ref(String(route.query.token || '')),
+  token = ref(
+    String(new URLSearchParams(route.hash.slice(1)).get('token') || route.query.token || ''),
+  ),
   mfa = ref(''),
   enrollment = ref(''),
   otp = ref(''),
@@ -35,9 +38,9 @@ const title = computed(() =>
         ? '激活管理员账户'
         : '激活项目中介账户',
 );
-const key = crypto.randomUUID();
+const attempt = writeAttempt();
 // 邀请令牌只留内存，移出地址栏，避免复制页面地址时扩散。
-if (route.query.token) void router.replace({ path: route.path, query: {} });
+if (route.query.token || route.hash) void router.replace({ path: route.path, query: {}, hash: '' });
 const interval = setInterval(() => {
   if (remaining.value > 0) remaining.value--;
 }, 1000);
@@ -101,7 +104,11 @@ async function submit() {
       await request('/auth/password-reset', {
         method: 'POST',
         authenticated: false,
-        key,
+        key: attempt({
+          challengeId: challenge.value,
+          code: code.value,
+          newPassword: password.value,
+        }),
         body: {
           challengeId: challenge.value,
           code: code.value,
@@ -130,7 +137,7 @@ async function submit() {
           };
     const session = await request<Session>(
       `/auth/${platform.value}/${mode.value === 'register' ? 'register' : 'activate'}`,
-      { method: 'POST', authenticated: false, key, body },
+      { method: 'POST', authenticated: false, key: attempt(body), body },
     );
     await acceptSession(session, platform.value);
     await router.push(`/${platform.value}`);

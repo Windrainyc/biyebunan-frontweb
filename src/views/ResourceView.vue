@@ -1,13 +1,19 @@
 <script setup lang="ts">
+import { writeAttempt } from '../api/attempt';
 import { computed, onMounted, ref } from 'vue';
 import { auth, request, errorText } from '../api/client';
 import { operation, schema } from '../config/contract';
 import { label, display } from '../config/labels';
 import type { Resource } from '../config/resources';
 import type { Row, Page } from '../types/api';
+import ReferenceName from '../components/ReferenceName.vue';
+import ForumDetail from '../components/ForumDetail.vue';
+import RecordActions from '../components/RecordActions.vue';
+import ProjectDetail from '../components/ProjectDetail.vue';
 import StatusBadge from '../components/StatusBadge.vue';
 import { formBody } from '../config/form';
 import ReferenceField from '../components/ReferenceField.vue';
+let attempt = writeAttempt();
 const props = defineProps<{ resource: Resource }>();
 const rows = ref<Row[]>([]),
   total = ref(0),
@@ -107,6 +113,7 @@ async function open(row?: Row) {
       editing.value?.[field.key] ??
       field.default ??
       (field.type === 'boolean' ? false : field.type === 'array' ? [] : '');
+  attempt = writeAttempt();
   writeKey.value = crypto.randomUUID();
   formOpen.value = true;
 }
@@ -119,7 +126,7 @@ async function save() {
       method: editing.value ? 'PUT' : 'POST',
       body,
       version: editing.value?.version,
-      key: writeKey.value,
+      key: attempt(body),
     });
     formOpen.value = false;
     notice.value = '数据已保存';
@@ -232,6 +239,10 @@ onMounted(() => {
                 <StatusBadge
                   v-if="['state', 'status', 'stage'].includes(column)"
                   :value="String(row[column] || '')"
+                /><ReferenceName
+                  v-else-if="column.endsWith('Id')"
+                  :field="column"
+                  :value="row[column]"
                 /><template v-else>{{ display(row[column]) }}</template>
               </td>
               <td class="actions">
@@ -288,19 +299,25 @@ onMounted(() => {
       >
         <h2 id="form-title">{{ editing ? '编辑' : '新增' }}{{ resource.title }}</h2>
         <div class="form-grid">
-          <label v-for="field in properties" :key="field.key"
-            >{{ label(field.key)
-            }}<span v-if="fields.required?.includes(field.key)" class="danger"> *</span
+          <div v-for="field in properties" :key="field.key" class="form-field">
+            <span>{{ label(field.key) }}</span
+            ><span v-if="fields.required?.includes(field.key)" class="danger"> *</span
             ><ReferenceField
               v-if="field.format === 'uuid' || field.type === 'array'"
               v-model="form[field.key]"
+              :aria-label="label(field.key)"
               :field="field.key"
               :context="resource.key"
               :filters="field.key === 'majorId' ? { schoolId: form.schoolId } : {}"
               :multiple="field.type === 'array'"
-              :required="fields.required?.includes(field.key)" /><select
+              :required="
+                fields.required?.includes(field.key) &&
+                !(Array.isArray(field.type) && field.type.includes('null'))
+              "
+            /><select
               v-else-if="field.enum"
               v-model="form[field.key]"
+              :aria-label="label(field.key)"
               :required="fields.required?.includes(field.key)"
             >
               <option value="">请选择</option>
@@ -310,14 +327,19 @@ onMounted(() => {
             ><input
               v-else-if="field.type === 'boolean'"
               v-model="form[field.key]"
-              type="checkbox" /><textarea
+              :aria-label="label(field.key)"
+              type="checkbox"
+            /><textarea
               v-else-if="field.maxLength && field.maxLength > 500 && field.format !== 'uri'"
               v-model="form[field.key]"
+              :aria-label="label(field.key)"
               :maxlength="field.maxLength"
               :required="fields.required?.includes(field.key)"
-              rows="4" /><input
+              rows="4"
+            /><input
               v-else
               v-model="form[field.key]"
+              :aria-label="label(field.key)"
               :type="
                 field.writeOnly
                   ? 'password'
@@ -332,7 +354,8 @@ onMounted(() => {
               :minlength="field.minLength"
               :maxlength="field.maxLength"
               :required="fields.required?.includes(field.key)"
-          /></label>
+            />
+          </div>
         </div>
         <p v-if="error" class="error" role="alert">{{ error }}</p>
         <footer>
@@ -353,6 +376,24 @@ onMounted(() => {
             <dd>{{ display(value) }}</dd></template
           >
         </dl>
+        <ForumDetail
+          v-if="resource.key === 'posts'"
+          :post="detail"
+          @changed="
+            inspect(detail);
+            load();
+          "
+        /><RecordActions
+          :resource-key="resource.key"
+          :record="detail"
+          @changed="
+            inspect(detail);
+            load();
+          "
+        /><ProjectDetail
+          v-if="resource.key === 'projects' && auth.platform !== 'partner'"
+          :project="detail"
+        />
         <footer>
           <button class="button" @click="detail = null">关闭</button>
         </footer>
@@ -464,7 +505,7 @@ td {
   grid-template-columns: 1fr 1fr;
   gap: 20px;
 }
-.form-grid label {
+.form-grid .form-field {
   display: flex;
   flex-direction: column;
   gap: 8px;

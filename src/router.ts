@@ -4,6 +4,9 @@ import LoginView from './views/LoginView.vue';
 import WorkspaceView from './views/WorkspaceView.vue';
 import { auth, bootstrap } from './api/client';
 import type { Platform } from './types/api';
+const entry = ['admin', 'student', 'partner'].includes(import.meta.env.VITE_PLATFORM)
+  ? import.meta.env.VITE_PLATFORM
+  : 'student';
 export const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -22,17 +25,19 @@ export const router = createRouter({
       component: AccountEntryView,
       meta: { entry: 'activate', public: true },
     },
-    { path: '/', redirect: '/student/login' },
+    { path: '/activate', redirect: (to) => ({ path: `/${entry}/activate`, hash: to.hash }) },
+    { path: '/', redirect: `/${entry}/login` },
     { path: '/:platform(admin|student|partner)/login', component: LoginView },
     {
       path: '/:platform(admin|student|partner)/:resource?',
       component: WorkspaceView,
     },
-    { path: '/:pathMatch(.*)*', redirect: '/student/login' },
+    { path: '/:pathMatch(.*)*', redirect: `/${entry}/login` },
   ],
 });
 router.beforeEach(async (to) => {
   const platform = to.params.platform as Platform | undefined;
+  if (platform && platform !== entry) return `/${entry}/login`;
   if (!platform || to.meta.public || to.path.endsWith('/login')) return;
   await bootstrap(platform);
   if (!auth.user) return `/${platform}/login`;

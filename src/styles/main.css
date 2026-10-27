@@ -117,8 +117,6 @@ textarea {
   min-height: 40px;
 }
 textarea.input,
-input:not([type='checkbox']):not([type='radio']),
-select,
 textarea {
   min-height: 100px;
   resize: vertical;
