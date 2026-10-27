@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, ref, defineAsyncComponent } from 'vue';
+import { computed, ref, defineAsyncComponent, watch, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { auth, logout, errorText } from '../api/client';
 import { resources, platformNames } from '../config/resources';
+import { loadNavigation, navigationLinks, type Menu } from '../api/navigation';
 import { operation } from '../config/contract';
 const KnowledgeSearchView = defineAsyncComponent(() => import('./KnowledgeSearchView.vue'));
 const ExportView = defineAsyncComponent(() => import('./ExportView.vue'));
@@ -25,6 +26,49 @@ const entries = computed(() =>
     return op && (!op.permission || auth.permissions.includes(op.permission));
   }),
 );
+const navigation = ref<{ configured: boolean; items: Menu[] } | null>(null);
+const navigationError = ref('');
+let navigationGeneration = 0;
+async function refreshNavigation() {
+  const current = ++navigationGeneration;
+  navigation.value = null;
+  navigationError.value = '';
+  try {
+    const result = await loadNavigation();
+    if (current === navigationGeneration) navigation.value = result;
+  } catch (e) {
+    if (current === navigationGeneration) navigationError.value = errorText(e);
+  }
+}
+watch(() => [route.fullPath, auth.user?.id], refreshNavigation, { immediate: true });
+onMounted(() => window.addEventListener('focus', refreshNavigation));
+onUnmounted(() => {
+  navigationGeneration++;
+  window.removeEventListener('focus', refreshNavigation);
+});
+const knownPaths = computed(
+  () =>
+    new Set([
+      ...entries.value.map((r) => `/${platform.value}/${r.key}`),
+      ...[
+        'statistics',
+        'notifications',
+        ...(platform.value === 'student'
+          ? ['search', 'profile', 'bind-order', 'chat']
+          : ['exports', ...(platform.value === 'admin' ? ['chat-audit'] : ['profile'])]),
+      ].map((p) => `/${platform.value}/${p}`),
+    ]),
+);
+const configuredLinks = computed(() =>
+  navigationLinks(navigation.value?.items || [], knownPaths.value),
+);
+const homeEntries = computed(() =>
+  navigation.value?.configured === false
+    ? entries.value
+    : entries.value.filter((r) =>
+        configuredLinks.value.some((m) => m.path === `/${platform.value}/${r.key}`),
+      ),
+);
 const selected = computed(() => entries.value.find((r) => r.key === route.params.resource));
 const groups = computed(() => [...new Set(entries.value.map((r) => r.group))]);
 async function exit() {
@@ -42,37 +86,53 @@ async function exit() {
       <RouterLink :to="`/${platform}`" class="logo"
         ><span>知</span><strong>{{ platformNames[platform] }}</strong></RouterLink
       >
-      <nav>
-        <RouterLink v-if="platform === 'student'" to="/student/search"
-          ><Icon name="book" />知识检索</RouterLink
-        >
-        <RouterLink v-if="platform !== 'student'" :to="`/${platform}/exports`"
-          ><Icon name="file" />数据导出</RouterLink
-        ><RouterLink
-          v-if="platform === 'admin' && auth.permissions.includes('chat:audit')"
-          to="/admin/chat-audit"
-          ><Icon name="shield" />答疑会话审计</RouterLink
-        >
-        <RouterLink v-if="platform !== 'admin'" :to="`/${platform}/profile`"
-          ><Icon name="users" />我的账户</RouterLink
-        >
-        <RouterLink v-if="platform === 'student'" to="/student/bind-order"
-          ><Icon name="bag" />绑定订单</RouterLink
-        >
-        <RouterLink :to="`/${platform}/statistics`"><Icon name="activity" />数据统计</RouterLink
-        ><RouterLink :to="`/${platform}/notifications`"><Icon name="bell" />消息通知</RouterLink>
-        <RouterLink v-if="platform === 'student'" to="/student/chat"
-          ><Icon name="message" />在线答疑</RouterLink
-        >
-        <section v-for="group in groups" :key="group">
-          <h3>{{ group }}</h3>
+      <nav aria-label="平台导航">
+        <p v-if="navigationError" role="alert">
+          导航加载失败 <button class="button" @click="refreshNavigation">重试</button>
+        </p>
+        <p v-else-if="!navigation" role="status">正在加载导航…</p>
+        <template v-else-if="navigation.configured">
           <RouterLink
-            v-for="entry in entries.filter((e) => e.group === group)"
-            :key="entry.key"
-            :to="`/${platform}/${entry.key}`"
-            ><Icon :name="entry.icon" />{{ entry.title }}</RouterLink
+            v-for="menu in configuredLinks"
+            :key="menu.id"
+            :to="menu.path"
+            :style="{ paddingLeft: `${12 + Math.min(menu.depth, 4) * 12}px` }"
+            >{{ menu.name }}</RouterLink
           >
-        </section>
+          <p v-if="!configuredLinks.length">暂无可用导航，请联系管理员。</p>
+        </template>
+        <template v-else>
+          <RouterLink v-if="platform === 'student'" to="/student/search"
+            ><Icon name="book" />知识检索</RouterLink
+          >
+          <RouterLink v-if="platform !== 'student'" :to="`/${platform}/exports`"
+            ><Icon name="file" />数据导出</RouterLink
+          ><RouterLink
+            v-if="platform === 'admin' && auth.permissions.includes('chat:audit')"
+            to="/admin/chat-audit"
+            ><Icon name="shield" />答疑会话审计</RouterLink
+          >
+          <RouterLink v-if="platform !== 'admin'" :to="`/${platform}/profile`"
+            ><Icon name="users" />我的账户</RouterLink
+          >
+          <RouterLink v-if="platform === 'student'" to="/student/bind-order"
+            ><Icon name="bag" />绑定订单</RouterLink
+          >
+          <RouterLink :to="`/${platform}/statistics`"><Icon name="activity" />数据统计</RouterLink
+          ><RouterLink :to="`/${platform}/notifications`"><Icon name="bell" />消息通知</RouterLink>
+          <RouterLink v-if="platform === 'student'" to="/student/chat"
+            ><Icon name="message" />在线答疑</RouterLink
+          >
+          <section v-for="group in groups" :key="group">
+            <h3>{{ group }}</h3>
+            <RouterLink
+              v-for="entry in entries.filter((e) => e.group === group)"
+              :key="entry.key"
+              :to="`/${platform}/${entry.key}`"
+              ><Icon :name="entry.icon" />{{ entry.title }}</RouterLink
+            >
+          </section>
+        </template>
       </nav>
       <div class="sidebar-foot">项目答疑 · 交付协作</div>
     </aside>
@@ -106,7 +166,7 @@ async function exit() {
           <p class="muted">选择下方功能，继续处理项目与平台事务。</p>
           <div class="entry-grid">
             <RouterLink
-              v-for="entry in entries"
+              v-for="entry in homeEntries"
               :key="entry.key"
               :to="`/${platform}/${entry.key}`"
               class="entry-card"

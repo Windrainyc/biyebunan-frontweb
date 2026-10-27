@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, onBeforeUnmount, ref } from 'vue';
 import { auth, request, errorText } from '../api/client';
 import { writeAttempt } from '../api/attempt';
 import { display } from '../config/labels';
@@ -58,6 +58,16 @@ const deliveries = ref<Row[]>([]),
   note = ref(''),
   reason = ref(''),
   busy = ref(false);
+const deliveryPage = ref(1),
+  milestonePage = ref(1),
+  deliveryTotal = ref(0),
+  milestoneTotal = ref(0),
+  loading = ref(false);
+const pageSize = 20;
+let loadGeneration = 0;
+onBeforeUnmount(() => {
+  loadGeneration++;
+});
 const kinds: Record<string, string> = {
   TASK: '任务书',
   PROPOSAL: '开题报告',
@@ -68,19 +78,27 @@ const kinds: Record<string, string> = {
 };
 async function load() {
   if (auth.platform === 'partner') return;
+  const generation = ++loadGeneration;
+  loading.value = true;
+  error.value = '';
   try {
     const [d, m] = await Promise.all([
       request<Page<Row>>(`/${auth.platform}/projects/${props.project.id}/deliveries`, {
-        query: { page: 1, size: 100 },
+        query: { page: deliveryPage.value, size: pageSize },
       }),
       request<Page<Row>>(`/${auth.platform}/projects/${props.project.id}/milestones`, {
-        query: { page: 1, size: 100 },
+        query: { page: milestonePage.value, size: pageSize },
       }),
     ]);
+    if (generation !== loadGeneration) return;
+    deliveryTotal.value = d.total;
+    milestoneTotal.value = m.total;
     deliveries.value = d.items;
     milestones.value = m.items;
   } catch (e) {
-    error.value = errorText(e);
+    if (generation === loadGeneration) error.value = errorText(e);
+  } finally {
+    if (generation === loadGeneration) loading.value = false;
   }
 }
 async function add() {
@@ -119,15 +137,26 @@ async function publication(row: Row, publish: boolean) {
     busy.value = false;
   }
 }
+const downloadGrant = ref<{ id: unknown; url: string } | null>(null);
+let downloadTimer: ReturnType<typeof setTimeout> | undefined;
+onBeforeUnmount(() => clearTimeout(downloadTimer));
 async function download(row: Row) {
+  downloadGrant.value = null;
+  clearTimeout(downloadTimer);
   try {
-    const grant = await request<{ url: string }>(
+    const grant = await request<{ url: string; expiresAt: string }>(
       `/${auth.platform}/assets/${row.assetId}/download`,
       { method: 'POST' },
     );
     const url = new URL(grant.url);
     if (!['https:', 'http:'].includes(url.protocol)) throw new Error('下载地址无效');
-    window.open(url.toString(), '_blank', 'noopener,noreferrer');
+    const remaining = Date.parse(grant.expiresAt) - Date.now();
+    if (!Number.isFinite(remaining) || remaining <= 0)
+      throw new Error('下载授权已过期，请重新获取');
+    downloadGrant.value = { id: row.id, url: url.toString() };
+    downloadTimer = setTimeout(() => {
+      downloadGrant.value = null;
+    }, remaining);
   } catch (e) {
     error.value = errorText(e);
   }
@@ -169,6 +198,29 @@ onMounted(load);
       ><button class="button primary" :disabled="busy">保存里程碑</button
       ><button type="button" class="button" @click="milestoneOpen = false">取消</button>
     </form>
+    <div class="detail-pagination" aria-label="里程碑分页">
+      <span>共 {{ milestoneTotal }} 条 · 第 {{ milestonePage }} 页</span>
+      <button
+        class="button"
+        :disabled="loading || milestonePage === 1"
+        @click="
+          milestonePage--;
+          load();
+        "
+      >
+        上一页里程碑
+      </button>
+      <button
+        class="button"
+        :disabled="loading || milestonePage * pageSize >= milestoneTotal"
+        @click="
+          milestonePage++;
+          load();
+        "
+      >
+        下一页里程碑
+      </button>
+    </div>
     <h3>交付版本</h3>
     <p v-if="error" class="error" role="alert">{{ error }}</p>
     <p v-if="!deliveries.length" class="muted">暂无可查看的交付版本</p>
@@ -179,6 +231,12 @@ onMounted(load);
       </div>
       <p>{{ d.note }}</p>
       <button class="button" @click="download(d)">下载文件</button
+      ><a
+        v-if="downloadGrant && downloadGrant.id === d.id"
+        class="button"
+        :href="downloadGrant.url"
+        rel="noopener noreferrer"
+        >保存已授权文件</a
       ><template v-if="auth.platform === 'admin'"
         ><button
           v-if="d.state === 'READY'"
@@ -197,6 +255,29 @@ onMounted(load);
         </button></template
       >
     </article>
+    <div class="detail-pagination" aria-label="交付版本分页">
+      <span>共 {{ deliveryTotal }} 条 · 第 {{ deliveryPage }} 页</span>
+      <button
+        class="button"
+        :disabled="loading || deliveryPage === 1"
+        @click="
+          deliveryPage--;
+          load();
+        "
+      >
+        上一页版本
+      </button>
+      <button
+        class="button"
+        :disabled="loading || deliveryPage * pageSize >= deliveryTotal"
+        @click="
+          deliveryPage++;
+          load();
+        "
+      >
+        下一页版本
+      </button>
+    </div>
     <template v-if="auth.platform === 'admin'"
       ><label>发布或撤回原因<input v-model="reason" maxlength="200" /></label>
       <h3>新增不可覆盖的交付版本</h3>
@@ -213,6 +294,14 @@ onMounted(load);
   </section>
 </template>
 <style scoped>
+.detail-pagination {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+  font-size: 13px;
+}
 .milestone,
 .delivery {
   padding: 16px;

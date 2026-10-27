@@ -58,7 +58,7 @@ watch(
 <template>
   <span>{{
     name ||
-    (!value
+    (value === null || value === undefined || value === ''
       ? '—'
       : field === 'authorId'
         ? '社区成员'

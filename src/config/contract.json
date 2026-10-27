@@ -1,5 +1,5 @@
 {
-  "version": "1.0.25",
+  "version": "1.0.26",
   "schemas": {
     "SchoolWrite": {
       "type": "object",
@@ -6794,6 +6794,22 @@
         "size",
         "total"
       ]
+    },
+    "Navigation": {
+      "type": "object",
+      "required": [
+        "configured",
+        "menus"
+      ],
+      "properties": {
+        "configured": {
+          "type": "boolean",
+          "description": "平台是否配置过菜单，包含全部停用情况"
+        },
+        "menus": {
+          "$ref": "#/components/schemas/MenuPage"
+        }
+      }
     }
   },
   "operations": {
@@ -20338,6 +20354,40 @@
         "items": {
           "type": "string"
         }
+      }
+    },
+    "GET /auth/navigation": {
+      "operationId": "get_auth_navigation",
+      "summary": "当前账户动态导航",
+      "permission": null,
+      "body": null,
+      "parameters": [
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1
+          }
+        },
+        {
+          "name": "size",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 100
+          }
+        }
+      ],
+      "response": {
+        "$ref": "#/components/schemas/Navigation"
       }
     }
   }
