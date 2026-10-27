@@ -1,10 +1,55 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { auth, request, errorText } from '../api/client';
+import { writeAttempt } from '../api/attempt';
 import { display } from '../config/labels';
 import type { Row, Page } from '../types/api';
 import AssetUpload from './AssetUpload.vue';
 const props = defineProps<{ project: Row }>();
+const emit = defineEmits<{ changed: [] }>();
+const attempt = writeAttempt();
+const milestoneEdit = ref<Row | null>(null),
+  milestoneOpen = ref(false),
+  milestoneName = ref(''),
+  milestoneDate = ref(''),
+  milestoneWeight = ref(10),
+  milestoneCompleted = ref(false);
+function editMilestone(row?: Row) {
+  milestoneEdit.value = row || null;
+  milestoneName.value = String(row?.name || '');
+  milestoneDate.value = String(row?.dueDate || '');
+  milestoneWeight.value = Number(row?.weight || 10);
+  milestoneCompleted.value = Boolean(row?.completed);
+  milestoneOpen.value = true;
+}
+async function saveMilestone() {
+  busy.value = true;
+  try {
+    const body = {
+      name: milestoneName.value,
+      dueDate: milestoneDate.value,
+      weight: milestoneWeight.value,
+      completed: milestoneCompleted.value,
+    };
+    const path = milestoneEdit.value
+      ? `/admin/milestones/${milestoneEdit.value.id}`
+      : `/admin/projects/${props.project.id}/milestones`;
+    await request(path, {
+      method: milestoneEdit.value ? 'PUT' : 'POST',
+      body,
+      version: milestoneEdit.value?.version,
+      key: attempt({ path, ...body }),
+    });
+    milestoneOpen.value = false;
+    await load();
+    emit('changed');
+  } catch (e) {
+    error.value = errorText(e);
+  } finally {
+    busy.value = false;
+  }
+}
+
 const deliveries = ref<Row[]>([]),
   milestones = ref<Row[]>([]),
   error = ref(''),
@@ -45,10 +90,12 @@ async function add() {
     await request(`/admin/projects/${props.project.id}/deliveries`, {
       method: 'POST',
       body: { kind: kind.value, assetId: uploaded.value.id, note: note.value },
+      key: attempt({ kind: kind.value, assetId: uploaded.value.id, note: note.value }),
     });
     uploaded.value = null;
     note.value = '';
     await load();
+    emit('changed');
   } catch (e) {
     error.value = errorText(e);
   } finally {
@@ -62,8 +109,10 @@ async function publication(row: Row, publish: boolean) {
       method: 'POST',
       body: { reason: reason.value },
       version: row.version,
+      key: attempt({ id: row.id, publish, reason: reason.value, version: row.version }),
     });
     await load();
+    emit('changed');
   } catch (e) {
     error.value = errorText(e);
   } finally {
@@ -88,13 +137,38 @@ onMounted(load);
 <template>
   <section>
     <h3>项目里程碑</h3>
+    <button v-if="auth.platform === 'admin'" class="button" @click="editMilestone()">
+      新增里程碑
+    </button>
     <p v-if="!milestones.length" class="muted">暂无里程碑</p>
     <div v-for="m in milestones" :key="String(m.id)" class="milestone">
       <strong>{{ m.name }}</strong
       ><span
         >{{ display(m.dueDate) }} · {{ m.weight }}% · {{ m.completed ? '已完成' : '进行中' }}</span
       >
+      <button v-if="auth.platform === 'admin'" class="button" @click="editMilestone(m)">
+        编辑
+      </button>
     </div>
+    <form v-if="milestoneOpen" class="delivery-form" @submit.prevent="saveMilestone">
+      <label>里程碑名称<input v-model="milestoneName" maxlength="200" required /></label
+      ><label
+        >计划日期<input
+          v-model="milestoneDate"
+          type="date"
+          :max="String(project.deliveryDate)"
+          required /></label
+      ><label
+        >进度权重<input
+          v-model.number="milestoneWeight"
+          type="number"
+          min="1"
+          max="100"
+          required /></label
+      ><label><input v-model="milestoneCompleted" type="checkbox" />已完成</label
+      ><button class="button primary" :disabled="busy">保存里程碑</button
+      ><button type="button" class="button" @click="milestoneOpen = false">取消</button>
+    </form>
     <h3>交付版本</h3>
     <p v-if="error" class="error" role="alert">{{ error }}</p>
     <p v-if="!deliveries.length" class="muted">暂无可查看的交付版本</p>

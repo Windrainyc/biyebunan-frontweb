@@ -1,18 +1,23 @@
 <script setup lang="ts">
 import { writeAttempt } from '../api/attempt';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, defineAsyncComponent } from 'vue';
 import { auth, request, errorText } from '../api/client';
 import { operation, schema } from '../config/contract';
 import { label, display } from '../config/labels';
 import type { Resource } from '../config/resources';
 import type { Row, Page } from '../types/api';
+const InvitationDetail = defineAsyncComponent(() => import('../components/InvitationDetail.vue'));
+const UsageDetail = defineAsyncComponent(() => import('../components/UsageDetail.vue'));
+const OrderDetail = defineAsyncComponent(() => import('../components/OrderDetail.vue'));
+const KnowledgeDetail = defineAsyncComponent(() => import('../components/KnowledgeDetail.vue'));
+const MembershipDetail = defineAsyncComponent(() => import('../components/MembershipDetail.vue'));
 import ReferenceName from '../components/ReferenceName.vue';
-import ForumDetail from '../components/ForumDetail.vue';
+const ForumDetail = defineAsyncComponent(() => import('../components/ForumDetail.vue'));
 import RecordActions from '../components/RecordActions.vue';
-import ProjectDetail from '../components/ProjectDetail.vue';
+const ProjectDetail = defineAsyncComponent(() => import('../components/ProjectDetail.vue'));
 import StatusBadge from '../components/StatusBadge.vue';
 import { formBody } from '../config/form';
-import ReferenceField from '../components/ReferenceField.vue';
+import SchemaField from '../components/SchemaField.vue';
 let attempt = writeAttempt();
 const props = defineProps<{ resource: Resource }>();
 const rows = ref<Row[]>([]),
@@ -28,18 +33,25 @@ const rows = ref<Row[]>([]),
   notice = ref('');
 const editing = ref<Row | null>(null),
   formOpen = ref(false),
-  form = ref<Record<string, any>>({}),
+  form = ref<Record<string, unknown>>({}),
   writeKey = ref(''),
   detail = ref<Row | null>(null),
   remove = ref<Row | null>(null);
+const extraFilters = ref<Record<string, unknown>>({});
+let loadGeneration = 0;
 const listOp = computed(() => operation('GET', props.resource.path));
 const queryNames = computed(
   () => new Set(listOp.value?.parameters.filter((p) => p.in === 'query').map((p) => p.name)),
 );
+const extraFields = computed(() =>
+  (listOp.value?.parameters || [])
+    .filter((p) => p.in === 'query' && !['page', 'size', 'q', 'status', 'sort'].includes(p.name))
+    .map((p) => ({ key: p.name, ...schema(p.schema) })),
+);
 const statusOptions = computed(() => {
   const pageSchema = schema(listOp.value?.response);
   const rowSchema = schema(schema(pageSchema.properties?.items).items);
-  return schema(rowSchema.properties?.status).enum || [];
+  return schema(rowSchema.properties?.status || rowSchema.properties?.state).enum || [];
 });
 const sorts = computed(
   () => (listOp.value?.parameters.find((p) => p.name === 'sort')?.schema.enum as string[]) || [],
@@ -67,27 +79,33 @@ const properties = computed(() =>
     .map(([key, value]) => ({ key, ...schema(value) })),
 );
 async function load() {
+  const generation = ++loadGeneration;
   loading.value = true;
   error.value = '';
   try {
     const query: Record<string, unknown> = {};
     for (const [k, v] of Object.entries({
+      ...extraFilters.value,
       page: page.value,
       size: size.value,
       q: q.value,
       status: status.value,
       sort: sort.value,
     }))
-      if (queryNames.value.has(k) && v !== '') query[k] = v;
+      if (queryNames.value.has(k) && v !== '' && v !== null && v !== undefined) {
+        const field = extraFields.value.find((f) => f.key === k);
+        query[k] = field?.format === 'date-time' ? new Date(String(v)).toISOString() : v;
+      }
     const data = await request<Page<Row> | Row[]>(props.resource.path, {
       query,
     });
+    if (generation !== loadGeneration) return;
     rows.value = Array.isArray(data) ? data : data.items;
     total.value = Array.isArray(data) ? data.length : data.total;
   } catch (e) {
-    error.value = errorText(e);
+    if (generation === loadGeneration) error.value = errorText(e);
   } finally {
-    loading.value = false;
+    if (generation === loadGeneration) loading.value = false;
   }
 }
 function search() {
@@ -217,11 +235,27 @@ onMounted(() => {
           @click="
             q = '';
             status = '';
+            extraFilters = {};
+            sort = sorts[0] || '';
             search();
           "
         >
           重置
         </button>
+        <details v-if="extraFields.length" class="advanced-filters">
+          <summary>更多筛选条件</summary>
+          <div class="form-grid">
+            <label v-for="field in extraFields" :key="field.key">
+              {{ label(field.key) }}
+              <SchemaField
+                v-model="extraFilters[field.key]"
+                :field="field"
+                :context="resource.key"
+                :filters="field.key === 'majorId' ? { schoolId: extraFilters.schoolId } : {}"
+              />
+            </label>
+          </div>
+        </details>
       </form>
       <div class="table-scroll" :aria-busy="loading">
         <table>
@@ -292,6 +326,11 @@ onMounted(() => {
     <div v-if="formOpen" class="modal-backdrop">
       <form
         class="modal"
+        v-dialog="
+          () => {
+            if (!saving) formOpen = false;
+          }
+        "
         role="dialog"
         aria-modal="true"
         aria-labelledby="form-title"
@@ -301,59 +340,20 @@ onMounted(() => {
         <div class="form-grid">
           <div v-for="field in properties" :key="field.key" class="form-field">
             <span>{{ label(field.key) }}</span
-            ><span v-if="fields.required?.includes(field.key)" class="danger"> *</span
-            ><ReferenceField
-              v-if="field.format === 'uuid' || field.type === 'array'"
-              v-model="form[field.key]"
-              :aria-label="label(field.key)"
-              :field="field.key"
-              :context="resource.key"
-              :filters="field.key === 'majorId' ? { schoolId: form.schoolId } : {}"
-              :multiple="field.type === 'array'"
-              :required="
+            ><span
+              v-if="
                 fields.required?.includes(field.key) &&
                 !(Array.isArray(field.type) && field.type.includes('null'))
               "
-            /><select
-              v-else-if="field.enum"
-              v-model="form[field.key]"
-              :aria-label="label(field.key)"
-              :required="fields.required?.includes(field.key)"
+              class="danger"
             >
-              <option value="">请选择</option>
-              <option v-for="value in field.enum" :key="String(value)" :value="value">
-                {{ display(value) }}
-              </option></select
-            ><input
-              v-else-if="field.type === 'boolean'"
+              *</span
+            ><SchemaField
               v-model="form[field.key]"
-              :aria-label="label(field.key)"
-              type="checkbox"
-            /><textarea
-              v-else-if="field.maxLength && field.maxLength > 500 && field.format !== 'uri'"
-              v-model="form[field.key]"
-              :aria-label="label(field.key)"
-              :maxlength="field.maxLength"
+              :field="field"
               :required="fields.required?.includes(field.key)"
-              rows="4"
-            /><input
-              v-else
-              v-model="form[field.key]"
-              :aria-label="label(field.key)"
-              :type="
-                field.writeOnly
-                  ? 'password'
-                  : field.type === 'integer' || field.type === 'number'
-                    ? 'number'
-                    : field.format === 'date'
-                      ? 'date'
-                      : 'text'
-              "
-              :min="field.minimum"
-              :max="field.maximum"
-              :minlength="field.minLength"
-              :maxlength="field.maxLength"
-              :required="fields.required?.includes(field.key)"
+              :context="resource.key"
+              :filters="field.key === 'majorId' ? { schoolId: form.schoolId } : {}"
             />
           </div>
         </div>
@@ -368,7 +368,13 @@ onMounted(() => {
       </form>
     </div>
     <div v-if="detail" class="modal-backdrop">
-      <section class="modal" role="dialog" aria-modal="true" aria-label="记录详情">
+      <section
+        class="modal"
+        v-dialog="() => (detail = null)"
+        role="dialog"
+        aria-modal="true"
+        aria-label="记录详情"
+      >
         <h2>{{ resource.title }}详情</h2>
         <dl class="detail-grid">
           <template v-for="(value, key) in detail" :key="key"
@@ -376,7 +382,33 @@ onMounted(() => {
             <dd>{{ display(value) }}</dd></template
           >
         </dl>
-        <ForumDetail
+        <InvitationDetail
+          v-if="auth.platform === 'admin' && resource.key === 'users'"
+          :user="detail"
+        />
+        <UsageDetail
+          v-if="resource.key === 'usage'"
+          :usage="detail"
+          @changed="load()"
+        /><OrderDetail
+          v-if="resource.key === 'orders'"
+          :order="detail"
+          @changed="
+            inspect(detail);
+            load();
+          "
+        /><KnowledgeDetail
+          v-if="['contents', 'knowledge'].includes(resource.key)"
+          :content="detail"
+          @changed="
+            inspect(detail);
+            load();
+          "
+        /><MembershipDetail
+          v-if="auth.platform === 'admin' && ['users', 'membership-plans'].includes(resource.key)"
+          :record="detail"
+          :mode="resource.key === 'users' ? 'user' : 'plan'"
+        /><ForumDetail
           v-if="resource.key === 'posts'"
           :post="detail"
           @changed="
@@ -393,6 +425,10 @@ onMounted(() => {
         /><ProjectDetail
           v-if="resource.key === 'projects' && auth.platform !== 'partner'"
           :project="detail"
+          @changed="
+            inspect(detail);
+            load();
+          "
         />
         <footer>
           <button class="button" @click="detail = null">关闭</button>
@@ -400,7 +436,17 @@ onMounted(() => {
       </section>
     </div>
     <div v-if="remove" class="modal-backdrop">
-      <section class="modal" role="alertdialog" aria-modal="true" aria-label="确认删除">
+      <section
+        class="modal"
+        v-dialog="
+          () => {
+            if (!saving) remove = null;
+          }
+        "
+        role="alertdialog"
+        aria-modal="true"
+        aria-label="确认删除"
+      >
         <h2>确认删除记录？</h2>
         <p>被其他业务引用的记录将受到删除保护。请核对后继续。</p>
         <p>{{ display(remove.name || remove.title || remove.code) }}</p>
@@ -414,6 +460,15 @@ onMounted(() => {
   </section>
 </template>
 <style scoped>
+.advanced-filters {
+  flex-basis: 100%;
+  width: 100%;
+}
+.advanced-filters summary {
+  cursor: pointer;
+  margin: 8px 0;
+}
+
 .page-heading {
   display: flex;
   justify-content: space-between;

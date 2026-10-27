@@ -13,16 +13,19 @@ const busy = ref(false),
   message = ref(''),
   error = ref(''),
   asset = ref<Row | null>(null);
+let activeUpload: XMLHttpRequest | undefined;
 let aborted = false,
   timer: ReturnType<typeof setTimeout> | undefined;
 onBeforeUnmount(() => {
   aborted = true;
   clearTimeout(timer);
+  activeUpload?.abort();
 });
 async function poll() {
   if (aborted || !asset.value?.id) return;
   try {
     asset.value = await request<Row>(`/${auth.platform}/assets/${asset.value.id}`);
+    if (aborted) return;
     if (asset.value.state === 'READY') {
       message.value = '文件校验通过，可用于业务关联';
       busy.value = false;
@@ -80,6 +83,7 @@ async function select(event: Event) {
     progress.value = 0;
     await new Promise<void>((resolve, reject) => {
       const xhr = new XMLHttpRequest();
+      activeUpload = xhr;
       xhr.open(grant.method, grant.url);
       for (const [key, value] of Object.entries(grant.headers)) xhr.setRequestHeader(key, value);
       xhr.upload.onprogress = (e) => {
@@ -90,6 +94,10 @@ async function select(event: Event) {
           ? resolve()
           : reject(new Error('对象存储上传失败，请重新上传'));
       xhr.onerror = () => reject(new Error('上传连接中断，请检查网络后重试'));
+      xhr.onabort = () => reject(new Error('上传已取消'));
+      xhr.onloadend = () => {
+        activeUpload = undefined;
+      };
       xhr.send(file);
     });
     asset.value = await request<Row>(`/${auth.platform}/uploads/${grant.uploadId}/complete`, {

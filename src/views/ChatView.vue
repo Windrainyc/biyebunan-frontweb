@@ -1,8 +1,27 @@
 <script setup lang="ts">
+import { useRoute } from 'vue-router';
 import { onMounted, onBeforeUnmount, ref } from 'vue';
-import { request, errorText } from '../api/client';
+import { auth, ApiError, request, errorText } from '../api/client';
+import { writeAttempt } from '../api/attempt';
 import { events } from '../api/stream';
 import type { Page, Row } from '../types/api';
+interface Citation {
+  sourceType: string;
+  versionId: string;
+  chunkId: string;
+  page: number;
+  quote: string;
+}
+function citations(message: Row): Citation[] {
+  return Array.isArray(message.citations) ? (message.citations as Citation[]) : [];
+}
+const route = useRoute();
+const source = ref(
+  typeof route.query.source === 'string' && /^[0-9a-f-]{36}$/.test(route.query.source)
+    ? route.query.source
+    : '',
+);
+const sourceTitle = String(route.query.title || '已选知识资料').slice(0, 200);
 const conversations = ref<Row[]>([]),
   projects = ref<Row[]>([]),
   models = ref<Row[]>([]),
@@ -19,6 +38,26 @@ const run = ref<Row | null>(null),
   sequence = ref(0),
   pending = ref<{ key: string; body: Record<string, unknown> } | null>(null);
 let controller: AbortController | undefined;
+const conversationAttempt = writeAttempt();
+const storageKey = () => `zx:active-run:${auth.user?.id}`;
+async function resumeSaved() {
+  const id = sessionStorage.getItem(storageKey());
+  if (!id) return;
+  try {
+    run.value = await request<Row>(`/student/runs/${id}`);
+    conversation.value = String(run.value.conversationId);
+    await history();
+    if (['SUCCEEDED', 'FAILED', 'CANCELLED'].includes(String(run.value.state))) {
+      sessionStorage.removeItem(storageKey());
+      return;
+    }
+    busy.value = true;
+    sequence.value = 0;
+    await subscribe();
+  } catch (e) {
+    error.value = errorText(e);
+  }
+}
 async function initialize() {
   try {
     const [c, p, m] = await Promise.all([
@@ -34,6 +73,7 @@ async function initialize() {
     projects.value = p.items;
     models.value = m.items;
     model.value = String(m.items[0]?.id || '');
+    await resumeSaved();
   } catch (e) {
     error.value = errorText(e);
   }
@@ -52,26 +92,28 @@ async function history() {
 async function subscribe() {
   if (!run.value?.id) return;
   controller?.abort();
-  controller = new AbortController();
+  const activeController = new AbortController();
+  controller = activeController;
   disconnected.value = false;
   let terminal = false;
   try {
-    await events(run.value.id, sequence.value, controller.signal, (event) => {
+    await events(run.value.id, sequence.value, activeController.signal, (event) => {
       sequence.value = event.sequence;
       if (event.type === 'delta') answer.value += event.data.text || '';
       if (['completed', 'failed', 'cancelled'].includes(event.type)) {
         terminal = true;
-        busy.value = false;
         if (event.type === 'failed') error.value = '本次答疑未完成，请查看用量账单中的结算状态。';
       }
     });
     if (terminal) {
       pending.value = null;
+      sessionStorage.removeItem(storageKey());
+      busy.value = false;
       await history();
       answer.value = '';
     } else disconnected.value = true;
   } catch (e) {
-    if (!controller.signal.aborted) {
+    if (!activeController.signal.aborted) {
       error.value = errorText(e);
       disconnected.value = true;
     }
@@ -89,6 +131,7 @@ async function send() {
         const c = await request<Row>('/student/conversations', {
           method: 'POST',
           body: { projectId: project.value, title: text.value.slice(0, 40) },
+          key: conversationAttempt({ projectId: project.value, title: text.value.slice(0, 40) }),
         });
         conversation.value = String(c.id);
         conversations.value.unshift(c);
@@ -100,7 +143,7 @@ async function send() {
           clientMessageId: crypto.randomUUID(),
           text: text.value,
           modelId: model.value,
-          sourceVersionIds: [],
+          sourceVersionIds: source.value ? [source.value] : [],
           maxOutputTokens: Math.min(
             2048,
             Number(models.value.find((m) => m.id === model.value)?.maxOutputTokens || 2048),
@@ -113,6 +156,7 @@ async function send() {
       body: pending.value.body,
       key: pending.value.key,
     });
+    sessionStorage.setItem(storageKey(), String(run.value.id));
     sequence.value = 0;
     answer.value = '';
     text.value = '';
@@ -121,6 +165,9 @@ async function send() {
   } catch (e) {
     error.value = errorText(e);
     busy.value = false;
+    // 明确的请求拒绝可修正内容；网络结果不明保留同一clientMessageId重试。
+    if (e instanceof ApiError && [400, 403, 404, 409, 412, 422].includes(e.status))
+      pending.value = null;
   }
 }
 async function cancel() {
@@ -142,6 +189,10 @@ onBeforeUnmount(() => controller?.abort());
     <h1>在线智能答疑</h1>
     <p class="muted">围绕项目提问，回答与用量均会保存。关闭页面不会自动取消正在执行的答疑。</p>
     <p v-if="error" class="error" role="alert">{{ error }}</p>
+    <p v-if="source" class="notice">
+      本次引用：{{ sourceTitle
+      }}<button class="button" :disabled="busy" @click="source = ''">移除引用</button>
+    </p>
     <div class="chat-controls">
       <select v-model="conversation" :disabled="busy" aria-label="选择会话" @change="history">
         <option value="">新建会话</option>
@@ -169,6 +220,17 @@ onBeforeUnmount(() => controller?.abort());
       >
         <strong>{{ message.role === 'USER' ? '我的提问' : '智能答疑' }}</strong>
         <p>{{ message.text }}</p>
+        <details v-if="citations(message).length">
+          <summary>查看回答引用（{{ citations(message).length }}）</summary>
+          <blockquote v-for="citation in citations(message)" :key="citation.chunkId">
+            <small
+              >{{ citation.sourceType === 'KNOWLEDGE' ? '知识资料' : '项目交付' }} · 第{{
+                citation.page
+              }}页</small
+            >
+            <p>{{ citation.quote }}</p>
+          </blockquote>
+        </details>
       </article>
       <article v-if="answer" class="message">
         <strong>智能答疑</strong>

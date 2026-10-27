@@ -1,14 +1,18 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, defineAsyncComponent } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { auth, logout, errorText } from '../api/client';
 import { resources, platformNames } from '../config/resources';
 import { operation } from '../config/contract';
-import OrderBindingView from './OrderBindingView.vue';
-import NotificationsView from './NotificationsView.vue';
-import StatisticsView from './StatisticsView.vue';
-import ChatView from './ChatView.vue';
-import ResourceView from './ResourceView.vue';
+const KnowledgeSearchView = defineAsyncComponent(() => import('./KnowledgeSearchView.vue'));
+const ExportView = defineAsyncComponent(() => import('./ExportView.vue'));
+const ChatAuditView = defineAsyncComponent(() => import('./ChatAuditView.vue'));
+const ProfileView = defineAsyncComponent(() => import('./ProfileView.vue'));
+const OrderBindingView = defineAsyncComponent(() => import('./OrderBindingView.vue'));
+const NotificationsView = defineAsyncComponent(() => import('./NotificationsView.vue'));
+const StatisticsView = defineAsyncComponent(() => import('./StatisticsView.vue'));
+const ChatView = defineAsyncComponent(() => import('./ChatView.vue'));
+const ResourceView = defineAsyncComponent(() => import('./ResourceView.vue'));
 import Icon from '../components/Icon.vue';
 import type { Platform } from '../types/api';
 const route = useRoute(),
@@ -39,6 +43,19 @@ async function exit() {
         ><span>知</span><strong>{{ platformNames[platform] }}</strong></RouterLink
       >
       <nav>
+        <RouterLink v-if="platform === 'student'" to="/student/search"
+          ><Icon name="book" />知识检索</RouterLink
+        >
+        <RouterLink v-if="platform !== 'student'" :to="`/${platform}/exports`"
+          ><Icon name="file" />数据导出</RouterLink
+        ><RouterLink
+          v-if="platform === 'admin' && auth.permissions.includes('chat:audit')"
+          to="/admin/chat-audit"
+          ><Icon name="shield" />答疑会话审计</RouterLink
+        >
+        <RouterLink v-if="platform !== 'admin'" :to="`/${platform}/profile`"
+          ><Icon name="users" />我的账户</RouterLink
+        >
         <RouterLink v-if="platform === 'student'" to="/student/bind-order"
           ><Icon name="bag" />绑定订单</RouterLink
         >
@@ -69,8 +86,16 @@ async function exit() {
       </header>
       <main class="page">
         <p v-if="error" class="error" role="alert">{{ error }}</p>
-        <OrderBindingView
-          v-if="platform === 'student' && route.params.resource === 'bind-order'"
+        <KnowledgeSearchView
+          v-if="platform === 'student' && route.params.resource === 'search'"
+        /><ExportView
+          v-else-if="platform !== 'student' && route.params.resource === 'exports'"
+        /><ChatAuditView
+          v-else-if="platform === 'admin' && route.params.resource === 'chat-audit'"
+        /><ProfileView
+          v-else-if="platform !== 'admin' && route.params.resource === 'profile'"
+        /><OrderBindingView
+          v-else-if="platform === 'student' && route.params.resource === 'bind-order'"
         /><StatisticsView v-else-if="route.params.resource === 'statistics'" />
         <NotificationsView v-else-if="route.params.resource === 'notifications'" />
         <ChatView

@@ -38,10 +38,13 @@ const resource: Record<string, string> = {
   storageId: 'storages',
   storageConfigId: 'storages',
 };
-const path = computed(
-  () =>
-    `/${auth.platform}/${(props.field === 'parentId' && props.context === 'menus' ? 'menus' : resource[props.field]) || ''}`,
-);
+const path = computed(() => {
+  const name =
+    (props.field === 'parentId' && props.context === 'menus' ? 'menus' : resource[props.field]) ||
+    '';
+  const direct = `/${auth.platform}/${name}`;
+  return operation('GET', direct) ? direct : `/${auth.platform}/dictionaries/${name}`;
+});
 const supported = computed(() => !!resource[props.field] && !!operation('GET', path.value));
 function value(row: Row) {
   return String(props.field === 'permissionCodes' ? row.code : row.id);
@@ -68,7 +71,9 @@ function choose(id: string) {
       : id,
   );
 }
+let generation = 0;
 async function load() {
+  const current = ++generation;
   if (!supported.value) return;
   busy.value = true;
   error.value = '';
@@ -86,12 +91,13 @@ async function load() {
             : {}),
       },
     });
+    if (current !== generation) return;
     rows.value = result.items;
     total.value = result.total;
   } catch (e) {
-    error.value = errorText(e);
+    if (current === generation) error.value = errorText(e);
   } finally {
-    busy.value = false;
+    if (current === generation) busy.value = false;
   }
 }
 onMounted(load);

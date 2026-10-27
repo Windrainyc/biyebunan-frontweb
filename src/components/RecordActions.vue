@@ -28,6 +28,12 @@ const definitions: Record<string, { path: string; title: string }[]> = {
   reports: [{ path: 'reports/{id}/resolve', title: '处理举报' }],
   adjudications: [{ path: 'adjudications/{id}/decision', title: '复核用量裁决' }],
 };
+definitions.contents = [
+  { path: 'knowledge/{id}/submit-review', title: '提交审核' },
+  { path: 'knowledge/{id}/publish', title: '发布内容' },
+  { path: 'knowledge/{id}/withdraw', title: '撤回发布' },
+  { path: 'knowledge/{id}/reindex', title: '重新建立索引' },
+];
 const statusPaths: Record<string, string> = {
   'membership-plans': 'membership-plans',
   'model-prices': 'model-prices',

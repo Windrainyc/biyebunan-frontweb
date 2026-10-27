@@ -1,0 +1,33 @@
+# 仅三端静态站点。API、中间件与持久化数据独立管理。
+# 本文件是本机容器示例，不能代表跨主机高可用部署。
+services:
+  student:
+    build:
+      context: ..
+      args:
+        PLATFORM: student
+    image: zhixiang/frontend-student:0.1.0-dev
+    ports: ["127.0.0.1:18780:8080"]
+    environment:
+      API_UPSTREAM: ${API_UPSTREAM:-http://host.lima.internal:18080}
+    restart: unless-stopped
+  admin:
+    build:
+      context: ..
+      args:
+        PLATFORM: admin
+    image: zhixiang/frontend-admin:0.1.0-dev
+    ports: ["127.0.0.1:18781:8080"]
+    environment:
+      API_UPSTREAM: ${API_UPSTREAM:-http://host.lima.internal:18080}
+    restart: unless-stopped
+  partner:
+    build:
+      context: ..
+      args:
+        PLATFORM: partner
+    image: zhixiang/frontend-partner:0.1.0-dev
+    ports: ["127.0.0.1:18782:8080"]
+    environment:
+      API_UPSTREAM: ${API_UPSTREAM:-http://host.lima.internal:18080}
+    restart: unless-stopped

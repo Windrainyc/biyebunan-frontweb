@@ -11,6 +11,12 @@ export function formBody(fields: Schema, values: Record<string, unknown>): Recor
       else if (fields.required?.includes(key)) result[key] = value;
       continue;
     }
+    if (field.format === 'date-time') {
+      const date = new Date(String(value));
+      if (Number.isNaN(date.getTime())) throw new Error('时间格式不正确');
+      result[key] = date.toISOString();
+      continue;
+    }
     if (field.type === 'integer' || field.type === 'number') {
       const n = Number(value);
       if (!Number.isFinite(n) || (field.type === 'integer' && !Number.isSafeInteger(n)))

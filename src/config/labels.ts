@@ -175,6 +175,18 @@ export const labels: Record<string, string> = {
   invitationToken: '邀请凭证',
   mfaCode: '动态验证码',
 };
+Object.assign(labels, {
+  maskedSuffix: '密钥尾部摘要',
+  hostname: '域名',
+  certificateRef: '证书引用',
+  postId: '关联帖子',
+  audience: '可见范围',
+  monthlyTokenQuota: '每月词元额度',
+  monthlyAmountLimit: '每月金额上限',
+  startsAt: '生效时间',
+  publishedVersionId: '发布版本',
+  rotatedAt: '最近轮换时间',
+});
 export const values: Record<string, string> = {
   ENABLED: '启用',
   DISABLED: '停用',

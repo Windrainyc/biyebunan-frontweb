@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import AccountEntryView from './views/AccountEntryView.vue';
-import LoginView from './views/LoginView.vue';
-import WorkspaceView from './views/WorkspaceView.vue';
+const AccountEntryView = () => import('./views/AccountEntryView.vue');
+const LoginView = () => import('./views/LoginView.vue');
+const WorkspaceView = () => import('./views/WorkspaceView.vue');
 import { auth, bootstrap } from './api/client';
 import type { Platform } from './types/api';
 const entry = ['admin', 'student', 'partner'].includes(import.meta.env.VITE_PLATFORM)
