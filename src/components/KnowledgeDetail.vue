@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { watch, onBeforeUnmount, ref } from 'vue';
 import { auth, request, errorText } from '../api/client';
 import { writeAttempt } from '../api/attempt';
 import type { Row, Page } from '../types/api';
@@ -14,16 +14,32 @@ const items = ref<Row[]>([]),
   video = ref(''),
   busy = ref(false);
 const attempt = writeAttempt();
+const loading = ref(false),
+  downloadUrl = ref('');
+let generation = 0,
+  downloadGeneration = 0;
+let downloadTimer: ReturnType<typeof setTimeout> | undefined;
+onBeforeUnmount(() => {
+  generation++;
+  downloadGeneration++;
+  clearTimeout(downloadTimer);
+});
 async function load() {
+  const current = ++generation;
+  loading.value = true;
+  error.value = '';
   try {
     const data = await request<Page<Row>>(
       `/${auth.platform}/knowledge/${props.content.id}/versions`,
       { query: { page: page.value, size: 20 } },
     );
+    if (current !== generation) return;
     items.value = data.items;
     total.value = data.total;
   } catch (e) {
-    error.value = errorText(e);
+    if (current === generation) error.value = errorText(e);
+  } finally {
+    if (current === generation) loading.value = false;
   }
 }
 async function attach(asset: Row) {
@@ -55,20 +71,42 @@ async function attach(asset: Row) {
   }
 }
 async function download(asset: unknown, play = false) {
+  const current = ++downloadGeneration;
+  downloadUrl.value = '';
+  clearTimeout(downloadTimer);
   try {
-    const grant = await request<{ url: string }>(`/${auth.platform}/assets/${asset}/download`, {
-      method: 'POST',
-      query: play ? { variant: 'PLAYBACK' } : {},
-    });
+    const grant = await request<{ url: string; expiresAt: string }>(
+      `/${auth.platform}/assets/${asset}/download`,
+      {
+        method: 'POST',
+        query: play ? { variant: 'PLAYBACK' } : {},
+      },
+    );
     const url = new URL(grant.url);
     if (!['http:', 'https:'].includes(url.protocol)) throw new Error('文件地址无效');
+    if (current !== downloadGeneration) return;
+    const remaining = Date.parse(grant.expiresAt) - Date.now();
+    if (!Number.isFinite(remaining) || remaining <= 0)
+      throw new Error('文件授权已过期，请重新获取');
     if (play) video.value = url.toString();
-    else window.open(url.toString(), '_blank', 'noopener,noreferrer');
+    else {
+      downloadUrl.value = url.toString();
+      downloadTimer = setTimeout(() => {
+        downloadUrl.value = '';
+      }, remaining);
+    }
   } catch (e) {
     error.value = errorText(e);
   }
 }
-onMounted(load);
+watch(
+  () => [props.content.id, props.content.version],
+  () => {
+    page.value = 1;
+    load();
+  },
+  { immediate: true },
+);
 </script>
 <template>
   <section>
@@ -90,6 +128,9 @@ onMounted(load);
       preload="metadata"
       style="width: 100%; margin-top: 16px"
     />
+    <p v-if="downloadUrl">
+      <a :href="downloadUrl" rel="noopener noreferrer" class="button">保存已授权资料</a>
+    </p>
     <h3>内容版本</h3>
     <article v-for="item in items" :key="String(item.id)" class="version">
       <strong>第{{ item.versionNumber }}版 · {{ display(item.state) }}</strong
@@ -103,7 +144,7 @@ onMounted(load);
     <div class="pagination">
       <button
         class="button"
-        :disabled="page === 1"
+        :disabled="loading || page === 1"
         @click="
           page--;
           load();
@@ -113,7 +154,7 @@ onMounted(load);
       ><span>第{{ page }}页 · 共{{ total }}条</span
       ><button
         class="button"
-        :disabled="page * 20 >= total"
+        :disabled="loading || page * 20 >= total"
         @click="
           page++;
           load();

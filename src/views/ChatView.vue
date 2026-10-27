@@ -4,6 +4,7 @@ import { onMounted, onBeforeUnmount, ref } from 'vue';
 import { auth, ApiError, request, errorText } from '../api/client';
 import { writeAttempt } from '../api/attempt';
 import { events } from '../api/stream';
+import { mergeMessagePage } from '../api/messages';
 import type { Page, Row } from '../types/api';
 interface Citation {
   sourceType: string;
@@ -39,6 +40,10 @@ const run = ref<Row | null>(null),
   pending = ref<{ key: string; body: Record<string, unknown> } | null>(null);
 let controller: AbortController | undefined;
 const conversationAttempt = writeAttempt();
+const historyPage = ref(1),
+  historyTotal = ref(0),
+  historyLoading = ref(false);
+let historyGeneration = 0;
 const storageKey = () => `zx:active-run:${auth.user?.id}`;
 async function resumeSaved() {
   const id = sessionStorage.getItem(storageKey());
@@ -78,15 +83,29 @@ async function initialize() {
     error.value = errorText(e);
   }
 }
-async function history() {
-  if (!conversation.value) return;
+async function history(older = false) {
+  const id = conversation.value;
+  const generation = ++historyGeneration;
+  if (!id) {
+    messages.value = [];
+    historyTotal.value = 0;
+    return;
+  }
+  historyLoading.value = true;
+  const page = older ? historyPage.value + 1 : 1;
   try {
-    const data = await request<Page<Row>>(`/student/conversations/${conversation.value}/messages`, {
-      query: { page: 1, size: 100 },
+    const data = await request<Page<Row>>(`/student/conversations/${id}/messages`, {
+      query: { page, size: 20, sort: 'createdAt:desc' },
     });
-    messages.value = data.items;
+    if (generation !== historyGeneration || conversation.value !== id) return;
+    // 接口按新到旧分页；聊天按旧到新展示，重叠页按消息ID去重。
+    messages.value = mergeMessagePage(data.items, older ? messages.value : []);
+    historyPage.value = page;
+    historyTotal.value = data.total;
   } catch (e) {
-    error.value = errorText(e);
+    if (generation === historyGeneration) error.value = errorText(e);
+  } finally {
+    if (generation === historyGeneration) historyLoading.value = false;
   }
 }
 async function subscribe() {
@@ -182,7 +201,10 @@ async function cancel() {
   }
 }
 onMounted(initialize);
-onBeforeUnmount(() => controller?.abort());
+onBeforeUnmount(() => {
+  historyGeneration++;
+  controller?.abort();
+});
 </script>
 <template>
   <section>
@@ -194,7 +216,7 @@ onBeforeUnmount(() => controller?.abort());
       }}<button class="button" :disabled="busy" @click="source = ''">移除引用</button>
     </p>
     <div class="chat-controls">
-      <select v-model="conversation" :disabled="busy" aria-label="选择会话" @change="history">
+      <select v-model="conversation" :disabled="busy" aria-label="选择会话" @change="history()">
         <option value="">新建会话</option>
         <option v-for="c in conversations" :key="String(c.id)" :value="c.id">
           {{ c.title }}
@@ -213,6 +235,14 @@ onBeforeUnmount(() => controller?.abort());
     </div>
     <p v-if="!models.length" class="notice">当前没有可用模型，请联系平台管理员配置。</p>
     <div class="messages">
+      <button
+        v-if="messages.length < historyTotal"
+        class="button"
+        :disabled="historyLoading || busy"
+        @click="history(true)"
+      >
+        加载更早消息
+      </button>
       <article
         v-for="message in messages"
         :key="String(message.id)"

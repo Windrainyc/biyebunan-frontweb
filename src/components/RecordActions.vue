@@ -70,6 +70,18 @@ const actions = computed(() =>
     .map((d) => ({ ...d, path: `/${auth.platform}/${d.path}` }))
     .filter((d) => {
       if (d.path.endsWith('/acceptance') && props.record.stage !== 'ACCEPTANCE') return false;
+      if (
+        d.path.endsWith('/knowledge/{id}/submit-review') &&
+        !['DRAFT', 'WITHDRAWN'].includes(String(props.record.state))
+      )
+        return false;
+      if (d.path.endsWith('/knowledge/{id}/publish') && props.record.state !== 'REVIEW')
+        return false;
+      if (
+        d.path.endsWith('/knowledge/{id}/withdraw') &&
+        !['REVIEW', 'PUBLISHED'].includes(String(props.record.state))
+      )
+        return false;
       const o = operation('POST', d.path);
       return o && (!o.permission || auth.permissions.includes(o.permission));
     }),

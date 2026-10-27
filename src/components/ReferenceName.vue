@@ -60,10 +60,12 @@ watch(
     name ||
     (value === null || value === undefined || value === ''
       ? '—'
-      : field === 'authorId'
-        ? '社区成员'
-        : resources[field]
-          ? '关联记录（当前不可查看）'
-          : display(value))
+      : field === 'publishedVersionId'
+        ? '已生成发布版本（见内容版本列表）'
+        : field === 'authorId'
+          ? '社区成员'
+          : resources[field]
+            ? '关联记录（当前不可查看）'
+            : display(value))
   }}</span>
 </template>
