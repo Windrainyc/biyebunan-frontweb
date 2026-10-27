@@ -49,7 +49,13 @@ def main():
             if args.action == 'stop':
                 if alive:
                     os.killpg(state['pid'], signal.SIGTERM)
-                    print(f'{platform}：已请求优雅停止')
+                    for _ in range(100):
+                        if identity(state['pid']) != state['identity']:
+                            break
+                        time.sleep(0.1)
+                    else:
+                        raise SystemExit(f'{platform}未在10秒内停止，保留进程记录，不强制杀死')
+                    print(f'{platform}：已优雅停止')
                 else:
                     print(f'{platform}：没有本脚本拥有的运行进程')
                 state_path.unlink(missing_ok=True)
@@ -73,6 +79,8 @@ def main():
                     if ready(port):
                         break
                     time.sleep(0.1)
+                if not ready(port):
+                    raise SystemExit(f'{platform}启动后HTTP未就绪，保留记录供检查')
                 alive = process.poll() is None
             print(f'{platform}：进程{"运行" if alive else "未由本脚本启动"}，'
                   f'HTTP{"正常" if ready(port) else "不可达"}，http://127.0.0.1:{port}')
