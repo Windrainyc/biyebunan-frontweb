@@ -63,25 +63,38 @@ async function resumeSaved() {
     error.value = errorText(e);
   }
 }
-async function initialize() {
+type Catalog = 'conversations' | 'projects' | 'models';
+const catalogs = {
+  conversations: { rows: conversations, page: ref(0), total: ref(0), loading: ref(false) },
+  projects: { rows: projects, page: ref(0), total: ref(0), loading: ref(false) },
+  models: { rows: models, page: ref(0), total: ref(0), loading: ref(false) },
+};
+let disposed = false;
+async function loadCatalog(name: Catalog) {
+  const catalog = catalogs[name];
+  if (catalog.loading.value) return;
+  catalog.loading.value = true;
   try {
-    const [c, p, m] = await Promise.all([
-      request<Page<Row>>('/student/conversations', {
-        query: { page: 1, size: 100 },
-      }),
-      request<Page<Row>>('/student/projects', {
-        query: { page: 1, size: 100 },
-      }),
-      request<Page<Row>>('/student/models', { query: { page: 1, size: 100 } }),
-    ]);
-    conversations.value = c.items;
-    projects.value = p.items;
-    models.value = m.items;
-    model.value = String(m.items[0]?.id || '');
-    await resumeSaved();
+    const next = catalog.page.value + 1;
+    const result = await request<Page<Row>>(`/student/${name}`, {
+      query: { page: next, size: 20 },
+    });
+    if (disposed) return;
+    const seen = new Set(catalog.rows.value.map((row) => row.id));
+    catalog.rows.value.push(...result.items.filter((row) => !seen.has(row.id)));
+    catalog.page.value = next;
+    catalog.total.value = result.total;
   } catch (e) {
-    error.value = errorText(e);
+    if (!disposed) error.value = errorText(e);
+  } finally {
+    if (!disposed) catalog.loading.value = false;
   }
+}
+async function initialize() {
+  await Promise.all([loadCatalog('conversations'), loadCatalog('projects'), loadCatalog('models')]);
+  if (disposed) return;
+  model.value = String(models.value[0]?.id || '');
+  await resumeSaved();
 }
 async function history(older = false) {
   const id = conversation.value;
@@ -202,6 +215,7 @@ async function cancel() {
 }
 onMounted(initialize);
 onBeforeUnmount(() => {
+  disposed = true;
   historyGeneration++;
   controller?.abort();
 });
@@ -232,6 +246,18 @@ onBeforeUnmount(() => {
           {{ m.name }}
         </option>
       </select>
+    </div>
+    <div class="chat-controls">
+      <template v-for="(catalog, name) in catalogs" :key="name">
+        <button
+          v-if="catalog.rows.value.length < catalog.total.value"
+          class="button"
+          :disabled="busy || catalog.loading.value"
+          @click="loadCatalog(name)"
+        >
+          加载更多{{ name === 'conversations' ? '会话' : name === 'projects' ? '项目' : '模型' }}
+        </button>
+      </template>
     </div>
     <p v-if="!models.length" class="notice">当前没有可用模型，请联系平台管理员配置。</p>
     <div class="messages">

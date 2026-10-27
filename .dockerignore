@@ -7,3 +7,6 @@ playwright-report
 test-results
 *.log
 .env.local
+
+.runtime
+__pycache__

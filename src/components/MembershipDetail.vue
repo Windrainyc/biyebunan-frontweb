@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onBeforeUnmount, ref, watch } from 'vue';
 import { request, errorText } from '../api/client';
 import { writeAttempt } from '../api/attempt';
 import { display } from '../config/labels';
@@ -24,13 +24,21 @@ const attempt = writeAttempt(),
     props.mode === 'plan'
       ? `/admin/membership-plans/${props.record.id}/versions`
       : `/admin/users/${props.record.id}/memberships`;
+const loading = ref(false);
+let generation = 0;
 async function load() {
+  const current = ++generation;
+  loading.value = true;
+  error.value = '';
   try {
     const data = await request<Page<Row>>(path(), { query: { page: page.value, size: 20 } });
+    if (current !== generation) return;
     items.value = data.items;
     total.value = data.total;
   } catch (e) {
-    error.value = errorText(e);
+    if (current === generation) error.value = errorText(e);
+  } finally {
+    if (current === generation) loading.value = false;
   }
 }
 async function submit() {
@@ -74,7 +82,15 @@ async function revoke(row: Row) {
     busy.value = false;
   }
 }
-onMounted(load);
+watch(
+  () => props.record.id,
+  () => {
+    page.value = 1;
+    void load();
+  },
+  { immediate: true },
+);
+onBeforeUnmount(() => generation++);
 </script>
 <template>
   <section>
@@ -102,7 +118,7 @@ onMounted(load);
     <div class="pagination">
       <button
         class="button"
-        :disabled="page === 1"
+        :disabled="loading || busy || page === 1"
         @click="
           page--;
           load();
@@ -112,7 +128,7 @@ onMounted(load);
       ><span>第{{ page }}页 · 共{{ total }}条</span
       ><button
         class="button"
-        :disabled="page * 20 >= total"
+        :disabled="loading || busy || page * 20 >= total"
         @click="
           page++;
           load();

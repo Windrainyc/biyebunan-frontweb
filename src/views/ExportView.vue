@@ -11,17 +11,23 @@ const kind = ref('ORDERS'),
   error = ref(''),
   busy = ref(false),
   download = ref('');
+let expiry: ReturnType<typeof setTimeout> | undefined;
 let timer: ReturnType<typeof setTimeout> | undefined,
   closed = false;
 const attempt = writeAttempt();
 onBeforeUnmount(() => {
   closed = true;
   clearTimeout(timer);
+  clearTimeout(expiry);
 });
 async function poll() {
   if (closed || !job.value?.id) return;
+  clearTimeout(timer);
+  const id = job.value.id;
   try {
-    job.value = await request<Row>(`/${auth.platform}/jobs/${job.value.id}`);
+    const result = await request<Row>(`/${auth.platform}/jobs/${id}`);
+    if (closed || job.value?.id !== id) return;
+    job.value = result;
     if (['QUEUED', 'RUNNING', 'PENDING'].includes(String(job.value.state)))
       timer = setTimeout(poll, 2500);
     else busy.value = false;
@@ -49,13 +55,23 @@ async function create() {
 }
 async function getDownload() {
   try {
-    const result = await request<{ url: string }>(
+    const result = await request<{ url: string; expiresAt: string }>(
       `/${auth.platform}/jobs/${job.value?.id}/download`,
       { method: 'POST' },
     );
     const url = new URL(result.url);
     if (!['http:', 'https:'].includes(url.protocol)) throw new Error('下载地址无效');
+    const ttl = Date.parse(result.expiresAt) - Date.now();
+    if (!Number.isFinite(ttl) || ttl <= 0) throw new Error('下载授权已过期，请重新获取');
+    if (closed) return;
+    clearTimeout(expiry);
     download.value = url.toString();
+    expiry = setTimeout(
+      () => {
+        download.value = '';
+      },
+      Math.min(ttl, 2147483647),
+    );
   } catch (e) {
     error.value = errorText(e);
   }
@@ -87,9 +103,7 @@ async function getDownload() {
       <button class="button" @click="poll">刷新进度</button
       ><button v-if="job.state === 'SUCCEEDED'" class="button primary" @click="getDownload">
         获取下载链接</button
-      ><a v-if="download" :href="download" target="_blank" rel="noopener noreferrer" class="button"
-        >下载导出文件</a
-      >
+      ><a v-if="download" :href="download" rel="noopener noreferrer" class="button">下载导出文件</a>
     </section>
   </section>
 </template>

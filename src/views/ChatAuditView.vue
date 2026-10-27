@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onBeforeUnmount, ref } from 'vue';
 import { request, errorText } from '../api/client';
 import type { Row, Page } from '../types/api';
 import { display } from '../config/labels';
@@ -14,8 +14,18 @@ const reason = ref(''),
   messageTotal = ref(0),
   error = ref(''),
   busy = ref(false);
+const reading = ref(false);
+let listGeneration = 0,
+  messageGeneration = 0;
+onBeforeUnmount(() => {
+  listGeneration++;
+  messageGeneration++;
+});
 async function list() {
   if (!reason.value.trim()) return;
+  const current = ++listGeneration;
+  messageGeneration++;
+  reading.value = false;
   busy.value = true;
   error.value = '';
   selected.value = null;
@@ -24,25 +34,33 @@ async function list() {
     const data = await request<Page<Row>>('/admin/conversations', {
       query: { page: page.value, size: 20, q: query.value, reason: reason.value },
     });
+    if (current !== listGeneration) return;
     items.value = data.items;
     total.value = data.total;
   } catch (e) {
-    error.value = errorText(e);
+    if (current === listGeneration) error.value = errorText(e);
   } finally {
-    busy.value = false;
+    if (current === listGeneration) busy.value = false;
   }
 }
 async function inspect(row: Row) {
   if (!reason.value.trim()) return;
+  const current = ++messageGeneration;
   selected.value = row;
+  messages.value = [];
+  error.value = '';
+  reading.value = true;
   try {
     const data = await request<Page<Row>>(`/admin/conversations/${row.id}/messages`, {
-      query: { page: messagePage.value, size: 20, reason: reason.value },
+      query: { page: messagePage.value, size: 20, sort: 'createdAt:asc', reason: reason.value },
     });
+    if (current !== messageGeneration) return;
     messages.value = data.items;
     messageTotal.value = data.total;
   } catch (e) {
-    error.value = errorText(e);
+    if (current === messageGeneration) error.value = errorText(e);
+  } finally {
+    if (current === messageGeneration) reading.value = false;
   }
 }
 </script>
@@ -71,7 +89,7 @@ async function inspect(row: Row) {
           <p>{{ display(item.createdAt) }}</p>
           <button
             class="button"
-            :disabled="!reason.trim()"
+            :disabled="busy || !reason.trim()"
             @click="
               messagePage = 1;
               inspect(item);
@@ -83,7 +101,7 @@ async function inspect(row: Row) {
         <div class="pagination">
           <button
             class="button"
-            :disabled="page === 1"
+            :disabled="busy || page === 1"
             @click="
               page--;
               list();
@@ -93,7 +111,7 @@ async function inspect(row: Row) {
           ><span>共{{ total }}条</span
           ><button
             class="button"
-            :disabled="page * 20 >= total"
+            :disabled="busy || page * 20 >= total"
             @click="
               page++;
               list();
@@ -113,7 +131,7 @@ async function inspect(row: Row) {
         <div class="pagination">
           <button
             class="button"
-            :disabled="messagePage === 1"
+            :disabled="reading || messagePage === 1"
             @click="
               messagePage--;
               inspect(selected);
@@ -123,7 +141,7 @@ async function inspect(row: Row) {
           ><span>共{{ messageTotal }}条</span
           ><button
             class="button"
-            :disabled="messagePage * 20 >= messageTotal"
+            :disabled="reading || messagePage * 20 >= messageTotal"
             @click="
               messagePage++;
               inspect(selected);

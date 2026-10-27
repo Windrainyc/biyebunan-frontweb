@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { auth, request, errorText } from '../api/client';
 import { writeAttempt } from '../api/attempt';
 import { operation } from '../config/contract';
@@ -32,7 +32,15 @@ const modes = computed(() =>
     return op && (!op.permission || auth.permissions.includes(op.permission));
   }),
 );
+watch(
+  modes,
+  (allowed) => {
+    if (!allowed.includes(mode.value)) mode.value = allowed[0] || '';
+  },
+  { immediate: true },
+);
 async function submit() {
+  if (!modes.value.includes(mode.value)) return;
   busy.value = true;
   error.value = '';
   try {

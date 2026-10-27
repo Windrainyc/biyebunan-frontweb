@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onBeforeUnmount, ref, watch } from 'vue';
 import { auth, request, errorText } from '../api/client';
 import { writeAttempt } from '../api/attempt';
 import { display } from '../config/labels';
@@ -15,15 +15,23 @@ const comments = ref<Row[]>([]),
   error = ref(''),
   busy = ref(false);
 const attempt = writeAttempt();
+const loading = ref(false);
+let generation = 0;
 async function load() {
+  const current = ++generation;
+  loading.value = true;
+  error.value = '';
   try {
     const data = await request<Page<Row>>(`/${auth.platform}/posts/${props.post.id}/comments`, {
       query: { page: page.value, size: 20 },
     });
+    if (current !== generation) return;
     comments.value = data.items;
     total.value = data.total;
   } catch (e) {
-    error.value = errorText(e);
+    if (current === generation) error.value = errorText(e);
+  } finally {
+    if (current === generation) loading.value = false;
   }
 }
 async function send() {
@@ -68,7 +76,15 @@ async function attach(asset: Row) {
     busy.value = false;
   }
 }
-onMounted(load);
+watch(
+  () => props.post.id,
+  () => {
+    page.value = 1;
+    void load();
+  },
+  { immediate: true },
+);
+onBeforeUnmount(() => generation++);
 </script>
 <template>
   <section>
@@ -92,7 +108,7 @@ onMounted(load);
     <div class="pagination">
       <button
         class="button"
-        :disabled="page === 1"
+        :disabled="loading || busy || page === 1"
         @click="
           page--;
           load();
@@ -102,7 +118,7 @@ onMounted(load);
       ><span>第{{ page }}页 · 共{{ total }}条</span
       ><button
         class="button"
-        :disabled="page * 20 >= total"
+        :disabled="loading || busy || page * 20 >= total"
         @click="
           page++;
           load();
