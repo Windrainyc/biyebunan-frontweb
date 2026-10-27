@@ -1,0 +1,255 @@
+{
+  "verifiedAt": "2026-10-27T23:46:07.342Z",
+  "scope": "仅导航及页面标题加载，不替代业务验收",
+  "admin": [
+    {
+      "path": "/admin",
+      "heading": "欢迎回来，本地验证管理员",
+      "loadError": false
+    },
+    {
+      "path": "/admin/exports",
+      "heading": "数据导出",
+      "loadError": false
+    },
+    {
+      "path": "/admin/chat-audit",
+      "heading": "答疑会话审计",
+      "loadError": false
+    },
+    {
+      "path": "/admin/statistics",
+      "heading": "数据统计",
+      "loadError": false
+    },
+    {
+      "path": "/admin/notifications",
+      "heading": "消息通知",
+      "loadError": false
+    },
+    {
+      "path": "/admin/orders",
+      "heading": "软件订单",
+      "loadError": false
+    },
+    {
+      "path": "/admin/projects",
+      "heading": "软件项目",
+      "loadError": false
+    },
+    {
+      "path": "/admin/users",
+      "heading": "用户管理",
+      "loadError": false
+    },
+    {
+      "path": "/admin/roles",
+      "heading": "角色管理",
+      "loadError": false
+    },
+    {
+      "path": "/admin/membership-plans",
+      "heading": "会员体系",
+      "loadError": false
+    },
+    {
+      "path": "/admin/schools",
+      "heading": "院校管理",
+      "loadError": false
+    },
+    {
+      "path": "/admin/majors",
+      "heading": "专业管理",
+      "loadError": false
+    },
+    {
+      "path": "/admin/menus",
+      "heading": "菜单配置",
+      "loadError": false
+    },
+    {
+      "path": "/admin/models",
+      "heading": "大模型配置",
+      "loadError": false
+    },
+    {
+      "path": "/admin/model-prices",
+      "heading": "模型价格",
+      "loadError": false
+    },
+    {
+      "path": "/admin/model-keys",
+      "heading": "模型密钥",
+      "loadError": false
+    },
+    {
+      "path": "/admin/storage-configs",
+      "heading": "对象存储",
+      "loadError": false
+    },
+    {
+      "path": "/admin/domains",
+      "heading": "域名配置",
+      "loadError": false
+    },
+    {
+      "path": "/admin/contents",
+      "heading": "知识库内容",
+      "loadError": false
+    },
+    {
+      "path": "/admin/categories",
+      "heading": "内容分类",
+      "loadError": false
+    },
+    {
+      "path": "/admin/tags",
+      "heading": "内容标签",
+      "loadError": false
+    },
+    {
+      "path": "/admin/boards",
+      "heading": "论坛板块",
+      "loadError": false
+    },
+    {
+      "path": "/admin/posts",
+      "heading": "论坛帖子",
+      "loadError": false
+    },
+    {
+      "path": "/admin/reports",
+      "heading": "举报审核",
+      "loadError": false
+    },
+    {
+      "path": "/admin/usage",
+      "heading": "词元用量",
+      "loadError": false
+    },
+    {
+      "path": "/admin/adjudications",
+      "heading": "用量裁决",
+      "loadError": false
+    },
+    {
+      "path": "/admin/jobs",
+      "heading": "异步任务",
+      "loadError": false
+    },
+    {
+      "path": "/admin/audit-events",
+      "heading": "审计记录",
+      "loadError": false
+    },
+    {
+      "path": "/admin/notification-templates",
+      "heading": "通知模板",
+      "loadError": false
+    }
+  ],
+  "student": [
+    {
+      "path": "/student",
+      "heading": "欢迎回来，联调学生",
+      "loadError": false
+    },
+    {
+      "path": "/student/search",
+      "heading": "检索知识资料",
+      "loadError": false
+    },
+    {
+      "path": "/student/profile",
+      "heading": "我的账户",
+      "loadError": false
+    },
+    {
+      "path": "/student/bind-order",
+      "heading": "绑定软件订单",
+      "loadError": false
+    },
+    {
+      "path": "/student/statistics",
+      "heading": "数据统计",
+      "loadError": false
+    },
+    {
+      "path": "/student/notifications",
+      "heading": "消息通知",
+      "loadError": false
+    },
+    {
+      "path": "/student/chat",
+      "heading": "在线智能答疑",
+      "loadError": false
+    },
+    {
+      "path": "/student/projects",
+      "heading": "我的项目",
+      "loadError": false
+    },
+    {
+      "path": "/student/orders",
+      "heading": "我的订单",
+      "loadError": false
+    },
+    {
+      "path": "/student/knowledge",
+      "heading": "知识库",
+      "loadError": false
+    },
+    {
+      "path": "/student/posts",
+      "heading": "交流社区",
+      "loadError": false
+    },
+    {
+      "path": "/student/usage",
+      "heading": "用量账单",
+      "loadError": false
+    }
+  ],
+  "partner": [
+    {
+      "path": "/partner",
+      "heading": "欢迎回来，联调项目中介",
+      "loadError": false
+    },
+    {
+      "path": "/partner/exports",
+      "heading": "数据导出",
+      "loadError": false
+    },
+    {
+      "path": "/partner/profile",
+      "heading": "我的账户",
+      "loadError": false
+    },
+    {
+      "path": "/partner/statistics",
+      "heading": "数据统计",
+      "loadError": false
+    },
+    {
+      "path": "/partner/notifications",
+      "heading": "消息通知",
+      "loadError": false
+    },
+    {
+      "path": "/partner/orders",
+      "heading": "我的订单",
+      "loadError": false
+    },
+    {
+      "path": "/partner/students",
+      "heading": "名下学生",
+      "loadError": false
+    },
+    {
+      "path": "/partner/projects",
+      "heading": "交付进度",
+      "loadError": false
+    }
+  ]
+}

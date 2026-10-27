@@ -10,6 +10,7 @@ import type { Component } from 'vue';
 function page(loader: () => Promise<{ default: Component }>) {
   return defineAsyncComponent({ loader, errorComponent: PageLoadError, timeout: 15000 });
 }
+const DashboardView = page(() => import('./DashboardView.vue'));
 const KnowledgeSearchView = page(() => import('./KnowledgeSearchView.vue'));
 const ExportView = page(() => import('./ExportView.vue'));
 const ChatAuditView = page(() => import('./ChatAuditView.vue'));
@@ -165,23 +166,17 @@ async function exit() {
         <NotificationsView v-else-if="route.params.resource === 'notifications'" />
         <ChatView
           v-else-if="platform === 'student' && route.params.resource === 'chat'"
-        /><ResourceView v-else-if="selected" :key="selected.path" :resource="selected" /><template
+        /><ResourceView
+          v-else-if="selected"
+          :key="selected.path"
+          :resource="selected"
+        /><DashboardView
           v-else
-          ><h1>欢迎回来，{{ auth.user?.displayName }}</h1>
-          <p class="muted">选择下方功能，继续处理项目与平台事务。</p>
-          <div class="entry-grid">
-            <RouterLink
-              v-for="entry in homeEntries"
-              :key="entry.key"
-              :to="`/${platform}/${entry.key}`"
-              class="entry-card"
-              ><Icon :name="entry.icon" />
-              <h2>{{ entry.title }}</h2>
-              <p>{{ entry.subtitle }}</p>
-              <span>进入查看 →</span></RouterLink
-            >
-          </div></template
-        >
+          :entries="homeEntries"
+          :visible-paths="
+            navigation?.configured ? configuredLinks.map((m) => m.path) : [...knownPaths]
+          "
+        />
       </main>
     </div>
   </div>

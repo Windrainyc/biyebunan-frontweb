@@ -46,9 +46,23 @@ const units: Record<string, string> = {
   COUNT: '次',
   count: '次',
   tokens: '词元',
+  token: '词元',
   users: '人',
   orders: '笔',
 };
+function unit(metric: Metric) {
+  if (metric.unit.toUpperCase() === 'COUNT') {
+    return (
+      (
+        { active_students: '人', orders_created: '笔', projects_created: '个' } as Record<
+          string,
+          string
+        >
+      )[metric.metric] || '次'
+    );
+  }
+  return units[metric.unit] || metric.unit;
+}
 async function load() {
   busy.value = true;
   error.value = '';
@@ -67,7 +81,11 @@ onMounted(load);
 <template>
   <section>
     <h1>数据统计</h1>
-    <p class="muted">按北京时间自然日查询，只展示实际产生的数据。未知模型费用单独统计。</p>
+    <p class="muted">
+      按北京时间自然日查询，只展示实际产生的数据。<template v-if="auth.platform !== 'partner'"
+        >未知模型费用单独统计。</template
+      >
+    </p>
     <form class="filters" @submit.prevent="load">
       <label>开始日期<input v-model="from" type="date" required :max="to" /></label
       ><label>结束日期<input v-model="to" type="date" required :min="from" /></label
@@ -81,7 +99,7 @@ onMounted(load);
       <article v-for="item in data?.items" :key="item.metric + item.bucket">
         <span>{{ names[item.metric] || '业务指标' }}</span
         ><strong
-          >{{ item.value }}<small>{{ units[item.unit] || item.unit }}</small></strong
+          >{{ item.value }}<small>{{ unit(item) }}</small></strong
         >
         <p>{{ item.bucket }}</p>
       </article>
