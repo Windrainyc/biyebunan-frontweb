@@ -44,6 +44,7 @@ async function load() {
 async function submit() {
   busy.value = true;
   error.value = '';
+  notice.value = '';
   try {
     const time = new Date(date.value).toISOString();
     const body =
@@ -55,7 +56,8 @@ async function submit() {
             effectiveFrom: time,
           }
         : { planId: plan.value, startsAt: time, reason: reason.value };
-    await request(path(), { method: 'POST', body, key: attempt(body) });
+    const version = props.mode === 'plan' ? props.record.version : undefined;
+    await request(path(), { method: 'POST', body, version, key: attempt({ body, version }) });
     notice.value = props.mode === 'plan' ? '权益版本已新增，历史版本保持不变' : '会员已授予';
     await load();
     emit('changed');

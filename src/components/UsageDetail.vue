@@ -43,6 +43,7 @@ async function submit() {
   if (!modes.value.includes(mode.value)) return;
   busy.value = true;
   error.value = '';
+  notice.value = '';
   try {
     const body =
       mode.value === 'reconcile'

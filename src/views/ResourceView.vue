@@ -119,6 +119,13 @@ async function load() {
     if (generation === loadGeneration) loading.value = false;
   }
 }
+async function refreshUsage() {
+  const runId = detail.value?.runId;
+  await load();
+  if (!runId || detail.value?.runId !== runId) return;
+  const refreshed = rows.value.find((row) => row.runId === runId);
+  if (refreshed) detail.value = refreshed;
+}
 function search() {
   page.value = 1;
   void load();
@@ -430,7 +437,7 @@ onMounted(() => {
         <UsageDetail
           v-if="resource.key === 'usage'"
           :usage="detail"
-          @changed="load()"
+          @changed="refreshUsage"
         /><OrderDetail
           v-if="resource.key === 'orders'"
           :order="detail"
@@ -449,6 +456,10 @@ onMounted(() => {
           v-if="auth.platform === 'admin' && ['users', 'membership-plans'].includes(resource.key)"
           :record="detail"
           :mode="resource.key === 'users' ? 'user' : 'plan'"
+          @changed="
+            inspect(detail);
+            load();
+          "
         /><ForumDetail
           v-if="resource.key === 'posts'"
           :post="detail"
