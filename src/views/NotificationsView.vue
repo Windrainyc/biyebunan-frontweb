@@ -1,0 +1,109 @@
+<script setup lang="ts">
+import { onMounted, ref } from 'vue';
+import { auth, request, errorText } from '../api/client';
+import type { Page } from '../types/api';
+import { display } from '../config/labels';
+interface Notification {
+  id: string;
+  title: string;
+  body: string;
+  read: boolean;
+  createdAt: string;
+}
+const items = ref<Notification[]>([]),
+  page = ref(1),
+  total = ref(0),
+  error = ref(''),
+  busy = ref(false);
+async function load() {
+  busy.value = true;
+  try {
+    const data = await request<Page<Notification>>(`/${auth.platform}/notifications`, {
+      query: { page: page.value, size: 20 },
+    });
+    items.value = data.items;
+    total.value = data.total;
+  } catch (e) {
+    error.value = errorText(e);
+  } finally {
+    busy.value = false;
+  }
+}
+async function read(item: Notification) {
+  try {
+    await request(`/${auth.platform}/notifications/${item.id}/read`, { method: 'POST' });
+    item.read = true;
+  } catch (e) {
+    error.value = errorText(e);
+  }
+}
+onMounted(load);
+</script>
+<template>
+  <section>
+    <h1>消息通知</h1>
+    <p class="muted">查看与你相关的项目与服务消息。</p>
+    <p v-if="error" role="alert" class="error">{{ error }}</p>
+    <article v-for="item in items" :key="item.id" class="notification">
+      <div>
+        <h2>{{ item.title }}</h2>
+        <span>{{ display(item.createdAt) }}</span>
+      </div>
+      <p>{{ item.body }}</p>
+      <button v-if="!item.read" class="button" @click="read(item)">标记已读</button
+      ><span v-else class="muted">已读</span>
+    </article>
+    <p v-if="!items.length" class="empty">{{ busy ? '加载中…' : '暂无消息通知' }}</p>
+    <div class="pagination">
+      <span>共{{ total }}条</span
+      ><button
+        class="button"
+        :disabled="page === 1 || busy"
+        @click="
+          page--;
+          load();
+        "
+      >
+        上一页</button
+      ><span>第{{ page }}页</span
+      ><button
+        class="button"
+        :disabled="page * 20 >= total || busy"
+        @click="
+          page++;
+          load();
+        "
+      >
+        下一页
+      </button>
+    </div>
+  </section>
+</template>
+<style scoped>
+.notification {
+  background: white;
+  border: 1px solid #e2e6ef;
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 16px;
+}
+.notification > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+}
+.notification h2 {
+  font-size: 18px;
+  margin: 0;
+}
+.notification span {
+  font-size: 12px;
+  color: #748096;
+}
+.notification p {
+  font-size: 14px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+</style>
