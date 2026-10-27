@@ -7,7 +7,7 @@ import { formBody } from '../config/form';
 import { label, display } from '../config/labels';
 import type { Row } from '../types/api';
 const props = defineProps<{ resourceKey: string; record: Row }>(),
-  emit = defineEmits<{ changed: [] }>();
+  emit = defineEmits<{ changed: [result: Row] }>();
 const selected = ref(''),
   values = ref<Record<string, string>>({}),
   error = ref(''),
@@ -26,6 +26,7 @@ const definitions: Record<string, { path: string; title: string }[]> = {
   ],
   jobs: [{ path: 'jobs/{id}/retry', title: '恢复失败任务' }],
   reports: [{ path: 'reports/{id}/decision', title: '处理举报' }],
+  comments: [{ path: 'comments/{id}/moderation', title: '管理评论' }],
   adjudications: [{ path: 'adjudications/{id}/decision', title: '复核用量裁决' }],
 };
 definitions.contents = [
@@ -88,7 +89,12 @@ const actions = computed(() =>
 );
 const bodySchema = computed(() => schema(operation('POST', selected.value)?.body));
 const fields = computed(() =>
-  Object.entries(bodySchema.value.properties || {}).map(([key, v]) => ({ key, ...schema(v) })),
+  Object.entries(bodySchema.value.properties || {}).map(([key, v]) => {
+    const field = { key, ...schema(v) };
+    if (props.resourceKey === 'comments' && key === 'action')
+      field.enum = field.enum?.filter((value) => ['APPROVE', 'HIDE'].includes(String(value)));
+    return field;
+  }),
 );
 function open(path: string) {
   selected.value = path;
@@ -114,7 +120,7 @@ async function submit() {
     notice.value = asynchronous
       ? `任务已提交，当前状态：${display(result?.state || 'QUEUED')}。请到异步任务页面查看执行结果。`
       : '操作已完成';
-    emit('changed');
+    emit('changed', result);
   } catch (e) {
     error.value = errorText(e);
   } finally {

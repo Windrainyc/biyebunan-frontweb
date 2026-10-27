@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onBeforeUnmount, ref } from 'vue';
 import { request, errorText } from '../api/client';
 import type { Page, Row } from '../types/api';
 import KnowledgeDetail from '../components/KnowledgeDetail.vue';
@@ -13,7 +13,16 @@ const query = ref(''),
   error = ref(''),
   busy = ref(false),
   searched = ref(false);
+let searchGeneration = 0,
+  detailGeneration = 0;
+onBeforeUnmount(() => {
+  searchGeneration++;
+  detailGeneration++;
+});
 async function search() {
+  const current = ++searchGeneration;
+  detailGeneration++;
+  detail.value = null;
   busy.value = true;
   error.value = '';
   try {
@@ -26,20 +35,24 @@ async function search() {
         size: 20,
       },
     });
+    if (current !== searchGeneration) return;
     items.value = data.items;
     total.value = data.total;
     searched.value = true;
   } catch (e) {
-    error.value = errorText(e);
+    if (current === searchGeneration) error.value = errorText(e);
   } finally {
-    busy.value = false;
+    if (current === searchGeneration) busy.value = false;
   }
 }
 async function open(hit: Row) {
+  const current = ++detailGeneration;
+  error.value = '';
   try {
-    detail.value = await request<Row>(`/student/knowledge/${hit.contentId}`);
+    const result = await request<Row>(`/student/knowledge/${hit.contentId}`);
+    if (current === detailGeneration) detail.value = result;
   } catch (e) {
-    error.value = errorText(e);
+    if (current === detailGeneration) error.value = errorText(e);
   }
 }
 </script>

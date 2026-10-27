@@ -5,15 +5,20 @@ import { auth, logout, errorText } from '../api/client';
 import { resources, platformNames } from '../config/resources';
 import { loadNavigation, navigationLinks, type Menu } from '../api/navigation';
 import { operation } from '../config/contract';
-const KnowledgeSearchView = defineAsyncComponent(() => import('./KnowledgeSearchView.vue'));
-const ExportView = defineAsyncComponent(() => import('./ExportView.vue'));
-const ChatAuditView = defineAsyncComponent(() => import('./ChatAuditView.vue'));
-const ProfileView = defineAsyncComponent(() => import('./ProfileView.vue'));
-const OrderBindingView = defineAsyncComponent(() => import('./OrderBindingView.vue'));
-const NotificationsView = defineAsyncComponent(() => import('./NotificationsView.vue'));
-const StatisticsView = defineAsyncComponent(() => import('./StatisticsView.vue'));
-const ChatView = defineAsyncComponent(() => import('./ChatView.vue'));
-const ResourceView = defineAsyncComponent(() => import('./ResourceView.vue'));
+import PageLoadError from '../components/PageLoadError.vue';
+import type { Component } from 'vue';
+function page(loader: () => Promise<{ default: Component }>) {
+  return defineAsyncComponent({ loader, errorComponent: PageLoadError, timeout: 15000 });
+}
+const KnowledgeSearchView = page(() => import('./KnowledgeSearchView.vue'));
+const ExportView = page(() => import('./ExportView.vue'));
+const ChatAuditView = page(() => import('./ChatAuditView.vue'));
+const ProfileView = page(() => import('./ProfileView.vue'));
+const OrderBindingView = page(() => import('./OrderBindingView.vue'));
+const NotificationsView = page(() => import('./NotificationsView.vue'));
+const StatisticsView = page(() => import('./StatisticsView.vue'));
+const ChatView = page(() => import('./ChatView.vue'));
+const ResourceView = page(() => import('./ResourceView.vue'));
 import Icon from '../components/Icon.vue';
 import type { Platform } from '../types/api';
 const route = useRoute(),

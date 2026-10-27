@@ -37,6 +37,13 @@ const editing = ref<Row | null>(null),
   writeKey = ref(''),
   detail = ref<Row | null>(null),
   remove = ref<Row | null>(null);
+const detailFields = computed(() => {
+  const excluded = ['id', 'version'];
+  if (props.resource.key === 'projects' && auth.platform === 'partner') excluded.push('milestones');
+  return Object.fromEntries(
+    Object.entries(detail.value || {}).filter(([key]) => !excluded.includes(key)),
+  );
+});
 const extraFilters = ref<Record<string, unknown>>({});
 let loadGeneration = 0;
 const listOp = computed(() => operation('GET', props.resource.path));
@@ -158,6 +165,14 @@ async function save() {
   } finally {
     saving.value = false;
   }
+}
+async function actionChanged(result: Row) {
+  const current = detail.value;
+  if (!current) return;
+  // 举报等资源没有详情GET，直接使用同一资源的服务端新快照，避免显示旧状态/旧CAS版本。
+  if (result?.id === current.id) detail.value = result;
+  else await inspect(current);
+  await load();
 }
 async function inspect(row: Row) {
   try {
@@ -386,15 +401,28 @@ onMounted(() => {
       >
         <h2>{{ resource.title }}详情</h2>
         <dl class="detail-grid">
-          <template
-            v-for="(value, key) in Object.fromEntries(
-              Object.entries(detail).filter(([k]) => !['id', 'version'].includes(k)),
-            )"
-            :key="key"
+          <template v-for="(value, key) in detailFields" :key="key"
             ><dt>{{ label(key) }}</dt>
             <dd><ReferenceName :field="key" :value="value" /></dd
           ></template>
         </dl>
+        <section v-if="resource.key === 'projects' && auth.platform === 'partner'">
+          <h3>项目里程碑</h3>
+          <p v-if="!Array.isArray(detail.milestones) || !detail.milestones.length" class="muted">
+            暂无里程碑
+          </p>
+          <article
+            v-for="milestone in (detail.milestones as Row[]) || []"
+            :key="String(milestone.id)"
+            class="card"
+          >
+            <h4>{{ milestone.name }}</h4>
+            <p>
+              计划日期：{{ display(milestone.dueDate) }} · 权重：{{ milestone.weight }}% ·
+              {{ milestone.completed ? '已完成' : '未完成' }}
+            </p>
+          </article>
+        </section>
         <InvitationDetail
           v-if="auth.platform === 'admin' && resource.key === 'users'"
           :user="detail"
@@ -431,10 +459,7 @@ onMounted(() => {
         /><RecordActions
           :resource-key="resource.key"
           :record="detail"
-          @changed="
-            inspect(detail);
-            load();
-          "
+          @changed="actionChanged"
         /><ProjectDetail
           v-if="resource.key === 'projects' && auth.platform !== 'partner'"
           :project="detail"

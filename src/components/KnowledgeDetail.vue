@@ -73,6 +73,7 @@ async function attach(asset: Row) {
 async function download(asset: unknown, play = false) {
   const current = ++downloadGeneration;
   downloadUrl.value = '';
+  video.value = '';
   clearTimeout(downloadTimer);
   try {
     const grant = await request<{ url: string; expiresAt: string }>(
@@ -89,20 +90,24 @@ async function download(asset: unknown, play = false) {
     if (!Number.isFinite(remaining) || remaining <= 0)
       throw new Error('文件授权已过期，请重新获取');
     if (play) video.value = url.toString();
-    else {
-      downloadUrl.value = url.toString();
-      downloadTimer = setTimeout(() => {
-        downloadUrl.value = '';
-      }, remaining);
-    }
+    else downloadUrl.value = url.toString();
+    downloadTimer = setTimeout(() => {
+      downloadUrl.value = '';
+      video.value = '';
+    }, remaining);
   } catch (e) {
-    error.value = errorText(e);
+    if (current === downloadGeneration) error.value = errorText(e);
   }
 }
 watch(
   () => [props.content.id, props.content.version],
   () => {
     page.value = 1;
+    downloadGeneration++;
+    clearTimeout(downloadTimer);
+    downloadUrl.value = '';
+    video.value = '';
+    items.value = [];
     load();
   },
   { immediate: true },
