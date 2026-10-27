@@ -16,7 +16,7 @@ const ForumDetail = defineAsyncComponent(() => import('../components/ForumDetail
 import RecordActions from '../components/RecordActions.vue';
 const ProjectDetail = defineAsyncComponent(() => import('../components/ProjectDetail.vue'));
 import StatusBadge from '../components/StatusBadge.vue';
-import { formBody } from '../config/form';
+import { formBody, requiresSelection } from '../config/form';
 import SchemaField from '../components/SchemaField.vue';
 let attempt = writeAttempt();
 const props = defineProps<{ resource: Resource }>();
@@ -51,7 +51,11 @@ const extraFields = computed(() =>
 const statusOptions = computed(() => {
   const pageSchema = schema(listOp.value?.response);
   const rowSchema = schema(schema(pageSchema.properties?.items).items);
-  return schema(rowSchema.properties?.status || rowSchema.properties?.state).enum || [];
+  return (
+    schema(
+      rowSchema.properties?.status || rowSchema.properties?.state || rowSchema.properties?.stage,
+    ).enum || []
+  );
 });
 const sorts = computed(
   () => (listOp.value?.parameters.find((p) => p.name === 'sort')?.schema.enum as string[]) || [],
@@ -199,7 +203,7 @@ onMounted(() => {
         <p class="muted">{{ resource.subtitle }}</p>
       </div>
       <button v-if="canCreate" class="button primary" @click="open()">
-        新增{{ resource.title.replace('管理', '') }}
+        {{ resource.key === 'posts' ? '发布帖子' : '新增' + resource.title.replace('管理', '') }}
       </button>
     </div>
     <p v-if="notice" role="status" class="notice">{{ notice }}</p>
@@ -336,15 +340,20 @@ onMounted(() => {
         aria-labelledby="form-title"
         @submit.prevent="save"
       >
-        <h2 id="form-title">{{ editing ? '编辑' : '新增' }}{{ resource.title }}</h2>
+        <h2 id="form-title">
+          {{
+            resource.key === 'posts'
+              ? editing
+                ? '编辑帖子'
+                : '发布帖子'
+              : (editing ? '编辑' : '新增') + resource.title
+          }}
+        </h2>
         <div class="form-grid">
           <div v-for="field in properties" :key="field.key" class="form-field">
             <span>{{ label(field.key) }}</span
             ><span
-              v-if="
-                fields.required?.includes(field.key) &&
-                !(Array.isArray(field.type) && field.type.includes('null'))
-              "
+              v-if="requiresSelection(field, fields.required?.includes(field.key))"
               class="danger"
             >
               *</span
@@ -377,10 +386,14 @@ onMounted(() => {
       >
         <h2>{{ resource.title }}详情</h2>
         <dl class="detail-grid">
-          <template v-for="(value, key) in detail" :key="key"
+          <template
+            v-for="(value, key) in Object.fromEntries(
+              Object.entries(detail).filter(([k]) => !['id', 'version'].includes(k)),
+            )"
+            :key="key"
             ><dt>{{ label(key) }}</dt>
-            <dd>{{ display(value) }}</dd></template
-          >
+            <dd><ReferenceName :field="key" :value="value" /></dd
+          ></template>
         </dl>
         <InvitationDetail
           v-if="auth.platform === 'admin' && resource.key === 'users'"

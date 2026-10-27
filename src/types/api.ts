@@ -44,6 +44,8 @@ export interface Schema {
   description?: string;
   minimum?: number;
   maximum?: number;
+  minItems?: number;
+  maxItems?: number;
   minLength?: number;
   maxLength?: number;
   pattern?: string;

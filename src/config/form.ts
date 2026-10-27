@@ -26,3 +26,9 @@ export function formBody(fields: Schema, values: Record<string, unknown>): Recor
   }
   return result;
 }
+
+/** OpenAPI required约束字段存在；数组是否至少选一项由minItems决定。 */
+export function requiresSelection(field: Schema, required = false): boolean {
+  if (!required || (Array.isArray(field.type) && field.type.includes('null'))) return false;
+  return field.type !== 'array' || (field.minItems ?? 0) > 0;
+}

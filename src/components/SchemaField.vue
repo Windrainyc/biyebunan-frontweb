@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Schema } from '../types/api';
+import { requiresSelection } from '../config/form';
 import { label, display } from '../config/labels';
 import ReferenceField from './ReferenceField.vue';
 const props = defineProps<{
@@ -14,7 +15,7 @@ function input(event: Event) {
   emit('update:modelValue', (event.target as HTMLInputElement).value);
 }
 function required() {
-  return props.required && !(Array.isArray(props.field.type) && props.field.type.includes('null'));
+  return requiresSelection(props.field, props.required);
 }
 function localTime(value: unknown) {
   if (!value) return '';
@@ -25,8 +26,11 @@ function localTime(value: unknown) {
 }
 </script>
 <template>
+  <p v-if="field.key === 'assetIds'" class="muted">
+    保存后可在详情中上传并关联附件，已有附件将保留。
+  </p>
   <ReferenceField
-    v-if="field.format === 'uuid' || field.type === 'array'"
+    v-else-if="field.format === 'uuid' || field.type === 'array'"
     :model-value="modelValue"
     :field="field.key"
     :context="context"

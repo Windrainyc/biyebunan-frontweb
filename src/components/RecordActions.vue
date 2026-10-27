@@ -25,7 +25,7 @@ const definitions: Record<string, { path: string; title: string }[]> = {
     { path: 'posts/{id}/reports', title: '举报帖子' },
   ],
   jobs: [{ path: 'jobs/{id}/retry', title: '恢复失败任务' }],
-  reports: [{ path: 'reports/{id}/resolve', title: '处理举报' }],
+  reports: [{ path: 'reports/{id}/decision', title: '处理举报' }],
   adjudications: [{ path: 'adjudications/{id}/decision', title: '复核用量裁决' }],
 };
 definitions.contents = [
@@ -57,11 +57,19 @@ for (const [key, path] of Object.entries(statusPaths)) {
     { path: `${path}/{id}/status`, title: '启停记录' },
   ];
 }
+for (const [key, path] of Object.entries({
+  models: 'models',
+  'storage-configs': 'storages',
+  domains: 'domains',
+})) {
+  definitions[key].push({ path: `${path}/{id}/test`, title: '验证连接配置' });
+}
 definitions['model-keys'].push({ path: 'model-keys/{id}/rotate', title: '更换模型密钥' });
 const actions = computed(() =>
   (definitions[props.resourceKey] || [])
     .map((d) => ({ ...d, path: `/${auth.platform}/${d.path}` }))
     .filter((d) => {
+      if (d.path.endsWith('/acceptance') && props.record.stage !== 'ACCEPTANCE') return false;
       const o = operation('POST', d.path);
       return o && (!o.permission || auth.permissions.includes(o.permission));
     }),
@@ -81,7 +89,8 @@ async function submit() {
   error.value = '';
   try {
     const body = formBody(bodySchema.value, values.value);
-    await request(selected.value.replace('{id}', String(props.record.id)), {
+    const asynchronous = /\/(test|reindex|retry)$/.test(selected.value);
+    const result = await request<Row>(selected.value.replace('{id}', String(props.record.id)), {
       method: 'POST',
       body,
       version: operation('POST', selected.value)?.parameters.some((p) => p.name === 'If-Match')
@@ -90,7 +99,9 @@ async function submit() {
       key: attempt(body),
     });
     selected.value = '';
-    notice.value = '操作已完成';
+    notice.value = asynchronous
+      ? `任务已提交，当前状态：${display(result?.state || 'QUEUED')}。请到异步任务页面查看执行结果。`
+      : '操作已完成';
     emit('changed');
   } catch (e) {
     error.value = errorText(e);
