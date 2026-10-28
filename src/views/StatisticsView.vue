@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { auth, request, errorText } from '../api/client';
 import { display } from '../config/labels';
 interface Metric {
@@ -65,17 +65,24 @@ function unit(metric: Metric) {
   }
   return units[metric.unit] || metric.unit;
 }
+let generation = 0;
+onBeforeUnmount(() => {
+  generation++;
+});
 async function load() {
+  const current = ++generation;
   busy.value = true;
+  data.value = null;
   error.value = '';
   try {
-    data.value = await request<Statistics>(`/${auth.platform}/statistics`, {
+    const result = await request<Statistics>(`/${auth.platform}/statistics`, {
       query: { from: from.value, to: to.value },
     });
+    if (current === generation) data.value = result;
   } catch (e) {
-    error.value = errorText(e);
+    if (current === generation) error.value = errorText(e);
   } finally {
-    busy.value = false;
+    if (current === generation) busy.value = false;
   }
 }
 onMounted(load);
@@ -94,6 +101,7 @@ onMounted(load);
       ><button class="button primary" :disabled="busy">查询统计</button>
     </form>
     <p v-if="error" class="error" role="alert">{{ error }}</p>
+    <p v-if="busy" class="muted">正在查询统计…</p>
     <p v-if="data" class="muted">
       生成时间：{{ display(data.generatedAt) }} · 数据延迟{{ data.lagSeconds }}秒
     </p>

@@ -25,6 +25,10 @@ async function search() {
   detail.value = null;
   busy.value = true;
   error.value = '';
+  // 新查询和权限重查尚未成功，旧命中不能冒充当前结果。
+  items.value = [];
+  total.value = 0;
+  searched.value = false;
   try {
     const data = await request<Page<Row>>('/student/knowledge-search', {
       query: {
@@ -87,6 +91,7 @@ async function open(hit: Row) {
       语义检索需要平台配置嵌入模型；服务不可用时会明确提示，不会伪装为语义结果。
     </p>
     <p v-if="error" class="error" role="alert">{{ error }}</p>
+    <p v-if="busy" class="muted">正在检索…</p>
     <article
       v-for="item in items"
       :key="String(item.contentId) + String(item.versionId)"

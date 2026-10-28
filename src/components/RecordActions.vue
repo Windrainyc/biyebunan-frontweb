@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 import { auth, request, errorText } from '../api/client';
 import { writeAttempt } from '../api/attempt';
 import { operation, schema } from '../config/contract';
+import { jobRecovery } from '../config/job-recovery';
 import { formBody } from '../config/form';
 import { label, display } from '../config/labels';
 import type { Row } from '../types/api';
@@ -66,11 +67,15 @@ for (const [key, path] of Object.entries({
   definitions[key].push({ path: `${path}/{id}/test`, title: '验证连接配置' });
 }
 definitions['model-keys'].push({ path: 'model-keys/{id}/rotate', title: '更换模型密钥' });
+const recovery = computed(() =>
+  jobRecovery(String(props.record.kind || ''), String(props.record.state || '')),
+);
 const actions = computed(() =>
   (definitions[props.resourceKey] || [])
     .map((d) => ({ ...d, path: `/${auth.platform}/${d.path}` }))
     .filter((d) => {
       // 举报结论只能从OPEN产生；终态不再提供重复处理入口，服务端仍执行CAS与状态校验。
+      if (props.resourceKey === 'jobs' && !recovery.value.retry) return false;
       if (props.resourceKey === 'reports' && props.record.state !== 'OPEN') return false;
       if (props.resourceKey === 'adjudications' && props.record.state !== 'PENDING') return false;
       if (d.path.endsWith('/acceptance') && props.record.stage !== 'ACCEPTANCE') return false;
@@ -132,8 +137,9 @@ async function submit() {
 }
 </script>
 <template>
-  <section v-if="actions.length" class="record-actions">
+  <section v-if="actions.length || resourceKey === 'jobs'" class="record-actions">
     <h3>业务操作</h3>
+    <p v-if="resourceKey === 'jobs'" class="muted">{{ recovery.message }}</p>
     <div class="action-buttons">
       <button
         v-for="action in actions"

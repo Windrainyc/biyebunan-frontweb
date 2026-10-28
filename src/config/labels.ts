@@ -307,6 +307,8 @@ export const values: Record<string, string> = {
   KNOWLEDGE_INDEX: '知识索引',
   BILLING_RECONCILIATION: '账务核对',
   EXPORT_ORDERS: '订单导出',
+  EXPORT_PROJECTS: '项目导出',
+  PROVIDER_RECONCILIATION_UNAVAILABLE: '尚无可用原调用证据（PROVIDER_RECONCILIATION_UNAVAILABLE）',
   EXPORT_USAGE: '用量导出',
   EXPORT_AUDIT: '审计导出',
   PROBE_MODEL: '模型探测',
