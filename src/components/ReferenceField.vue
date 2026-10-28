@@ -74,9 +74,12 @@ function choose(id: string) {
 let generation = 0;
 async function load() {
   const current = ++generation;
+  rows.value = [];
+  total.value = 0;
+  error.value = '';
+  busy.value = false;
   if (!supported.value) return;
   busy.value = true;
-  error.value = '';
   try {
     const result = await request<Page<Row>>(path.value, {
       query: {
@@ -143,7 +146,9 @@ watch(
             :checked="selected.includes(value(row))"
             @change="choose(value(row))"
           />{{ title(row) }}</label
-        ><span v-if="!rows.length">{{ busy ? '加载中…' : '暂无可选数据' }}</span>
+        ><span v-if="!rows.length">{{
+          busy ? '加载中…' : error ? '查询失败，请重新搜索' : '暂无可选数据'
+        }}</span>
       </div>
       <div class="reference-foot">
         <span>已选 {{ selected.length }} 项</span>
