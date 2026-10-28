@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { termsConfiguration } from '../config/terms';
 import { writeAttempt } from '../api/attempt';
 import { computed, onBeforeUnmount, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -24,8 +25,12 @@ const phone = ref(''),
   sending = ref(false),
   remaining = ref(0),
   accepted = ref(false);
-const termsUrl = import.meta.env.VITE_TERMS_URL as string | undefined,
-  termsVersion = import.meta.env.VITE_TERMS_VERSION as string | undefined;
+const terms = termsConfiguration(
+  import.meta.env.VITE_TERMS_URL,
+  import.meta.env.VITE_TERMS_VERSION,
+);
+const termsUrl = terms?.url,
+  termsVersion = terms?.version;
 const needsTerms = computed(
   () => mode.value === 'register' || (mode.value === 'activate' && platform.value === 'partner'),
 );
@@ -154,7 +159,7 @@ async function submit() {
       <RouterLink :to="`/${platform}/login`">← 返回登录</RouterLink>
       <h1>{{ title }}</h1>
       <p v-if="needsTerms && !termsUrl" class="notice">
-        平台尚未配置服务协议地址，暂不能完成注册激活。
+        平台尚未配置有效的服务协议地址和版本，暂不能完成注册激活。
       </p>
       <label v-if="mode === 'activate'"
         >邀请凭据<input v-model="token" type="password" required autocomplete="off" /></label

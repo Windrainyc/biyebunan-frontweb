@@ -5,6 +5,11 @@ COPY package.json package-lock.json .npmrc ./
 RUN npm ci
 COPY . .
 ARG PLATFORM=student
+# 服务协议为公开配置；必须由运营方提供实际地址和版本，空值保持注册关闭。
+ARG VITE_TERMS_URL=
+ARG VITE_TERMS_VERSION=
+ENV VITE_TERMS_URL=$VITE_TERMS_URL
+ENV VITE_TERMS_VERSION=$VITE_TERMS_VERSION
 RUN case "$PLATFORM" in student|admin|partner) ;; *) exit 1 ;; esac \
     && npm run build -- --mode "$PLATFORM"
 

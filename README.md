@@ -55,3 +55,5 @@ python3 scripts/stackctl.py stop
 停止时只终止记录且身份一致的进程、停止zhixiang-ui容器，不清空卷、不停止中间件。日志在.runtime/stack和后端受保护目录。当前组合使用前端容器与宿主API/worker；独立API/worker镜像另经启动验证，不等于已实现跨主机高可用。
 
 本机视频联调可使用 `python3 scripts/stackctl.py start --fixtures --video`；`--video` 要求已安装 FFmpeg/ffprobe，显式启用隔离 worker 转码，默认关闭。该模式不启用 ASR/OCR。
+
+注册与中介激活需要运营方确认的真实服务协议地址和版本。容器构建从环境变量 `VITE_TERMS_URL`、`VITE_TERMS_VERSION` 读取，修改后执行 `docker --context colima-zhixiang compose -p zhixiang-ui -f deploy/compose.yaml build` 并 `up -d`。地址要求HTTPS（仅本机联调允许localhost HTTP），不允许嵌入凭据；两个值缺失或不合法时按钮保持禁用。版本须与后端接受的版本一致。这里不提供虚构协议，也不会自动替用户勾选同意。
