@@ -12,6 +12,7 @@ beforeEach(() => {
   auth.platform = 'student';
   vi.stubGlobal('document', { cookie: 'zx_student_csrf=isolated-test' });
   vi.stubGlobal('fetch', vi.fn());
+  vi.stubGlobal('navigator', {});
 });
 afterEach(() => vi.unstubAllGlobals());
 describe('会话与幂等保护', () => {
@@ -61,5 +62,48 @@ describe('会话与幂等保护', () => {
       raw('/student/posts', { method: 'POST', body: { title: '测试' } }),
     ).rejects.toThrow();
     expect(fetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('同源多标签刷新协调', () => {
+  it('等到跨标签锁后读取最新CSRF Cookie', async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const lock = vi.fn(async (_name: string, action: () => Promise<boolean>) => {
+      await gate;
+      return action();
+    });
+    vi.stubGlobal('navigator', { locks: { request: lock } });
+    vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify(session)));
+    const pending = refresh();
+    expect(fetch).not.toHaveBeenCalled();
+    vi.stubGlobal('document', { cookie: 'zx_student_csrf=rotated-by-another-tab' });
+    release();
+    expect(await pending).toBe(true);
+    expect(lock.mock.calls[0]?.[0]).toBe('zx:refresh:student');
+    expect(
+      (vi.mocked(fetch).mock.calls[0]?.[1]?.headers as Record<string, string>)['X-CSRF-Token'],
+    ).toBe('rotated-by-another-tab');
+  });
+  it('等待跨标签锁时退出，不再发送刷新请求', async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    vi.stubGlobal('navigator', {
+      locks: {
+        request: async (_name: string, action: () => Promise<boolean>) => {
+          await gate;
+          return action();
+        },
+      },
+    });
+    const pending = refresh();
+    forget();
+    release();
+    expect(await pending).toBe(false);
+    expect(fetch).not.toHaveBeenCalled();
   });
 });

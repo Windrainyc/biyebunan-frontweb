@@ -72,7 +72,9 @@ export function forget() {
 export async function refresh(platform = auth.platform): Promise<boolean> {
   const started = epoch;
   if (refreshing?.platform === platform && refreshing.epoch === started) return refreshing.promise;
-  const promise = (async () => {
+  const perform = async () => {
+    // 等待其他标签页期间可能已退出；获取锁后再读取已轮换的CSRF Cookie。
+    if (epoch !== started || auth.platform !== platform) return false;
     const csrf = csrfCookie(platform);
     if (!csrf) return false;
     try {
@@ -90,7 +92,12 @@ export async function refresh(platform = auth.platform): Promise<boolean> {
     } catch {
       return false;
     }
-  })();
+  };
+  // Web Locks在同源标签间串行化一次性刷新；不广播访问令牌或扩大Cookie范围。
+  const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;
+  const promise: Promise<boolean> = Promise.resolve(
+    locks ? locks.request(`zx:refresh:${platform}`, perform) : perform(),
+  );
   refreshing = { platform, epoch: started, promise };
   try {
     return await promise;
