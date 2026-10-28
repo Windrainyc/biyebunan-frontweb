@@ -1,5 +1,5 @@
 {
-  "version": "1.0.30",
+  "version": "1.0.31",
   "schemas": {
     "SchoolWrite": {
       "type": "object",
@@ -3324,6 +3324,8 @@
                   "model_settled_amount",
                   "model_adjustment_amount",
                   "model_settled_tokens",
+                  "model_correction_tokens",
+                  "model_correction_amount",
                   "model_unresolved_runs",
                   "active_students"
                 ]

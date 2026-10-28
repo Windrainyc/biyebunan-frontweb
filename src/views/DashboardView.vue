@@ -69,13 +69,17 @@ const cards = computed(() => [
   { key: 'delivery_publications', title: '近7日交付发布', icon: 'file', unit: '次' },
   ...(auth.platform === 'partner'
     ? []
-    : [{ key: 'model_settled_tokens', title: '近7日已结算词元', icon: 'cpu', unit: '词元' }]),
+    : [{ key: 'model_settled_tokens', title: '近7日净入账词元', icon: 'cpu', unit: '词元' }]),
 ]);
 function total(key: string) {
   return metrics.value === null
     ? '—'
     : metrics.value
-        .filter((m) => m.metric === key)
+        .filter(
+          (m) =>
+            m.metric === key ||
+            (key === 'model_settled_tokens' && m.metric === 'model_correction_tokens'),
+        )
         .reduce((sum, m) => sum + BigInt(m.value), 0n)
         .toLocaleString('zh-CN');
 }

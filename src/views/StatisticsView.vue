@@ -36,6 +36,8 @@ const names: Record<string, string> = {
   delivery_publications: '交付发布次数',
   model_settled_amount: '模型结算金额',
   model_adjustment_amount: '模型调整金额',
+  model_correction_tokens: '原调用词元更正',
+  model_correction_amount: '原调用金额更正',
   model_settled_tokens: '已结算词元',
   model_unresolved_runs: '待核对模型调用',
   active_students: '活跃学生',

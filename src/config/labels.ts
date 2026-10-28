@@ -338,6 +338,8 @@ Object.assign(values, {
   delivery_publications: '交付发布次数',
   model_adjustment_amount: '人工调整金额',
   model_settled_amount: '已结算金额',
+  model_correction_tokens: '原调用词元更正',
+  model_correction_amount: '原调用金额更正',
   model_settled_tokens: '已结算词元',
   model_unresolved_runs: '未决答疑次数',
   orders_created: '新增订单',
