@@ -1,5 +1,5 @@
 {
-  "version": "1.0.26",
+  "version": "1.0.28",
   "schemas": {
     "SchoolWrite": {
       "type": "object",
@@ -3981,6 +3981,11 @@
           "type": "string",
           "description": "",
           "format": "uri"
+        },
+        "instance": {
+          "type": "string",
+          "format": "uri-reference",
+          "description": "可选请求路径，不包含查询参数；安全过滤器拒绝可省略。"
         },
         "title": {
           "type": "string",
@@ -15197,11 +15202,12 @@
         {
           "name": "q",
           "in": "query",
-          "required": false,
-          "description": "",
+          "required": true,
+          "description": "检索词必须包含非空白字符；缺失或空白返回400 INVALID_FILTER。",
           "schema": {
             "type": "string",
-            "description": "",
+            "minLength": 1,
+            "pattern": "\\S",
             "maxLength": 100
           }
         },
@@ -15209,11 +15215,10 @@
           "name": "status",
           "in": "query",
           "required": false,
-          "description": "状态取值遵循返回资源定义；未知状态 400",
+          "description": "仅允许PUBLISHED；省略时仍仅检索已发布内容。",
           "schema": {
             "type": "string",
-            "description": "",
-            "maxLength": 200
+            "enum": ["PUBLISHED"]
           }
         },
         {
