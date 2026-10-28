@@ -29,6 +29,7 @@ const rows = ref<Row[]>([]),
   status = ref(''),
   sort = ref('createdAt:desc'),
   loading = ref(false),
+  listFailed = ref(false),
   error = ref(''),
   saving = ref(false),
   notice = ref('');
@@ -99,6 +100,10 @@ const properties = computed(() =>
 async function load() {
   const generation = ++loadGeneration;
   loading.value = true;
+  listFailed.value = false;
+  // 查询条件或页码已改变，旧行不能继续冒充本次查询结果。
+  rows.value = [];
+  total.value = 0;
   error.value = '';
   try {
     const query: Record<string, unknown> = {};
@@ -121,7 +126,10 @@ async function load() {
     rows.value = Array.isArray(data) ? data : data.items;
     total.value = Array.isArray(data) ? data.length : data.total;
   } catch (e) {
-    if (generation === loadGeneration) error.value = errorText(e);
+    if (generation === loadGeneration) {
+      listFailed.value = true;
+      error.value = errorText(e);
+    }
   } finally {
     if (generation === loadGeneration) loading.value = false;
   }
@@ -326,14 +334,20 @@ onMounted(() => {
             </tr>
             <tr v-if="!rows.length">
               <td :colspan="resource.columns.length + 1" class="empty">
-                {{ loading ? '正在读取数据…' : '暂无符合条件的数据' }}
+                {{
+                  loading
+                    ? '正在读取数据…'
+                    : listFailed
+                      ? '读取失败，请重新查询'
+                      : '暂无符合条件的数据'
+                }}
               </td>
             </tr>
           </tbody>
         </table>
       </div>
       <div class="pagination">
-        <span>共 {{ total }} 条</span
+        <span>{{ loading ? '正在查询…' : listFailed ? '总数暂不可用' : `共 ${total} 条` }}</span
         ><select v-model.number="size" aria-label="每页条数" @change="search">
           <option :value="10">每页10条</option>
           <option :value="20">每页20条</option>
