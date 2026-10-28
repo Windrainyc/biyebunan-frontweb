@@ -22,18 +22,10 @@
         },
         "status": {
           "type": "string",
-          "enum": [
-            "ENABLED",
-            "DISABLED"
-          ]
+          "enum": ["ENABLED", "DISABLED"]
         }
       },
-      "required": [
-        "name",
-        "code",
-        "region",
-        "status"
-      ]
+      "required": ["name", "code", "region", "status"]
     },
     "School": {
       "type": "object",
@@ -75,22 +67,10 @@
         },
         "status": {
           "type": "string",
-          "enum": [
-            "ENABLED",
-            "DISABLED"
-          ]
+          "enum": ["ENABLED", "DISABLED"]
         }
       },
-      "required": [
-        "id",
-        "version",
-        "createdAt",
-        "updatedAt",
-        "name",
-        "code",
-        "region",
-        "status"
-      ]
+      "required": ["id", "version", "createdAt", "updatedAt", "name", "code", "region", "status"]
     },
     "MajorWrite": {
       "type": "object",
@@ -113,27 +93,14 @@
         },
         "level": {
           "type": "string",
-          "enum": [
-            "COLLEGE",
-            "BACHELOR",
-            "MASTER"
-          ]
+          "enum": ["COLLEGE", "BACHELOR", "MASTER"]
         },
         "status": {
           "type": "string",
-          "enum": [
-            "ENABLED",
-            "DISABLED"
-          ]
+          "enum": ["ENABLED", "DISABLED"]
         }
       },
-      "required": [
-        "name",
-        "code",
-        "schoolId",
-        "level",
-        "status"
-      ]
+      "required": ["name", "code", "schoolId", "level", "status"]
     },
     "Major": {
       "type": "object",
@@ -175,18 +142,11 @@
         },
         "level": {
           "type": "string",
-          "enum": [
-            "COLLEGE",
-            "BACHELOR",
-            "MASTER"
-          ]
+          "enum": ["COLLEGE", "BACHELOR", "MASTER"]
         },
         "status": {
           "type": "string",
-          "enum": [
-            "ENABLED",
-            "DISABLED"
-          ]
+          "enum": ["ENABLED", "DISABLED"]
         }
       },
       "required": [
@@ -217,19 +177,11 @@
         },
         "platform": {
           "type": "string",
-          "enum": [
-            "student",
-            "partner",
-            "admin"
-          ]
+          "enum": ["student", "partner", "admin"]
         },
         "dataScope": {
           "type": "string",
-          "enum": [
-            "SELF",
-            "OWNED",
-            "ALL"
-          ]
+          "enum": ["SELF", "OWNED", "ALL"]
         },
         "permissionCodes": {
           "type": "array",
@@ -241,20 +193,10 @@
         },
         "status": {
           "type": "string",
-          "enum": [
-            "ENABLED",
-            "DISABLED"
-          ]
+          "enum": ["ENABLED", "DISABLED"]
         }
       },
-      "required": [
-        "name",
-        "code",
-        "platform",
-        "dataScope",
-        "permissionCodes",
-        "status"
-      ]
+      "required": ["name", "code", "platform", "dataScope", "permissionCodes", "status"]
     },
     "Role": {
       "type": "object",
@@ -291,19 +233,11 @@
         },
         "platform": {
           "type": "string",
-          "enum": [
-            "student",
-            "partner",
-            "admin"
-          ]
+          "enum": ["student", "partner", "admin"]
         },
         "dataScope": {
           "type": "string",
-          "enum": [
-            "SELF",
-            "OWNED",
-            "ALL"
-          ]
+          "enum": ["SELF", "OWNED", "ALL"]
         },
         "permissionCodes": {
           "type": "array",
@@ -315,10 +249,7 @@
         },
         "status": {
           "type": "string",
-          "enum": [
-            "ENABLED",
-            "DISABLED"
-          ]
+          "enum": ["ENABLED", "DISABLED"]
         }
       },
       "required": [
@@ -365,10 +296,7 @@
         },
         "status": {
           "type": "string",
-          "enum": [
-            "ENABLED",
-            "DISABLED"
-          ]
+          "enum": ["ENABLED", "DISABLED"]
         }
       },
       "required": [
@@ -430,10 +358,7 @@
         },
         "status": {
           "type": "string",
-          "enum": [
-            "ENABLED",
-            "DISABLED"
-          ]
+          "enum": ["ENABLED", "DISABLED"]
         }
       },
       "required": [
@@ -465,17 +390,10 @@
         },
         "platform": {
           "type": "string",
-          "enum": [
-            "student",
-            "partner",
-            "admin"
-          ]
+          "enum": ["student", "partner", "admin"]
         },
         "parentId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "uuid"
         },
         "path": {
@@ -496,10 +414,7 @@
         },
         "status": {
           "type": "string",
-          "enum": [
-            "ENABLED",
-            "DISABLED"
-          ]
+          "enum": ["ENABLED", "DISABLED"]
         }
       },
       "required": [
@@ -548,17 +463,10 @@
         },
         "platform": {
           "type": "string",
-          "enum": [
-            "student",
-            "partner",
-            "admin"
-          ]
+          "enum": ["student", "partner", "admin"]
         },
         "parentId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "uuid"
         },
         "path": {
@@ -579,10 +487,7 @@
         },
         "status": {
           "type": "string",
-          "enum": [
-            "ENABLED",
-            "DISABLED"
-          ]
+          "enum": ["ENABLED", "DISABLED"]
         }
       },
       "required": [
@@ -639,10 +544,7 @@
         },
         "status": {
           "type": "string",
-          "enum": [
-            "ENABLED",
-            "DISABLED"
-          ]
+          "enum": ["ENABLED", "DISABLED"]
         }
       },
       "required": [
@@ -714,10 +616,7 @@
         },
         "status": {
           "type": "string",
-          "enum": [
-            "ENABLED",
-            "DISABLED"
-          ]
+          "enum": ["ENABLED", "DISABLED"]
         }
       },
       "required": [
@@ -746,9 +645,7 @@
         },
         "currency": {
           "type": "string",
-          "enum": [
-            "CNY"
-          ]
+          "enum": ["CNY"]
         },
         "inputPerMillion": {
           "type": "string",
@@ -772,10 +669,7 @@
         },
         "status": {
           "type": "string",
-          "enum": [
-            "ENABLED",
-            "DISABLED"
-          ]
+          "enum": ["ENABLED", "DISABLED"]
         }
       },
       "required": [
@@ -819,9 +713,7 @@
         },
         "currency": {
           "type": "string",
-          "enum": [
-            "CNY"
-          ]
+          "enum": ["CNY"]
         },
         "inputPerMillion": {
           "type": "string",
@@ -845,10 +737,7 @@
         },
         "status": {
           "type": "string",
-          "enum": [
-            "ENABLED",
-            "DISABLED"
-          ]
+          "enum": ["ENABLED", "DISABLED"]
         }
       },
       "required": [
@@ -877,10 +766,7 @@
         },
         "provider": {
           "type": "string",
-          "enum": [
-            "ALIYUN_OSS",
-            "S3_COMPATIBLE"
-          ]
+          "enum": ["ALIYUN_OSS", "S3_COMPATIBLE"]
         },
         "bucket": {
           "type": "string",
@@ -906,16 +792,11 @@
         },
         "access": {
           "type": "string",
-          "enum": [
-            "PRIVATE"
-          ]
+          "enum": ["PRIVATE"]
         },
         "status": {
           "type": "string",
-          "enum": [
-            "ENABLED",
-            "DISABLED"
-          ]
+          "enum": ["ENABLED", "DISABLED"]
         }
       },
       "required": [
@@ -960,10 +841,7 @@
         },
         "provider": {
           "type": "string",
-          "enum": [
-            "ALIYUN_OSS",
-            "S3_COMPATIBLE"
-          ]
+          "enum": ["ALIYUN_OSS", "S3_COMPATIBLE"]
         },
         "bucket": {
           "type": "string",
@@ -989,16 +867,11 @@
         },
         "access": {
           "type": "string",
-          "enum": [
-            "PRIVATE"
-          ]
+          "enum": ["PRIVATE"]
         },
         "status": {
           "type": "string",
-          "enum": [
-            "ENABLED",
-            "DISABLED"
-          ]
+          "enum": ["ENABLED", "DISABLED"]
         }
       },
       "required": [
@@ -1033,12 +906,7 @@
         },
         "platform": {
           "type": "string",
-          "enum": [
-            "student",
-            "partner",
-            "admin",
-            "assets"
-          ]
+          "enum": ["student", "partner", "admin", "assets"]
         },
         "certificateRef": {
           "type": "string",
@@ -1047,19 +915,10 @@
         },
         "status": {
           "type": "string",
-          "enum": [
-            "ENABLED",
-            "DISABLED"
-          ]
+          "enum": ["ENABLED", "DISABLED"]
         }
       },
-      "required": [
-        "name",
-        "hostname",
-        "platform",
-        "certificateRef",
-        "status"
-      ],
+      "required": ["name", "hostname", "platform", "certificateRef", "status"],
       "description": "域名配置元数据，不自动设置 DNS/TLS。域名规范化为小写；更换域名、平台、证书及删除前先停用。"
     },
     "Domain": {
@@ -1097,12 +956,7 @@
         },
         "platform": {
           "type": "string",
-          "enum": [
-            "student",
-            "partner",
-            "admin",
-            "assets"
-          ]
+          "enum": ["student", "partner", "admin", "assets"]
         },
         "certificateRef": {
           "type": "string",
@@ -1111,10 +965,7 @@
         },
         "status": {
           "type": "string",
-          "enum": [
-            "ENABLED",
-            "DISABLED"
-          ]
+          "enum": ["ENABLED", "DISABLED"]
         }
       },
       "required": [
@@ -1145,10 +996,7 @@
           "maxLength": 200
         },
         "parentId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "uuid"
         },
         "sortOrder": {
@@ -1158,19 +1006,10 @@
         },
         "status": {
           "type": "string",
-          "enum": [
-            "ENABLED",
-            "DISABLED"
-          ]
+          "enum": ["ENABLED", "DISABLED"]
         }
       },
-      "required": [
-        "name",
-        "code",
-        "parentId",
-        "sortOrder",
-        "status"
-      ]
+      "required": ["name", "code", "parentId", "sortOrder", "status"]
     },
     "Category": {
       "type": "object",
@@ -1206,10 +1045,7 @@
           "maxLength": 200
         },
         "parentId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "uuid"
         },
         "sortOrder": {
@@ -1219,10 +1055,7 @@
         },
         "status": {
           "type": "string",
-          "enum": [
-            "ENABLED",
-            "DISABLED"
-          ]
+          "enum": ["ENABLED", "DISABLED"]
         }
       },
       "required": [
@@ -1253,17 +1086,10 @@
         },
         "status": {
           "type": "string",
-          "enum": [
-            "ENABLED",
-            "DISABLED"
-          ]
+          "enum": ["ENABLED", "DISABLED"]
         }
       },
-      "required": [
-        "name",
-        "code",
-        "status"
-      ]
+      "required": ["name", "code", "status"]
     },
     "Tag": {
       "type": "object",
@@ -1300,21 +1126,10 @@
         },
         "status": {
           "type": "string",
-          "enum": [
-            "ENABLED",
-            "DISABLED"
-          ]
+          "enum": ["ENABLED", "DISABLED"]
         }
       },
-      "required": [
-        "id",
-        "version",
-        "createdAt",
-        "updatedAt",
-        "name",
-        "code",
-        "status"
-      ]
+      "required": ["id", "version", "createdAt", "updatedAt", "name", "code", "status"]
     },
     "ForumBoardWrite": {
       "type": "object",
@@ -1340,19 +1155,10 @@
         },
         "status": {
           "type": "string",
-          "enum": [
-            "ENABLED",
-            "DISABLED"
-          ]
+          "enum": ["ENABLED", "DISABLED"]
         }
       },
-      "required": [
-        "name",
-        "code",
-        "requiresReview",
-        "sortOrder",
-        "status"
-      ]
+      "required": ["name", "code", "requiresReview", "sortOrder", "status"]
     },
     "ForumBoard": {
       "type": "object",
@@ -1397,10 +1203,7 @@
         },
         "status": {
           "type": "string",
-          "enum": [
-            "ENABLED",
-            "DISABLED"
-          ]
+          "enum": ["ENABLED", "DISABLED"]
         }
       },
       "required": [
@@ -1431,10 +1234,7 @@
         },
         "channel": {
           "type": "string",
-          "enum": [
-            "SMS",
-            "IN_APP"
-          ]
+          "enum": ["SMS", "IN_APP"]
         },
         "providerTemplateId": {
           "type": "string",
@@ -1443,19 +1243,10 @@
         },
         "status": {
           "type": "string",
-          "enum": [
-            "ENABLED",
-            "DISABLED"
-          ]
+          "enum": ["ENABLED", "DISABLED"]
         }
       },
-      "required": [
-        "name",
-        "code",
-        "channel",
-        "providerTemplateId",
-        "status"
-      ]
+      "required": ["name", "code", "channel", "providerTemplateId", "status"]
     },
     "NotificationTemplate": {
       "type": "object",
@@ -1492,10 +1283,7 @@
         },
         "channel": {
           "type": "string",
-          "enum": [
-            "SMS",
-            "IN_APP"
-          ]
+          "enum": ["SMS", "IN_APP"]
         },
         "providerTemplateId": {
           "type": "string",
@@ -1504,10 +1292,7 @@
         },
         "status": {
           "type": "string",
-          "enum": [
-            "ENABLED",
-            "DISABLED"
-          ]
+          "enum": ["ENABLED", "DISABLED"]
         }
       },
       "required": [
@@ -1557,31 +1342,18 @@
         },
         "platform": {
           "type": "string",
-          "enum": [
-            "student",
-            "partner",
-            "admin"
-          ]
+          "enum": ["student", "partner", "admin"]
         },
         "status": {
           "type": "string",
-          "enum": [
-            "ENABLED",
-            "DISABLED"
-          ]
+          "enum": ["ENABLED", "DISABLED"]
         },
         "schoolId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "uuid"
         },
         "majorId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "uuid"
         },
         "roleIds": {
@@ -1627,10 +1399,7 @@
           "maxLength": 200
         },
         "schoolName": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "学生个人资料院校名，尚未设置时为null"
         },
         "activeOrderCount": {
@@ -1639,13 +1408,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "id",
-        "displayName",
-        "phoneMasked",
-        "schoolName",
-        "activeOrderCount"
-      ]
+      "required": ["id", "displayName", "phoneMasked", "schoolName", "activeOrderCount"]
     },
     "UserProfileWrite": {
       "type": "object",
@@ -1667,11 +1430,7 @@
           "format": "uuid"
         }
       },
-      "required": [
-        "displayName",
-        "schoolId",
-        "majorId"
-      ]
+      "required": ["displayName", "schoolId", "majorId"]
     },
     "UserAdminWrite": {
       "type": "object",
@@ -1702,10 +1461,7 @@
         },
         "status": {
           "type": "string",
-          "enum": [
-            "ENABLED",
-            "DISABLED"
-          ]
+          "enum": ["ENABLED", "DISABLED"]
         },
         "reason": {
           "type": "string",
@@ -1713,12 +1469,7 @@
           "maxLength": 200
         }
       },
-      "required": [
-        "displayName",
-        "roleIds",
-        "status",
-        "reason"
-      ]
+      "required": ["displayName", "roleIds", "status", "reason"]
     },
     "UserCreate": {
       "type": "object",
@@ -1736,11 +1487,7 @@
         },
         "platform": {
           "type": "string",
-          "enum": [
-            "student",
-            "partner",
-            "admin"
-          ]
+          "enum": ["student", "partner", "admin"]
         },
         "roleIds": {
           "type": "array",
@@ -1751,12 +1498,7 @@
           }
         }
       },
-      "required": [
-        "phone",
-        "displayName",
-        "platform",
-        "roleIds"
-      ],
+      "required": ["phone", "displayName", "platform", "roleIds"],
       "description": "管理员分配待激活账户；学生通过手机证明自助注册。创建不会启用账户，随后签发邀请。"
     },
     "OrderWrite": {
@@ -1779,10 +1521,7 @@
           "pattern": "^1\\d{10}$"
         },
         "partnerId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "uuid"
         },
         "amount": {
@@ -1792,9 +1531,7 @@
         },
         "currency": {
           "type": "string",
-          "enum": [
-            "CNY"
-          ]
+          "enum": ["CNY"]
         },
         "packageCode": {
           "type": "string",
@@ -1803,11 +1540,7 @@
         },
         "source": {
           "type": "string",
-          "enum": [
-            "MANUAL",
-            "IMPORT",
-            "PARTNER"
-          ],
+          "enum": ["MANUAL", "IMPORT", "PARTNER"],
           "description": "管理员创建仅MANUAL/IMPORT；编辑需保持已有来源，含中介创建的PARTNER。"
         },
         "schoolId": {
@@ -1869,17 +1602,11 @@
           "maxLength": 200
         },
         "studentId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "uuid"
         },
         "partnerId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "uuid"
         },
         "amount": {
@@ -1889,20 +1616,11 @@
         },
         "currency": {
           "type": "string",
-          "enum": [
-            "CNY"
-          ]
+          "enum": ["CNY"]
         },
         "status": {
           "type": "string",
-          "enum": [
-            "DRAFT",
-            "CONFIRMED",
-            "ACTIVE",
-            "COMPLETED",
-            "CANCELLED",
-            "ARCHIVED"
-          ]
+          "enum": ["DRAFT", "CONFIRMED", "ACTIVE", "COMPLETED", "CANCELLED", "ARCHIVED"]
         },
         "cancellationFinancialReviewRequired": {
           "type": "boolean",
@@ -1910,10 +1628,7 @@
         },
         "receiptStatus": {
           "type": "string",
-          "enum": [
-            "UNCONFIRMED",
-            "CONFIRMED"
-          ]
+          "enum": ["UNCONFIRMED", "CONFIRMED"]
         },
         "packageCode": {
           "type": "string",
@@ -1930,11 +1645,7 @@
         },
         "source": {
           "type": "string",
-          "enum": [
-            "MANUAL",
-            "IMPORT",
-            "PARTNER"
-          ]
+          "enum": ["MANUAL", "IMPORT", "PARTNER"]
         },
         "note": {
           "type": "string",
@@ -1997,14 +1708,7 @@
           "maxLength": 200
         }
       },
-      "required": [
-        "title",
-        "studentPhone",
-        "schoolId",
-        "majorId",
-        "packageCode",
-        "note"
-      ],
+      "required": ["title", "studentPhone", "schoolId", "majorId", "packageCode", "note"],
       "description": "服务端生成订单号和当前中介归属，创建金额0的待报价草稿。不能指定学生ID或其他中介。"
     },
     "PartnerOrderUpdate": {
@@ -2027,11 +1731,7 @@
           "maxLength": 200
         }
       },
-      "required": [
-        "schoolId",
-        "majorId",
-        "note"
-      ]
+      "required": ["schoolId", "majorId", "note"]
     },
     "ProjectWrite": {
       "type": "object",
@@ -2058,12 +1758,7 @@
           "format": "date"
         }
       },
-      "required": [
-        "orderId",
-        "title",
-        "requirements",
-        "deliveryDate"
-      ],
+      "required": ["orderId", "title", "requirements", "deliveryDate"],
       "description": "一个CONFIRMED/ACTIVE订单最多一个项目，订单不可转移；交付日期不可早于已有里程碑。"
     },
     "Project": {
@@ -2177,14 +1872,7 @@
           }
         }
       },
-      "required": [
-        "id",
-        "title",
-        "stage",
-        "progress",
-        "deliveryDate",
-        "milestones"
-      ]
+      "required": ["id", "title", "stage", "progress", "deliveryDate", "milestones"]
     },
     "MilestoneWrite": {
       "type": "object",
@@ -2209,12 +1897,7 @@
           "type": "boolean"
         }
       },
-      "required": [
-        "name",
-        "dueDate",
-        "weight",
-        "completed"
-      ],
+      "required": ["name", "dueDate", "weight", "completed"],
       "description": "同项目权重总和最多100，完成权重之和为进度；所有写入锁定父项目并递增项目版本。日期不晚于项目交付日，DONE项目不可修改。"
     },
     "Milestone": {
@@ -2302,11 +1985,7 @@
           "maxLength": 200
         }
       },
-      "required": [
-        "kind",
-        "assetId",
-        "note"
-      ]
+      "required": ["kind", "assetId", "note"]
     },
     "DeliveryVersion": {
       "type": "object",
@@ -2363,12 +2042,7 @@
         },
         "state": {
           "type": "string",
-          "enum": [
-            "READY",
-            "PUBLISHED",
-            "SUPERSEDED",
-            "WITHDRAWN"
-          ]
+          "enum": ["READY", "PUBLISHED", "SUPERSEDED", "WITHDRAWN"]
         }
       },
       "required": [
@@ -2409,17 +2083,10 @@
         },
         "type": {
           "type": "string",
-          "enum": [
-            "VIDEO",
-            "DOCUMENT",
-            "MARKDOWN"
-          ]
+          "enum": ["VIDEO", "DOCUMENT", "MARKDOWN"]
         },
         "assetId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "uuid"
         },
         "markdown": {
@@ -2429,27 +2096,14 @@
         },
         "audience": {
           "type": "string",
-          "enum": [
-            "PUBLIC",
-            "MEMBER",
-            "PROJECT"
-          ]
+          "enum": ["PUBLIC", "MEMBER", "PROJECT"]
         },
         "projectId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "uuid"
         }
       },
-      "required": [
-        "title",
-        "categoryId",
-        "tagIds",
-        "type",
-        "audience"
-      ]
+      "required": ["title", "categoryId", "tagIds", "type", "audience"]
     },
     "Content": {
       "type": "object",
@@ -2494,17 +2148,10 @@
         },
         "type": {
           "type": "string",
-          "enum": [
-            "VIDEO",
-            "DOCUMENT",
-            "MARKDOWN"
-          ]
+          "enum": ["VIDEO", "DOCUMENT", "MARKDOWN"]
         },
         "assetId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "uuid"
         },
         "markdown": {
@@ -2514,43 +2161,23 @@
         },
         "audience": {
           "type": "string",
-          "enum": [
-            "PUBLIC",
-            "MEMBER",
-            "PROJECT"
-          ]
+          "enum": ["PUBLIC", "MEMBER", "PROJECT"]
         },
         "projectId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "uuid"
         },
         "state": {
           "type": "string",
-          "enum": [
-            "DRAFT",
-            "REVIEW",
-            "PUBLISHED",
-            "WITHDRAWN"
-          ]
+          "enum": ["DRAFT", "REVIEW", "PUBLISHED", "WITHDRAWN"]
         },
         "publishedVersionId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "uuid"
         },
         "indexState": {
           "type": "string",
-          "enum": [
-            "PENDING",
-            "INDEXING",
-            "READY",
-            "FAILED"
-          ]
+          "enum": ["PENDING", "INDEXING", "READY", "FAILED"]
         }
       },
       "required": [
@@ -2574,10 +2201,7 @@
       "properties": {
         "sourceType": {
           "type": "string",
-          "enum": [
-            "KNOWLEDGE",
-            "DELIVERY"
-          ]
+          "enum": ["KNOWLEDGE", "DELIVERY"]
         },
         "versionId": {
           "type": "string",
@@ -2600,13 +2224,7 @@
           "maxLength": 2000
         }
       },
-      "required": [
-        "sourceType",
-        "versionId",
-        "chunkId",
-        "page",
-        "quote"
-      ]
+      "required": ["sourceType", "versionId", "chunkId", "page", "quote"]
     },
     "SearchHit": {
       "type": "object",
@@ -2642,14 +2260,7 @@
           }
         }
       },
-      "required": [
-        "contentId",
-        "versionId",
-        "title",
-        "snippet",
-        "score",
-        "citations"
-      ]
+      "required": ["contentId", "versionId", "title", "snippet", "score", "citations"]
     },
     "ConversationWrite": {
       "type": "object",
@@ -2666,10 +2277,7 @@
           "maxLength": 200
         }
       },
-      "required": [
-        "projectId",
-        "title"
-      ]
+      "required": ["projectId", "title"]
     },
     "Conversation": {
       "type": "object",
@@ -2710,15 +2318,7 @@
           "format": "uuid"
         }
       },
-      "required": [
-        "id",
-        "version",
-        "createdAt",
-        "updatedAt",
-        "projectId",
-        "title",
-        "studentId"
-      ]
+      "required": ["id", "version", "createdAt", "updatedAt", "projectId", "title", "studentId"]
     },
     "Message": {
       "type": "object",
@@ -2735,18 +2335,12 @@
           "format": "uuid"
         },
         "runId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "uuid"
         },
         "role": {
           "type": "string",
-          "enum": [
-            "USER",
-            "ASSISTANT"
-          ]
+          "enum": ["USER", "ASSISTANT"]
         },
         "text": {
           "type": "string",
@@ -2766,15 +2360,7 @@
           "format": "date-time"
         }
       },
-      "required": [
-        "id",
-        "conversationId",
-        "runId",
-        "role",
-        "text",
-        "citations",
-        "createdAt"
-      ]
+      "required": ["id", "conversationId", "runId", "role", "text", "citations", "createdAt"]
     },
     "RunCreate": {
       "type": "object",
@@ -2857,23 +2443,11 @@
         },
         "state": {
           "type": "string",
-          "enum": [
-            "CREATED",
-            "RESERVED",
-            "RUNNING",
-            "SUCCEEDED",
-            "FAILED",
-            "CANCELLED"
-          ]
+          "enum": ["CREATED", "RESERVED", "RUNNING", "SUCCEEDED", "FAILED", "CANCELLED"]
         },
         "billingState": {
           "type": "string",
-          "enum": [
-            "RESERVED",
-            "SETTLED",
-            "RELEASED",
-            "RECONCILING"
-          ]
+          "enum": ["RESERVED", "SETTLED", "RELEASED", "RECONCILING"]
         },
         "modelId": {
           "type": "string",
@@ -2886,10 +2460,7 @@
           "maximum": 9223372036854775807
         },
         "errorCode": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         }
       },
       "required": [
@@ -2911,11 +2482,7 @@
       "properties": {
         "evidenceSource": {
           "type": "string",
-          "enum": [
-            "ORIGINAL_CALL",
-            "MANUAL_ADJUDICATION",
-            "UNCONFIRMED"
-          ]
+          "enum": ["ORIGINAL_CALL", "MANUAL_ADJUDICATION", "UNCONFIRMED"]
         },
         "id": {
           "type": "string",
@@ -2928,34 +2495,22 @@
           "format": "uuid"
         },
         "inputTokens": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "description": "未确认实际用量时为null，不以0推断无消耗"
         },
         "outputTokens": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "description": "未确认实际用量时为null，不以0推断无消耗"
         },
         "cachedTokens": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "description": "未确认实际用量时为null，不以0推断无消耗"
         },
         "amount": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "实际人民币金额十进制字符串；未知为null，确定释放为0",
           "pattern": "^[0-9]{1,14}(\\.[0-9]{1,6})?$"
         },
@@ -2965,18 +2520,13 @@
           "pattern": "^-?[0-9]{1,14}(\\.[0-9]{1,6})?$"
         },
         "netAmount": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "原始金额加人工调整净额，未知时为null",
           "pattern": "^[0-9]{1,14}(\\.[0-9]{1,6})?$"
         },
         "currency": {
           "type": "string",
-          "enum": [
-            "CNY"
-          ]
+          "enum": ["CNY"]
         },
         "priceVersionId": {
           "type": "string",
@@ -2985,12 +2535,7 @@
         },
         "state": {
           "type": "string",
-          "enum": [
-            "RESERVED",
-            "SETTLED",
-            "RELEASED",
-            "RECONCILING"
-          ]
+          "enum": ["RESERVED", "SETTLED", "RELEASED", "RECONCILING"]
         },
         "createdAt": {
           "type": "string",
@@ -3039,9 +2584,7 @@
         },
         "currency": {
           "type": "string",
-          "enum": [
-            "CNY"
-          ]
+          "enum": ["CNY"]
         },
         "periodEnd": {
           "type": "string",
@@ -3100,13 +2643,7 @@
           }
         }
       },
-      "required": [
-        "boardId",
-        "title",
-        "body",
-        "tagIds",
-        "assetIds"
-      ],
+      "required": ["boardId", "title", "body", "tagIds", "assetIds"],
       "description": "先以空assetIds创建帖子，再向本人可编辑帖子上传FORUM文件，校验扫描READY后通过更新帖子关联附件。最多20个同帖附件，发布时复核；隐藏、停用和撤下关联后拒绝新的学生下载授权。"
     },
     "Post": {
@@ -3175,12 +2712,7 @@
         },
         "state": {
           "type": "string",
-          "enum": [
-            "PENDING",
-            "PUBLISHED",
-            "HIDDEN",
-            "LOCKED"
-          ]
+          "enum": ["PENDING", "PUBLISHED", "HIDDEN", "LOCKED"]
         },
         "pinned": {
           "type": "boolean"
@@ -3212,17 +2744,11 @@
           "maxLength": 5000
         },
         "parentId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "uuid"
         }
       },
-      "required": [
-        "body",
-        "parentId"
-      ],
+      "required": ["body", "parentId"],
       "description": "parentId为空表示主评论；非空必须是本帖可见主评论，仅支持一层回复。"
     },
     "Comment": {
@@ -3255,10 +2781,7 @@
           "maxLength": 5000
         },
         "parentId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "uuid"
         },
         "postId": {
@@ -3273,10 +2796,7 @@
         },
         "state": {
           "type": "string",
-          "enum": [
-            "PUBLISHED",
-            "HIDDEN"
-          ]
+          "enum": ["PUBLISHED", "HIDDEN"]
         }
       },
       "required": [
@@ -3331,11 +2851,7 @@
         },
         "state": {
           "type": "string",
-          "enum": [
-            "OPEN",
-            "RESOLVED",
-            "DISMISSED"
-          ]
+          "enum": ["OPEN", "RESOLVED", "DISMISSED"]
         }
       },
       "required": [
@@ -3389,10 +2905,7 @@
         },
         "status": {
           "type": "string",
-          "enum": [
-            "ENABLED",
-            "DISABLED"
-          ]
+          "enum": ["ENABLED", "DISABLED"]
         },
         "rotatedAt": {
           "type": "string",
@@ -3435,11 +2948,7 @@
           "writeOnly": true
         }
       },
-      "required": [
-        "name",
-        "modelId",
-        "secretValue"
-      ],
+      "required": ["name", "modelId", "secretValue"],
       "description": "创建为 DISABLED。密钥 AES-GCM 加密，响应仅脱敏元数据。"
     },
     "SecretRotate": {
@@ -3459,10 +2968,7 @@
           "maxLength": 200
         }
       },
-      "required": [
-        "secretValue",
-        "reason"
-      ],
+      "required": ["secretValue", "reason"],
       "description": "轮换使用 If-Match 和幂等键，更新引用并清除旧密文，审计原因不得含旧或新密钥。"
     },
     "Asset": {
@@ -3510,12 +3016,7 @@
         },
         "state": {
           "type": "string",
-          "enum": [
-            "UPLOADING",
-            "QUARANTINED",
-            "READY",
-            "REJECTED"
-          ]
+          "enum": ["UPLOADING", "QUARANTINED", "READY", "REJECTED"]
         },
         "storageId": {
           "type": "string",
@@ -3543,12 +3044,7 @@
       "properties": {
         "ownerType": {
           "type": "string",
-          "enum": [
-            "PROJECT",
-            "KNOWLEDGE",
-            "FORUM",
-            "RECEIPT"
-          ]
+          "enum": ["PROJECT", "KNOWLEDGE", "FORUM", "RECEIPT"]
         },
         "ownerId": {
           "type": "string",
@@ -3576,14 +3072,7 @@
           "maxLength": 200
         }
       },
-      "required": [
-        "ownerType",
-        "ownerId",
-        "filename",
-        "size",
-        "sha256",
-        "mimeType"
-      ]
+      "required": ["ownerType", "ownerId", "filename", "size", "sha256", "mimeType"]
     },
     "UploadGrant": {
       "type": "object",
@@ -3606,10 +3095,7 @@
         },
         "method": {
           "type": "string",
-          "enum": [
-            "PUT",
-            "POST"
-          ]
+          "enum": ["PUT", "POST"]
         },
         "headers": {
           "type": "object",
@@ -3659,10 +3145,7 @@
           "format": "date-time"
         }
       },
-      "required": [
-        "url",
-        "expiresAt"
-      ]
+      "required": ["url", "expiresAt"]
     },
     "Job": {
       "type": "object",
@@ -3694,13 +3177,7 @@
         },
         "state": {
           "type": "string",
-          "enum": [
-            "QUEUED",
-            "RUNNING",
-            "SUCCEEDED",
-            "FAILED",
-            "DEAD"
-          ]
+          "enum": ["QUEUED", "RUNNING", "SUCCEEDED", "FAILED", "DEAD"]
         },
         "progress": {
           "type": "integer",
@@ -3708,17 +3185,11 @@
           "maximum": 9223372036854775807
         },
         "resultAssetId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "uuid"
         },
         "errorCode": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         }
       },
       "required": [
@@ -3758,17 +3229,11 @@
           "maxLength": 200
         },
         "reason": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "不存在时为null，不伪造历史记录"
         },
         "traceId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "不存在时为null，不伪造历史记录"
         },
         "createdAt": {
@@ -3852,22 +3317,11 @@
                 "maxLength": 200
               }
             },
-            "required": [
-              "metric",
-              "value",
-              "unit",
-              "bucket"
-            ]
+            "required": ["metric", "value", "unit", "bucket"]
           }
         }
       },
-      "required": [
-        "from",
-        "to",
-        "generatedAt",
-        "lagSeconds",
-        "items"
-      ],
+      "required": ["from", "to", "generatedAt", "lagSeconds", "items"],
       "description": "北京时间自然日from/to包含，最大366天；仅返回有数据日。同一主库快照直接聚合，lagSeconds=0表示未使用异步投影。归属按查询时当前订单归属；未知用量单独计数，不并入零成本。"
     },
     "Notification": {
@@ -3898,13 +3352,7 @@
           "format": "date-time"
         }
       },
-      "required": [
-        "id",
-        "title",
-        "body",
-        "read",
-        "createdAt"
-      ]
+      "required": ["id", "title", "body", "read", "createdAt"]
     },
     "Membership": {
       "type": "object",
@@ -3951,12 +3399,7 @@
         },
         "state": {
           "type": "string",
-          "enum": [
-            "SCHEDULED",
-            "ACTIVE",
-            "EXPIRED",
-            "REVOKED"
-          ]
+          "enum": ["SCHEDULED", "ACTIVE", "EXPIRED", "REVOKED"]
         }
       },
       "required": [
@@ -3985,11 +3428,7 @@
         },
         "platform": {
           "type": "string",
-          "enum": [
-            "student",
-            "partner",
-            "admin"
-          ]
+          "enum": ["student", "partner", "admin"]
         },
         "user": {
           "$ref": "#/components/schemas/User"
@@ -3999,13 +3438,7 @@
           "description": "用于 Cookie 刷新/退出，不能用于业务授权"
         }
       },
-      "required": [
-        "accessToken",
-        "expiresIn",
-        "platform",
-        "user",
-        "csrfToken"
-      ]
+      "required": ["accessToken", "expiresIn", "platform", "user", "csrfToken"]
     },
     "Login": {
       "type": "object",
@@ -4029,10 +3462,7 @@
           "pattern": "^\\d{6}$"
         }
       },
-      "required": [
-        "phone",
-        "password"
-      ]
+      "required": ["phone", "password"]
     },
     "Register": {
       "type": "object",
@@ -4071,14 +3501,7 @@
           "maxLength": 200
         }
       },
-      "required": [
-        "phone",
-        "password",
-        "displayName",
-        "challengeId",
-        "code",
-        "termsVersion"
-      ]
+      "required": ["phone", "password", "displayName", "challengeId", "code", "termsVersion"]
     },
     "Activate": {
       "type": "object",
@@ -4152,11 +3575,7 @@
           "maximum": 72
         }
       },
-      "required": [
-        "phone",
-        "displayName",
-        "expiresInHours"
-      ]
+      "required": ["phone", "displayName", "expiresInHours"]
     },
     "Invitation": {
       "type": "object",
@@ -4178,11 +3597,7 @@
           "format": "uri"
         }
       },
-      "required": [
-        "id",
-        "expiresAt",
-        "activationUrl"
-      ]
+      "required": ["id", "expiresAt", "activationUrl"]
     },
     "ChallengeRequest": {
       "type": "object",
@@ -4195,12 +3610,7 @@
         },
         "purpose": {
           "type": "string",
-          "enum": [
-            "REGISTER",
-            "RESET_PASSWORD",
-            "BIND_ORDER",
-            "ACTIVATE"
-          ]
+          "enum": ["REGISTER", "RESET_PASSWORD", "BIND_ORDER", "ACTIVATE"]
         },
         "orderNo": {
           "type": "string",
@@ -4209,19 +3619,12 @@
         },
         "platform": {
           "type": "string",
-          "enum": [
-            "student",
-            "partner",
-            "admin"
-          ],
+          "enum": ["student", "partner", "admin"],
           "default": "student",
           "description": "重置密码的目标账户平台；只用于定位手机号证明对象，不赋予角色。REGISTER只能student。"
         }
       },
-      "required": [
-        "phone",
-        "purpose"
-      ],
+      "required": ["phone", "purpose"],
       "description": "BIND_ORDER必须携带已登录学生身份与orderNo。手机号须同时匹配已验证学生账户和订单预留手机号；仅CONFIRMED/ACTIVE订单可发起。普通挑战不可用于绑定。"
     },
     "Challenge": {
@@ -4244,11 +3647,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "challengeId",
-        "expiresAt",
-        "retryAfterSeconds"
-      ]
+      "required": ["challengeId", "expiresAt", "retryAfterSeconds"]
     },
     "PasswordReset": {
       "type": "object",
@@ -4272,11 +3671,7 @@
           "writeOnly": true
         }
       },
-      "required": [
-        "challengeId",
-        "code",
-        "newPassword"
-      ]
+      "required": ["challengeId", "code", "newPassword"]
     },
     "Binding": {
       "type": "object",
@@ -4298,11 +3693,7 @@
           "pattern": "^\\d{6}$"
         }
       },
-      "required": [
-        "orderNo",
-        "challengeId",
-        "code"
-      ],
+      "required": ["orderNo", "challengeId", "code"],
       "description": "一次性绑定当前学生，挑战固定订单、学生和手机号，5次错误后失效。失败返回problem+json并提交错误次数。相同幂等键重放原结果，修改验证码须换新幂等键。"
     },
     "Reason": {
@@ -4316,9 +3707,7 @@
           "maxLength": 1000
         }
       },
-      "required": [
-        "reason"
-      ]
+      "required": ["reason"]
     },
     "StateChange": {
       "type": "object",
@@ -4326,10 +3715,7 @@
       "properties": {
         "status": {
           "type": "string",
-          "enum": [
-            "ENABLED",
-            "DISABLED"
-          ]
+          "enum": ["ENABLED", "DISABLED"]
         },
         "reason": {
           "type": "string",
@@ -4337,10 +3723,7 @@
           "maxLength": 200
         }
       },
-      "required": [
-        "status",
-        "reason"
-      ]
+      "required": ["status", "reason"]
     },
     "StageChange": {
       "description": "订单须ACTIVE。阶段顺序推进，可暂停并恢复原阶段；DONE仅由学生验收产生。进入ACCEPTANCE须进度100并发布源码与论文模板。",
@@ -4366,10 +3749,7 @@
           "maxLength": 200
         }
       },
-      "required": [
-        "stage",
-        "reason"
-      ]
+      "required": ["stage", "reason"]
     },
     "OrderTransition": {
       "type": "object",
@@ -4377,13 +3757,7 @@
       "properties": {
         "action": {
           "type": "string",
-          "enum": [
-            "CONFIRM",
-            "ACTIVATE",
-            "COMPLETE",
-            "CANCEL",
-            "ARCHIVE"
-          ]
+          "enum": ["CONFIRM", "ACTIVATE", "COMPLETE", "CANCEL", "ARCHIVE"]
         },
         "reason": {
           "type": "string",
@@ -4391,11 +3765,8 @@
           "maxLength": 200
         }
       },
-      "required": [
-        "action",
-        "reason"
-      ],
-      "description": "CONFIRM为人工核实，不代表收款。ACTIVATE须已绑定学生、已确认收款并有项目；COMPLETE须项目DONE。CANCEL允许DRAFT/CONFIRMED/ACTIVE，但存在运行中答疑或未决预占时返回ORDER_CANCEL_UNSETTLED；同事务暂停未完成项目、失效挑战并记录快照，已收款保留财务核对标记，不自动退款。"
+      "required": ["action", "reason"],
+      "description": "CONFIRM为人工核实，不代表收款；金额必须大于0，否则返回422 ORDER_AMOUNT_INVALID并保留草稿供修改。零金额仅允许暂存草稿，当前无免费订单履约流程。ACTIVATE须已绑定学生、已确认收款并有项目；COMPLETE须项目DONE。CANCEL允许DRAFT/CONFIRMED/ACTIVE，但存在运行中答疑或未决预占时返回ORDER_CANCEL_UNSETTLED；同事务暂停未完成项目、失效挑战并记录快照，已收款保留财务核对标记，不自动退款。"
     },
     "Receipt": {
       "description": "已确认未收款订单全额核验；流水号全局唯一，凭证须属于订单且READY，核验记录不可覆盖，不支持分期与退款。",
@@ -4428,23 +3799,14 @@
           "maxLength": 200
         }
       },
-      "required": [
-        "reference",
-        "receivedAt",
-        "amount",
-        "proofAssetId",
-        "reason"
-      ]
+      "required": ["reference", "receivedAt", "amount", "proofAssetId", "reason"]
     },
     "Assignment": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "partnerId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "uuid"
         },
         "reason": {
@@ -4453,10 +3815,7 @@
           "maxLength": 200
         }
       },
-      "required": [
-        "partnerId",
-        "reason"
-      ]
+      "required": ["partnerId", "reason"]
     },
     "Moderation": {
       "type": "object",
@@ -4464,14 +3823,7 @@
       "properties": {
         "action": {
           "type": "string",
-          "enum": [
-            "APPROVE",
-            "HIDE",
-            "LOCK",
-            "UNLOCK",
-            "PIN",
-            "UNPIN"
-          ]
+          "enum": ["APPROVE", "HIDE", "LOCK", "UNLOCK", "PIN", "UNPIN"]
         },
         "reason": {
           "type": "string",
@@ -4479,10 +3831,7 @@
           "maxLength": 200
         }
       },
-      "required": [
-        "action",
-        "reason"
-      ]
+      "required": ["action", "reason"]
     },
     "ReportDecision": {
       "type": "object",
@@ -4490,10 +3839,7 @@
       "properties": {
         "decision": {
           "type": "string",
-          "enum": [
-            "RESOLVED",
-            "DISMISSED"
-          ]
+          "enum": ["RESOLVED", "DISMISSED"]
         },
         "reason": {
           "type": "string",
@@ -4501,10 +3847,7 @@
           "maxLength": 200
         }
       },
-      "required": [
-        "decision",
-        "reason"
-      ]
+      "required": ["decision", "reason"]
     },
     "Adjustment": {
       "type": "object",
@@ -4522,10 +3865,7 @@
         },
         "direction": {
           "type": "string",
-          "enum": [
-            "DEBIT",
-            "CREDIT"
-          ]
+          "enum": ["DEBIT", "CREDIT"]
         },
         "amount": {
           "type": "string",
@@ -4534,9 +3874,7 @@
         },
         "currency": {
           "type": "string",
-          "enum": [
-            "CNY"
-          ]
+          "enum": ["CNY"]
         },
         "reason": {
           "type": "string",
@@ -4582,10 +3920,7 @@
         },
         "direction": {
           "type": "string",
-          "enum": [
-            "DEBIT",
-            "CREDIT"
-          ]
+          "enum": ["DEBIT", "CREDIT"]
         },
         "amount": {
           "type": "string",
@@ -4603,13 +3938,7 @@
           "maxLength": 1000
         }
       },
-      "required": [
-        "runId",
-        "direction",
-        "amount",
-        "reason",
-        "evidenceRef"
-      ]
+      "required": ["runId", "direction", "amount", "reason", "evidenceRef"]
     },
     "ExportRequest": {
       "type": "object",
@@ -4617,12 +3946,7 @@
       "properties": {
         "kind": {
           "type": "string",
-          "enum": [
-            "ORDERS",
-            "PROJECTS",
-            "USAGE",
-            "AUDIT"
-          ]
+          "enum": ["ORDERS", "PROJECTS", "USAGE", "AUDIT"]
         },
         "from": {
           "type": "string",
@@ -4635,11 +3959,7 @@
           "format": "date"
         }
       },
-      "required": [
-        "kind",
-        "from",
-        "to"
-      ],
+      "required": ["kind", "from", "to"],
       "description": "from/to为北京时间自然日包含范围，最多366天；ORDERS按订单创建，PROJECTS按项目创建，USAGE按预占创建时间且反映当前账务状态，AUDIT按事件创建。中介仅前两类。"
     },
     "Health": {
@@ -4648,15 +3968,10 @@
       "properties": {
         "status": {
           "type": "string",
-          "enum": [
-            "UP",
-            "DOWN"
-          ]
+          "enum": ["UP", "DOWN"]
         }
       },
-      "required": [
-        "status"
-      ]
+      "required": ["status"]
     },
     "Error": {
       "type": "object",
@@ -4707,22 +4022,11 @@
                 "maxLength": 200
               }
             },
-            "required": [
-              "field",
-              "message"
-            ]
+            "required": ["field", "message"]
           }
         }
       },
-      "required": [
-        "type",
-        "title",
-        "status",
-        "code",
-        "detail",
-        "traceId",
-        "fieldErrors"
-      ]
+      "required": ["type", "title", "status", "code", "detail", "traceId", "fieldErrors"]
     },
     "StreamEvent": {
       "type": "object",
@@ -4740,15 +4044,7 @@
         },
         "type": {
           "type": "string",
-          "enum": [
-            "accepted",
-            "delta",
-            "citation",
-            "usage",
-            "completed",
-            "failed",
-            "cancelled"
-          ]
+          "enum": ["accepted", "delta", "citation", "usage", "completed", "failed", "cancelled"]
         },
         "data": {
           "type": "object",
@@ -4772,12 +4068,7 @@
           ]
         }
       },
-      "required": [
-        "runId",
-        "sequence",
-        "type",
-        "data"
-      ],
+      "required": ["runId", "sequence", "type", "data"],
       "allOf": [
         {
           "if": {
@@ -4903,9 +4194,7 @@
           "maxLength": 200
         }
       },
-      "required": [
-        "state"
-      ]
+      "required": ["state"]
     },
     "DeltaPayload": {
       "type": "object",
@@ -4916,9 +4205,7 @@
           "description": ""
         }
       },
-      "required": [
-        "text"
-      ]
+      "required": ["text"]
     },
     "CitationPayload": {
       "type": "object",
@@ -4928,9 +4215,7 @@
           "$ref": "#/components/schemas/Citation"
         }
       },
-      "required": [
-        "citation"
-      ]
+      "required": ["citation"]
     },
     "UsagePayload": {
       "type": "object",
@@ -4957,12 +4242,7 @@
           "maxLength": 200
         }
       },
-      "required": [
-        "inputTokens",
-        "outputTokens",
-        "amount",
-        "billingState"
-      ]
+      "required": ["inputTokens", "outputTokens", "amount", "billingState"]
     },
     "TerminalPayload": {
       "type": "object",
@@ -4974,24 +4254,14 @@
           "maxLength": 200
         },
         "messageId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "uuid"
         },
         "errorCode": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         }
       },
-      "required": [
-        "state",
-        "messageId",
-        "errorCode"
-      ]
+      "required": ["state", "messageId", "errorCode"]
     },
     "SchoolPage": {
       "type": "object",
@@ -5019,12 +4289,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "MajorPage": {
       "type": "object",
@@ -5052,12 +4317,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "RolePage": {
       "type": "object",
@@ -5085,12 +4345,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "MembershipPlanPage": {
       "type": "object",
@@ -5118,12 +4373,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "MenuPage": {
       "type": "object",
@@ -5151,12 +4401,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "ModelPage": {
       "type": "object",
@@ -5184,12 +4429,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "ModelPricePage": {
       "type": "object",
@@ -5217,12 +4457,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "StoragePage": {
       "type": "object",
@@ -5250,12 +4485,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "DomainPage": {
       "type": "object",
@@ -5283,12 +4513,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "CategoryPage": {
       "type": "object",
@@ -5316,12 +4541,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "TagPage": {
       "type": "object",
@@ -5349,12 +4569,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "ForumBoardPage": {
       "type": "object",
@@ -5382,12 +4597,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "NotificationTemplatePage": {
       "type": "object",
@@ -5415,12 +4625,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "UserPage": {
       "type": "object",
@@ -5448,12 +4653,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "MembershipPage": {
       "type": "object",
@@ -5481,12 +4681,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "MembershipGrant": {
       "type": "object",
@@ -5508,11 +4703,7 @@
           "maxLength": 200
         }
       },
-      "required": [
-        "planId",
-        "startsAt",
-        "reason"
-      ]
+      "required": ["planId", "startsAt", "reason"]
     },
     "SecretMetadataPage": {
       "type": "object",
@@ -5540,12 +4731,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "OrderPage": {
       "type": "object",
@@ -5573,12 +4759,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "StudentSummaryPage": {
       "type": "object",
@@ -5606,12 +4787,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "ProjectPage": {
       "type": "object",
@@ -5639,12 +4815,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "DeliveryVersionPage": {
       "type": "object",
@@ -5672,12 +4843,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "MilestonePage": {
       "type": "object",
@@ -5705,12 +4871,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "ProjectProgressPage": {
       "type": "object",
@@ -5738,12 +4899,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "ContentPage": {
       "type": "object",
@@ -5771,12 +4927,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "SearchHitPage": {
       "type": "object",
@@ -5804,12 +4955,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "ConversationPage": {
       "type": "object",
@@ -5837,12 +4983,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "MessagePage": {
       "type": "object",
@@ -5870,12 +5011,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "UsageEntryPage": {
       "type": "object",
@@ -5903,12 +5039,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "PostPage": {
       "type": "object",
@@ -5936,12 +5067,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "CommentPage": {
       "type": "object",
@@ -5969,12 +5095,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "ReportPage": {
       "type": "object",
@@ -6002,12 +5123,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "NotificationPage": {
       "type": "object",
@@ -6035,12 +5151,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "JobPage": {
       "type": "object",
@@ -6068,12 +5179,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "AuditPage": {
       "type": "object",
@@ -6101,12 +5207,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "AvailableModel": {
       "type": "object",
@@ -6128,11 +5229,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "id",
-        "name",
-        "maxOutputTokens"
-      ]
+      "required": ["id", "name", "maxOutputTokens"]
     },
     "AvailableModelPage": {
       "type": "object",
@@ -6160,12 +5257,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "Permission": {
       "type": "object",
@@ -6187,11 +5279,7 @@
           "maxLength": 200
         }
       },
-      "required": [
-        "code",
-        "module",
-        "description"
-      ]
+      "required": ["code", "module", "description"]
     },
     "PermissionPage": {
       "type": "object",
@@ -6219,12 +5307,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "AdminActivation": {
       "type": "object",
@@ -6253,12 +5336,7 @@
           "pattern": "^\\d{6}$"
         }
       },
-      "required": [
-        "invitationToken",
-        "password",
-        "mfaEnrollmentId",
-        "mfaCode"
-      ]
+      "required": ["invitationToken", "password", "mfaEnrollmentId", "mfaCode"]
     },
     "MfaEnrollmentRequest": {
       "type": "object",
@@ -6270,9 +5348,7 @@
           "writeOnly": true
         }
       },
-      "required": [
-        "invitationToken"
-      ]
+      "required": ["invitationToken"]
     },
     "MfaEnrollment": {
       "type": "object",
@@ -6294,11 +5370,7 @@
           "format": "date-time"
         }
       },
-      "required": [
-        "enrollmentId",
-        "otpAuthUri",
-        "expiresAt"
-      ]
+      "required": ["enrollmentId", "otpAuthUri", "expiresAt"]
     },
     "Acceptance": {
       "description": "仅本人项目ACCEPTANCE阶段；ACCEPT转DONE，REJECT退DEVELOPMENT并记录原因。",
@@ -6307,10 +5379,7 @@
       "properties": {
         "decision": {
           "type": "string",
-          "enum": [
-            "ACCEPT",
-            "REJECT"
-          ]
+          "enum": ["ACCEPT", "REJECT"]
         },
         "reason": {
           "type": "string",
@@ -6318,10 +5387,7 @@
           "maxLength": 200
         }
       },
-      "required": [
-        "decision",
-        "reason"
-      ]
+      "required": ["decision", "reason"]
     },
     "MembershipPlanVersionWrite": {
       "type": "object",
@@ -6348,12 +5414,7 @@
           "format": "date-time"
         }
       },
-      "required": [
-        "durationDays",
-        "monthlyTokenQuota",
-        "monthlyAmountLimit",
-        "effectiveFrom"
-      ]
+      "required": ["durationDays", "monthlyTokenQuota", "monthlyAmountLimit", "effectiveFrom"]
     },
     "MembershipPlanVersion": {
       "type": "object",
@@ -6442,12 +5503,7 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "KnowledgeVersion": {
       "type": "object",
@@ -6483,10 +5539,7 @@
           "maximum": 9223372036854775807
         },
         "assetId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "uuid"
         },
         "markdown": {
@@ -6496,23 +5549,10 @@
         },
         "state": {
           "type": "string",
-          "enum": [
-            "DRAFT",
-            "REVIEW",
-            "PUBLISHED",
-            "WITHDRAWN"
-          ]
+          "enum": ["DRAFT", "REVIEW", "PUBLISHED", "WITHDRAWN"]
         }
       },
-      "required": [
-        "id",
-        "version",
-        "createdAt",
-        "updatedAt",
-        "contentId",
-        "versionNumber",
-        "state"
-      ]
+      "required": ["id", "version", "createdAt", "updatedAt", "contentId", "versionNumber", "state"]
     },
     "KnowledgeVersionPage": {
       "type": "object",
@@ -6540,19 +5580,12 @@
           "maximum": 9223372036854775807
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "AccountInvitationRequest": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "expiresInHours"
-      ],
+      "required": ["expiresInHours"],
       "properties": {
         "expiresInHours": {
           "type": "integer",
@@ -6567,32 +5600,20 @@
       "properties": {
         "kind": {
           "type": "string",
-          "enum": [
-            "USAGE",
-            "NO_CHARGE"
-          ]
+          "enum": ["USAGE", "NO_CHARGE"]
         },
         "inputTokens": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "maximum": 1000000000
         },
         "outputTokens": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "maximum": 1000000000
         },
         "cachedTokens": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "maximum": 1000000000
         },
@@ -6611,12 +5632,7 @@
           "maxLength": 1000
         }
       },
-      "required": [
-        "kind",
-        "evidenceRef",
-        "evidenceSha256",
-        "reason"
-      ],
+      "required": ["kind", "evidenceRef", "evidenceSha256", "reason"],
       "description": "USAGE必须提供全部词元，cached<=input；NO_CHARGE的词元必须为空。原始凭据由两个管理员独立核验，摘要不是服务端自动认证。"
     },
     "AdjudicationDecision": {
@@ -6625,10 +5641,7 @@
       "properties": {
         "decision": {
           "type": "string",
-          "enum": [
-            "APPROVE",
-            "REJECT"
-          ]
+          "enum": ["APPROVE", "REJECT"]
         },
         "reason": {
           "type": "string",
@@ -6636,10 +5649,7 @@
           "maxLength": 1000
         }
       },
-      "required": [
-        "decision",
-        "reason"
-      ]
+      "required": ["decision", "reason"]
     },
     "Adjudication": {
       "type": "object",
@@ -6647,32 +5657,20 @@
       "properties": {
         "kind": {
           "type": "string",
-          "enum": [
-            "USAGE",
-            "NO_CHARGE"
-          ]
+          "enum": ["USAGE", "NO_CHARGE"]
         },
         "inputTokens": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "maximum": 1000000000
         },
         "outputTokens": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "maximum": 1000000000
         },
         "cachedTokens": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "maximum": 1000000000
         },
@@ -6704,11 +5702,7 @@
         },
         "state": {
           "type": "string",
-          "enum": [
-            "PENDING",
-            "APPROVED",
-            "REJECTED"
-          ]
+          "enum": ["PENDING", "APPROVED", "REJECTED"]
         },
         "createdBy": {
           "type": "string",
@@ -6719,23 +5713,14 @@
           "format": "date-time"
         },
         "reviewedBy": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "uuid"
         },
         "reviewReason": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "reviewedAt": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "date-time"
         },
         "source": {
@@ -6788,19 +5773,11 @@
           "type": "integer"
         }
       },
-      "required": [
-        "items",
-        "page",
-        "size",
-        "total"
-      ]
+      "required": ["items", "page", "size", "total"]
     },
     "Navigation": {
       "type": "object",
-      "required": [
-        "configured",
-        "menus"
-      ],
+      "required": ["configured", "menus"],
       "properties": {
         "configured": {
           "type": "boolean",
@@ -6871,11 +5848,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -7191,11 +6164,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -7522,11 +6491,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -7842,11 +6807,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -8162,12 +7123,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "sortOrder:asc",
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ],
+            "enum": ["sortOrder:asc", "createdAt:desc", "createdAt:asc", "updatedAt:desc"],
             "default": "sortOrder:asc"
           }
         },
@@ -8178,11 +7134,7 @@
           "description": "",
           "schema": {
             "type": "string",
-            "enum": [
-              "student",
-              "partner",
-              "admin"
-            ]
+            "enum": ["student", "partner", "admin"]
           }
         },
         {
@@ -8509,11 +7461,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -8829,11 +7777,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -9149,11 +8093,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -9469,11 +8409,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -9789,11 +8725,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -10109,11 +9041,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -10429,11 +9357,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -10749,11 +9673,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -11623,11 +10543,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -11637,11 +10553,7 @@
           "description": "",
           "schema": {
             "type": "string",
-            "enum": [
-              "student",
-              "partner",
-              "admin"
-            ]
+            "enum": ["student", "partner", "admin"]
           }
         },
         {
@@ -11925,11 +10837,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -12155,11 +11063,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -12616,11 +11520,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -12697,11 +11597,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -12789,12 +11685,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "sortOrder:asc",
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ],
+            "enum": ["sortOrder:asc", "createdAt:desc", "createdAt:asc", "updatedAt:desc"],
             "default": "sortOrder:asc"
           }
         },
@@ -12872,11 +11763,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -12953,11 +11840,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -13045,12 +11928,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "sortOrder:asc",
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ],
+            "enum": ["sortOrder:asc", "createdAt:desc", "createdAt:asc", "updatedAt:desc"],
             "default": "sortOrder:asc"
           }
         },
@@ -13128,11 +12006,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -13380,11 +12254,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -13494,11 +12364,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -13945,11 +12811,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -14059,11 +12921,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -14308,11 +13166,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -14436,11 +13290,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -14564,11 +13414,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -14689,11 +13535,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -14770,11 +13612,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -15137,11 +13975,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -15432,10 +14266,7 @@
           "description": "ORIGINAL为不可变原件；PLAYBACK为已扫描视频的独立转码副本，未就绪503。",
           "schema": {
             "type": "string",
-            "enum": [
-              "ORIGINAL",
-              "PLAYBACK"
-            ],
+            "enum": ["ORIGINAL", "PLAYBACK"],
             "default": "ORIGINAL"
           }
         },
@@ -15593,10 +14424,7 @@
           "description": "ORIGINAL为不可变原件；PLAYBACK为已扫描视频的独立转码副本，未就绪503。",
           "schema": {
             "type": "string",
-            "enum": [
-              "ORIGINAL",
-              "PLAYBACK"
-            ],
+            "enum": ["ORIGINAL", "PLAYBACK"],
             "default": "ORIGINAL"
           }
         },
@@ -15727,11 +14555,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -15762,11 +14586,7 @@
           "required": false,
           "schema": {
             "type": "string",
-            "enum": [
-              "VIDEO",
-              "DOCUMENT",
-              "MARKDOWN"
-            ]
+            "enum": ["VIDEO", "DOCUMENT", "MARKDOWN"]
           }
         },
         {
@@ -16024,11 +14844,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -16055,11 +14871,7 @@
           "required": false,
           "schema": {
             "type": "string",
-            "enum": [
-              "VIDEO",
-              "DOCUMENT",
-              "MARKDOWN"
-            ]
+            "enum": ["VIDEO", "DOCUMENT", "MARKDOWN"]
           }
         },
         {
@@ -16355,10 +15167,7 @@
           "description": "KEYWORD默认；SEMANTIC需部署嵌入服务，否则503。相似度阈值0.2，分页遵循sort。",
           "schema": {
             "type": "string",
-            "enum": [
-              "KEYWORD",
-              "SEMANTIC"
-            ],
+            "enum": ["KEYWORD", "SEMANTIC"],
             "default": "KEYWORD"
           }
         },
@@ -16414,11 +15223,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -16450,11 +15255,7 @@
           "description": "",
           "schema": {
             "type": "string",
-            "enum": [
-              "VIDEO",
-              "DOCUMENT",
-              "MARKDOWN"
-            ]
+            "enum": ["VIDEO", "DOCUMENT", "MARKDOWN"]
           }
         },
         {
@@ -16520,11 +15321,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -16724,11 +15521,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -16962,11 +15755,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -17065,11 +15854,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -17169,11 +15954,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -17262,11 +16043,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -17448,12 +16225,7 @@
           "description": "资源状态；未知值400",
           "schema": {
             "type": "string",
-            "enum": [
-              "PENDING",
-              "PUBLISHED",
-              "HIDDEN",
-              "LOCKED"
-            ]
+            "enum": ["PENDING", "PUBLISHED", "HIDDEN", "LOCKED"]
           }
         },
         {
@@ -17463,11 +16235,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -17588,10 +16356,7 @@
           "description": "资源状态；未知值400",
           "schema": {
             "type": "string",
-            "enum": [
-              "PUBLISHED",
-              "HIDDEN"
-            ]
+            "enum": ["PUBLISHED", "HIDDEN"]
           }
         },
         {
@@ -17601,11 +16366,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -17671,12 +16432,7 @@
           "description": "资源状态；未知值400",
           "schema": {
             "type": "string",
-            "enum": [
-              "PENDING",
-              "PUBLISHED",
-              "HIDDEN",
-              "LOCKED"
-            ]
+            "enum": ["PENDING", "PUBLISHED", "HIDDEN", "LOCKED"]
           }
         },
         {
@@ -17686,11 +16442,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -17959,10 +16711,7 @@
           "description": "资源状态；未知值400",
           "schema": {
             "type": "string",
-            "enum": [
-              "PUBLISHED",
-              "HIDDEN"
-            ]
+            "enum": ["PUBLISHED", "HIDDEN"]
           }
         },
         {
@@ -17972,11 +16721,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -18306,11 +17051,7 @@
           "description": "资源状态；未知值400",
           "schema": {
             "type": "string",
-            "enum": [
-              "OPEN",
-              "RESOLVED",
-              "DISMISSED"
-            ]
+            "enum": ["OPEN", "RESOLVED", "DISMISSED"]
           }
         },
         {
@@ -18320,11 +17061,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -18492,10 +17229,7 @@
           "description": "已读或未读；未知状态400",
           "schema": {
             "type": "string",
-            "enum": [
-              "READ",
-              "UNREAD"
-            ]
+            "enum": ["READ", "UNREAD"]
           }
         },
         {
@@ -18505,11 +17239,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -18662,10 +17392,7 @@
           "description": "已读或未读；未知状态400",
           "schema": {
             "type": "string",
-            "enum": [
-              "READ",
-              "UNREAD"
-            ]
+            "enum": ["READ", "UNREAD"]
           }
         },
         {
@@ -18675,11 +17402,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -18832,10 +17555,7 @@
           "description": "已读或未读；未知状态400",
           "schema": {
             "type": "string",
-            "enum": [
-              "READ",
-              "UNREAD"
-            ]
+            "enum": ["READ", "UNREAD"]
           }
         },
         {
@@ -18845,11 +17565,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -19173,11 +17889,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -19300,10 +18012,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc"]
           }
         },
         {
@@ -19424,11 +18133,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -19505,11 +18210,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -19586,11 +18287,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -19667,11 +18364,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -19748,11 +18441,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -19946,11 +18635,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -20038,11 +18723,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -20130,11 +18811,7 @@
           "description": "稳定排序附加 id 同序",
           "schema": {
             "type": "string",
-            "enum": [
-              "createdAt:desc",
-              "createdAt:asc",
-              "updatedAt:desc"
-            ]
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
           }
         },
         {
@@ -20310,11 +18987,7 @@
           "required": false,
           "schema": {
             "type": "string",
-            "enum": [
-              "PENDING",
-              "APPROVED",
-              "REJECTED"
-            ]
+            "enum": ["PENDING", "APPROVED", "REJECTED"]
           }
         },
         {

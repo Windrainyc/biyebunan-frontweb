@@ -3,6 +3,7 @@
 需要PyYAML，可使用架构设计目录tools/.venv/bin/python运行。
 """
 import json
+import subprocess
 from pathlib import Path
 import yaml
 root=Path(__file__).resolve().parents[1]
@@ -15,4 +16,6 @@ for path,methods in doc['paths'].items():
         successful=next((v for k,v in spec['responses'].items() if str(k).startswith('2')), {})
         operations[method.upper()+' '+path.removeprefix('/api/v1')]={'operationId':spec['operationId'],'summary':spec['summary'],'permission':spec.get('x-permission'),'body':spec.get('requestBody',{}).get('content',{}).get('application/json',{}).get('schema'),'parameters':spec.get('parameters',[]),'response':successful.get('content',{}).get('application/json',{}).get('schema')}
 (root/'src/config/contract.json').write_text(json.dumps({'version':doc['info']['version'],'schemas':doc['components']['schemas'],'operations':operations},ensure_ascii=False,indent=2)+'\n')
+# 生成产物也遵守仓库格式规则；使用锁定的本地Prettier，不临时下载。
+subprocess.run(['node', str(root/'node_modules/prettier/bin/prettier.cjs'), '--write', str(root/'src/config/contract.json')], check=True)
 print('已生成',len(operations),'项契约元数据')

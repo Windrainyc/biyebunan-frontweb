@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import { auth, request, errorText } from '../api/client';
 import { operation } from '../config/contract';
 import type { Row, Page } from '../types/api';
@@ -101,6 +101,9 @@ async function load() {
   }
 }
 onMounted(load);
+onBeforeUnmount(() => {
+  generation++;
+});
 watch(
   () => props.filters,
   () => {
@@ -143,8 +146,16 @@ watch(
         ><span v-if="!rows.length">{{ busy ? '加载中…' : '暂无可选数据' }}</span>
       </div>
       <div class="reference-foot">
-        <span>已选 {{ selected.length }} 项</span
-        ><button
+        <span>已选 {{ selected.length }} 项</span>
+        <button
+          v-if="!required && selected.length"
+          type="button"
+          class="button"
+          @click="emit('update:modelValue', multiple ? [] : '')"
+        >
+          清空选择
+        </button>
+        <button
           type="button"
           :disabled="page === 1 || busy"
           @click="

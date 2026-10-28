@@ -32,14 +32,19 @@ async function poll() {
       timer = setTimeout(poll, 2500);
     else busy.value = false;
   } catch (e) {
-    error.value = errorText(e);
-    busy.value = false;
+    if (!closed && job.value?.id === id) {
+      error.value = errorText(e);
+      busy.value = false;
+    }
   }
 }
 async function create() {
   busy.value = true;
   error.value = '';
   download.value = '';
+  job.value = null;
+  clearTimeout(timer);
+  clearTimeout(expiry);
   try {
     const body = { kind: kind.value, from: from.value, to: to.value };
     job.value = await request<Row>(`/${auth.platform}/exports`, {
@@ -54,16 +59,21 @@ async function create() {
   }
 }
 async function getDownload() {
+  const id = job.value?.id;
+  if (!id) return;
+  error.value = '';
+  download.value = '';
   try {
     const result = await request<{ url: string; expiresAt: string }>(
-      `/${auth.platform}/jobs/${job.value?.id}/download`,
+      `/${auth.platform}/jobs/${id}/download`,
       { method: 'POST' },
     );
     const url = new URL(result.url);
     if (!['http:', 'https:'].includes(url.protocol)) throw new Error('下载地址无效');
     const ttl = Date.parse(result.expiresAt) - Date.now();
     if (!Number.isFinite(ttl) || ttl <= 0) throw new Error('下载授权已过期，请重新获取');
-    if (closed) return;
+    // 新任务开始后丢弃旧任务的迟到授权，避免下载与当前结果不一致。
+    if (closed || job.value?.id !== id) return;
     clearTimeout(expiry);
     download.value = url.toString();
     expiry = setTimeout(
@@ -73,7 +83,7 @@ async function getDownload() {
       Math.min(ttl, 2147483647),
     );
   } catch (e) {
-    error.value = errorText(e);
+    if (!closed && job.value?.id === id) error.value = errorText(e);
   }
 }
 </script>
