@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import { latestRequest } from '../api/latest';
 import { writeAttempt } from '../api/attempt';
-import { computed, onMounted, ref, defineAsyncComponent } from 'vue';
+import { computed, onMounted, onBeforeUnmount, ref, defineAsyncComponent } from 'vue';
 import { auth, request, errorText } from '../api/client';
 import { operation, schema, updateMethod } from '../config/contract';
 import { label, display } from '../config/labels';
@@ -20,6 +21,16 @@ import StatusBadge from '../components/StatusBadge.vue';
 import { formBody, requiresSelection } from '../config/form';
 import SchemaField from '../components/SchemaField.vue';
 let attempt = writeAttempt();
+const editRead = latestRequest(),
+  detailRead = latestRequest();
+function closeForm() {
+  editRead.invalidate();
+  formOpen.value = false;
+}
+function closeDetail() {
+  detailRead.invalidate();
+  detail.value = null;
+}
 const props = defineProps<{ resource: Resource }>();
 const rows = ref<Row[]>([]),
   total = ref(0),
@@ -146,16 +157,19 @@ function search() {
   void load();
 }
 async function open(row?: Row) {
+  const current = editRead.start();
   error.value = '';
   editing.value = row || null;
   form.value = {};
   if (row) {
     try {
-      editing.value = allowed('GET', props.resource.path + '/{id}')
+      const loaded = allowed('GET', props.resource.path + '/{id}')
         ? await request<Row>(props.resource.path + '/' + row.id)
         : row;
+      if (!current()) return;
+      editing.value = loaded;
     } catch (e) {
-      error.value = errorText(e);
+      if (current()) error.value = errorText(e);
       return;
     }
   }
@@ -197,12 +211,14 @@ async function actionChanged(result: Row) {
   await load();
 }
 async function inspect(row: Row) {
+  const current = detailRead.start();
   try {
-    detail.value = allowed('GET', props.resource.path + '/{id}')
+    const loaded = allowed('GET', props.resource.path + '/{id}')
       ? await request<Row>(props.resource.path + '/' + row.id)
       : row;
+    if (current()) detail.value = loaded;
   } catch (e) {
-    error.value = errorText(e);
+    if (current()) error.value = errorText(e);
   }
 }
 async function destroy() {
@@ -227,6 +243,11 @@ function askDelete(row: Row) {
   remove.value = row;
   writeKey.value = crypto.randomUUID();
 }
+onBeforeUnmount(() => {
+  editRead.invalidate();
+  detailRead.invalidate();
+  loadGeneration++;
+});
 onMounted(() => {
   sort.value = sorts.value[0] || '';
   void load();
@@ -379,7 +400,7 @@ onMounted(() => {
         class="modal"
         v-dialog="
           () => {
-            if (!saving) formOpen = false;
+            if (!saving) closeForm();
           }
         "
         role="dialog"
@@ -415,8 +436,7 @@ onMounted(() => {
         </div>
         <p v-if="error" class="error" role="alert">{{ error }}</p>
         <footer>
-          <button type="button" class="button" :disabled="saving" @click="formOpen = false">
-            取消</button
+          <button type="button" class="button" :disabled="saving" @click="closeForm">取消</button
           ><button class="button primary" :disabled="saving">
             {{ saving ? '保存中…' : '保存' }}
           </button>
@@ -426,7 +446,7 @@ onMounted(() => {
     <div v-if="detail" class="modal-backdrop">
       <section
         class="modal"
-        v-dialog="() => (detail = null)"
+        v-dialog="closeDetail"
         role="dialog"
         aria-modal="true"
         aria-label="记录详情"
@@ -513,7 +533,7 @@ onMounted(() => {
           "
         />
         <footer>
-          <button class="button" @click="detail = null">关闭</button>
+          <button class="button" @click="closeDetail">关闭</button>
         </footer>
       </section>
     </div>
