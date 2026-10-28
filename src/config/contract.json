@@ -1,5 +1,5 @@
 {
-  "version": "1.0.28",
+  "version": "1.0.30",
   "schemas": {
     "SchoolWrite": {
       "type": "object",
@@ -172,8 +172,10 @@
         },
         "code": {
           "type": "string",
-          "description": "",
-          "maxLength": 200
+          "description": "大写字母开头，仅含大写字母、数字、下划线",
+          "maxLength": 64,
+          "minLength": 2,
+          "pattern": "^[A-Z][A-Z0-9_]{1,63}$"
         },
         "platform": {
           "type": "string",
@@ -2482,7 +2484,7 @@
       "properties": {
         "evidenceSource": {
           "type": "string",
-          "enum": ["ORIGINAL_CALL", "MANUAL_ADJUDICATION", "UNCONFIRMED"]
+          "enum": ["ORIGINAL_CALL", "MANUAL_ADJUDICATION", "CORRECTED_ORIGINAL_CALL", "UNCONFIRMED"]
         },
         "id": {
           "type": "string",
@@ -2541,6 +2543,26 @@
           "type": "string",
           "description": "UTC 时间",
           "format": "date-time"
+        },
+        "effectiveInputTokens": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "更正后有效词元，未知仍null，原始值保持不变"
+        },
+        "effectiveOutputTokens": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "更正后有效词元，未知仍null，原始值保持不变"
+        },
+        "effectiveCachedTokens": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "更正后有效词元，未知仍null，原始值保持不变"
+        },
+        "correctionAmount": {
+          "type": "string",
+          "description": "迟到原调用更正金额差额，六位十进制人民币；与人工调整分开",
+          "pattern": "^-?[0-9]{1,14}(\\.[0-9]{1,6})?$"
         }
       },
       "required": [
@@ -2555,7 +2577,11 @@
         "currency",
         "priceVersionId",
         "state",
-        "createdAt"
+        "createdAt",
+        "effectiveInputTokens",
+        "effectiveOutputTokens",
+        "effectiveCachedTokens",
+        "correctionAmount"
       ]
     },
     "Quota": {
@@ -5605,7 +5631,8 @@
       "properties": {
         "kind": {
           "type": "string",
-          "enum": ["USAGE", "NO_CHARGE"]
+          "enum": ["USAGE", "NO_CHARGE", "CORRECTION"],
+          "description": "CORRECTION只采用已保存迟到原调用证据，申请不得填写词元；响应为证据快照"
         },
         "inputTokens": {
           "type": ["integer", "null"],
@@ -5662,7 +5689,8 @@
       "properties": {
         "kind": {
           "type": "string",
-          "enum": ["USAGE", "NO_CHARGE"]
+          "enum": ["USAGE", "NO_CHARGE", "CORRECTION"],
+          "description": "CORRECTION只采用已保存迟到原调用证据，申请不得填写词元；响应为证据快照"
         },
         "inputTokens": {
           "type": ["integer", "null"],

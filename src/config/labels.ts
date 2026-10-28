@@ -1,5 +1,9 @@
 /** 业务字段显示名称；页面不直接展示契约字段名作为标题。 */
 export const labels: Record<string, string> = {
+  effectiveInputTokens: '有效输入词元',
+  effectiveOutputTokens: '有效输出词元',
+  effectiveCachedTokens: '有效缓存词元',
+  correctionAmount: '原调用更正金额（元）',
   providerTemplateId: '供应商模板编号',
   milestones: '项目里程碑',
   versionNumber: '发布版本号',
@@ -203,6 +207,8 @@ Object.assign(labels, {
   rotatedAt: '最近轮换时间',
 });
 export const values: Record<string, string> = {
+  CORRECTION: '迟到原调用更正',
+  CORRECTED_ORIGINAL_CALL: '原调用双人更正',
   ENABLED: '启用',
   DISABLED: '停用',
   admin: '管理员',

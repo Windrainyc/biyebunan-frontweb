@@ -91,6 +91,9 @@ async function submit() {
 <template>
   <section v-if="auth.platform === 'admin' && modes.length">
     <h3>用量核对与调整</h3>
+    <p v-if="usage.evidenceSource === 'CORRECTED_ORIGINAL_CALL'" class="notice">
+      本次账务已按迟到原调用证据更正。原始用量、金额及预占状态保留；当前计费请查看有效词元和净费用。
+    </p>
     <p class="notice">
       没有可信用量证据时保留冻结状态。人工声明需由两名管理员独立核验，不能把填写凭据等同于供应商自动确认。
     </p>
@@ -117,8 +120,12 @@ async function submit() {
           >凭据结论<select v-model="kind">
             <option value="USAGE">已确认实际用量</option>
             <option value="NO_CHARGE">已确认未计费</option>
+            <option value="CORRECTION">按迟到原调用证据更正</option>
           </select></label
         >
+        <p v-if="kind === 'CORRECTION'" class="notice">
+          仅适用于已批准人工裁决后收到不同的原调用证据。服务器提供更正用量，另一名管理员复核后追加差额；原始账单保持不变。已有人工退费冲突时必须先处理金额调整。
+        </p>
         <div v-if="kind === 'USAGE'" class="token-fields">
           <label
             >输入词元<input

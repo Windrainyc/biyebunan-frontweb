@@ -432,6 +432,9 @@ onMounted(() => {
         aria-label="记录详情"
       >
         <h2>{{ resource.title }}详情</h2>
+        <p v-if="detail.evidenceSource === 'CORRECTED_ORIGINAL_CALL'" class="notice">
+          已按迟到原调用证据更正。原始用量和预占状态保留，当前计费以有效词元和净费用为准。
+        </p>
         <dl class="detail-grid">
           <template v-for="(value, key) in detailFields" :key="key"
             ><dt>{{ label(key) }}</dt>
