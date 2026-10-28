@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import { auth, request, errorText } from '../api/client';
+import { ApiError, auth, request, errorText } from '../api/client';
+import { display } from '../config/labels';
 import { writeAttempt } from '../api/attempt';
 import type { Row, User } from '../types/api';
 import ReferenceField from '../components/ReferenceField.vue';
@@ -11,7 +12,10 @@ const profile = ref<Row | null>(null),
   error = ref(''),
   notice = ref(''),
   busy = ref(false),
-  quota = ref<Row | null>(null);
+  quota = ref<Row | null>(null),
+  membership = ref<Row | null>(null),
+  membershipError = ref(''),
+  membershipLoaded = ref(false);
 const attempt = writeAttempt();
 onMounted(async () => {
   try {
@@ -19,13 +23,31 @@ onMounted(async () => {
     name.value = String(profile.value.displayName || '');
     school.value = String(profile.value.schoolId || '');
     major.value = String(profile.value.majorId || '');
-    if (auth.platform === 'student') quota.value = await request<Row>('/student/quota');
+    if (auth.platform === 'student') {
+      await Promise.all([
+        request<Row>('/student/quota').then((value) => {
+          quota.value = value;
+        }),
+        request<Row>('/student/membership')
+          .then((value) => {
+            membership.value = value;
+          })
+          .catch((e) => {
+            if (!(e instanceof ApiError && e.status === 404)) membershipError.value = errorText(e);
+          })
+          .finally(() => {
+            membershipLoaded.value = true;
+          }),
+      ]);
+    }
   } catch (e) {
     error.value = errorText(e);
   }
 });
 async function save() {
   busy.value = true;
+  error.value = '';
+  notice.value = '';
   try {
     const body = { displayName: name.value, schoolId: school.value, majorId: major.value };
     const updated = await request<User>(`/${auth.platform}/me`, {
@@ -50,6 +72,17 @@ async function save() {
     <p class="muted">更新个人资料，查看当前可用额度。</p>
     <p v-if="error" class="error" role="alert">{{ error }}</p>
     <p v-if="notice" class="success" role="status">{{ notice }}</p>
+    <article v-if="auth.platform === 'student'" class="membership-card">
+      <h2>当前会员</h2>
+      <p v-if="membershipError" class="error" role="alert">{{ membershipError }}</p>
+      <template v-else-if="membership"
+        ><strong>{{ display(membership.state) }}</strong>
+        <p>{{ display(membership.startsAt) }} 至 {{ display(membership.expiresAt) }}</p>
+        <p class="muted">会员有效期与当前额度分别管理，实际可用量以下方账户数据为准。</p>
+      </template>
+      <p v-else-if="membershipLoaded" class="muted">当前没有有效会员</p>
+      <p v-else class="muted">正在读取会员状态…</p>
+    </article>
     <div v-if="quota" class="quota">
       <article>
         <span>可用词元</span><strong>{{ quota.availableTokens }}</strong>
@@ -85,6 +118,17 @@ async function save() {
   </section>
 </template>
 <style scoped>
+.membership-card {
+  margin-top: 24px;
+  padding: 24px;
+  background: white;
+  border: 1px solid #e2e6ef;
+  border-radius: 12px;
+}
+.membership-card h2 {
+  margin-top: 0;
+  font-size: 20px;
+}
 .profile {
   max-width: 650px;
   display: grid;

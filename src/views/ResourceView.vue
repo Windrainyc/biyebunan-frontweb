@@ -10,6 +10,7 @@ const InvitationDetail = defineAsyncComponent(() => import('../components/Invita
 const UsageDetail = defineAsyncComponent(() => import('../components/UsageDetail.vue'));
 const OrderDetail = defineAsyncComponent(() => import('../components/OrderDetail.vue'));
 const KnowledgeDetail = defineAsyncComponent(() => import('../components/KnowledgeDetail.vue'));
+const PartnerInvitation = defineAsyncComponent(() => import('../components/PartnerInvitation.vue'));
 const MembershipDetail = defineAsyncComponent(() => import('../components/MembershipDetail.vue'));
 import ReferenceName from '../components/ReferenceName.vue';
 const ForumDetail = defineAsyncComponent(() => import('../components/ForumDetail.vue'));
@@ -228,6 +229,10 @@ onMounted(() => {
         {{ resource.key === 'posts' ? '发布帖子' : '新增' + resource.title.replace('管理', '') }}
       </button>
     </div>
+    <PartnerInvitation
+      v-if="resource.key === 'users' && auth.platform === 'admin'"
+      @changed="load"
+    />
     <p v-if="notice" role="status" class="notice">{{ notice }}</p>
     <p v-if="error" class="error" role="alert">{{ error }}</p>
     <div class="data-card">
@@ -453,7 +458,12 @@ onMounted(() => {
             load();
           "
         /><MembershipDetail
-          v-if="auth.platform === 'admin' && ['users', 'membership-plans'].includes(resource.key)"
+          v-if="
+            auth.platform === 'admin' &&
+            (resource.key === 'membership-plans' ||
+              (resource.key === 'users' && detail.platform === 'student'))
+          "
+          :key="'membership-' + detail.id"
           :record="detail"
           :mode="resource.key === 'users' ? 'user' : 'plan'"
           @changed="

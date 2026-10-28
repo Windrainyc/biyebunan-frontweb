@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref, watch } from 'vue';
-import { request, errorText } from '../api/client';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { auth, request, errorText } from '../api/client';
+import { operation } from '../config/contract';
 import { writeAttempt } from '../api/attempt';
 import { display } from '../config/labels';
 import type { Page, Row } from '../types/api';
@@ -24,12 +25,28 @@ const attempt = writeAttempt(),
     props.mode === 'plan'
       ? `/admin/membership-plans/${props.record.id}/versions`
       : `/admin/users/${props.record.id}/memberships`;
+const contractPath = computed(() =>
+  props.mode === 'plan' ? '/admin/membership-plans/{id}/versions' : '/admin/users/{id}/memberships',
+);
+function allowed(method: string, path: string) {
+  const op = operation(method, path);
+  return !!op && (!op.permission || auth.permissions.includes(op.permission));
+}
+const canRead = computed(() => allowed('GET', contractPath.value));
+const canWrite = computed(() => allowed('POST', contractPath.value));
+const canRevoke = computed(() => allowed('POST', '/admin/memberships/{id}/revoke'));
 const loading = ref(false);
 let generation = 0;
 async function load() {
   const current = ++generation;
   loading.value = true;
   error.value = '';
+  if (!canRead.value) {
+    items.value = [];
+    total.value = 0;
+    loading.value = false;
+    return;
+  }
   try {
     const data = await request<Page<Row>>(path(), { query: { page: page.value, size: 20 } });
     if (current !== generation) return;
@@ -42,6 +59,7 @@ async function load() {
   }
 }
 async function submit() {
+  if (!canWrite.value) return;
   busy.value = true;
   error.value = '';
   notice.value = '';
@@ -68,7 +86,10 @@ async function submit() {
   }
 }
 async function revoke(row: Row) {
+  if (!canRevoke.value) return;
   busy.value = true;
+  error.value = '';
+  notice.value = '';
   try {
     const body = { reason: reason.value };
     await request(`/admin/memberships/${row.id}/revoke`, {
@@ -78,6 +99,7 @@ async function revoke(row: Row) {
       key: attempt({ id: row.id, ...body }),
     });
     await load();
+    notice.value = '该会员记录已撤销，其他会员记录保持不变';
   } catch (e) {
     error.value = errorText(e);
   } finally {
@@ -95,7 +117,7 @@ watch(
 onBeforeUnmount(() => generation++);
 </script>
 <template>
-  <section>
+  <section v-if="canRead || canWrite || canRevoke">
     <h3>{{ mode === 'plan' ? '会员权益版本' : '会员记录' }}</h3>
     <p v-if="error" class="error" role="alert">{{ error }}</p>
     <p v-if="notice" class="success" role="status">{{ notice }}</p>
@@ -108,6 +130,7 @@ onBeforeUnmount(() => generation++);
         ><strong>{{ display(item.state || item.status) }}</strong>
         <p>{{ display(item.startsAt) }} 至 {{ display(item.expiresAt) }}</p>
         <button
+          v-if="canRevoke"
           class="button"
           :disabled="busy || !reason || item.state === 'REVOKED'"
           @click="revoke(item)"
@@ -116,8 +139,8 @@ onBeforeUnmount(() => generation++);
         </button></template
       >
     </article>
-    <p v-if="!items.length" class="muted">暂无记录</p>
-    <div class="pagination">
+    <p v-if="canRead && !items.length" class="muted">暂无记录</p>
+    <div v-if="canRead" class="pagination">
       <button
         class="button"
         :disabled="loading || busy || page === 1"
@@ -139,7 +162,10 @@ onBeforeUnmount(() => generation++);
         下一页
       </button>
     </div>
-    <form @submit.prevent="submit">
+    <label v-if="canRevoke && !canWrite"
+      >撤销原因<input v-model="reason" maxlength="200" required
+    /></label>
+    <form v-if="canWrite" @submit.prevent="submit">
       <h3>{{ mode === 'plan' ? '新增权益版本' : '授予会员' }}</h3>
       <template v-if="mode === 'plan'"
         ><label

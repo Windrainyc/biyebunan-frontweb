@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { auth, errorText, request } from '../api/client';
 import { operation } from '../config/contract';
 import { writeAttempt } from '../api/attempt';
@@ -9,25 +9,43 @@ const hours = ref(24),
   busy = ref(false),
   error = ref('');
 const invitation = ref<{ activationUrl: string; expiresAt: string } | null>(null);
-const attempt = writeAttempt();
+let attempt = writeAttempt();
+let generation = 0;
+watch(
+  () => props.user.id,
+  () => {
+    generation++;
+    invitation.value = null;
+    error.value = '';
+    busy.value = false;
+    attempt = writeAttempt();
+  },
+);
+onBeforeUnmount(() => generation++);
 const allowed = computed(() => {
   const op = operation('POST', '/admin/users/{id}/invitations');
   return op && (!op.permission || auth.permissions.includes(op.permission));
 });
 async function issue() {
+  const current = ++generation;
   busy.value = true;
+  invitation.value = null;
   error.value = '';
   const body = { expiresInHours: hours.value };
   try {
-    invitation.value = await request(`/admin/users/${props.user.id}/invitations`, {
-      method: 'POST',
-      body,
-      key: attempt(body),
-    });
+    const result = await request<{ activationUrl: string; expiresAt: string }>(
+      `/admin/users/${props.user.id}/invitations`,
+      {
+        method: 'POST',
+        body,
+        key: attempt({ userId: props.user.id, ...body }),
+      },
+    );
+    if (current === generation) invitation.value = result;
   } catch (e) {
-    error.value = errorText(e);
+    if (current === generation) error.value = errorText(e);
   } finally {
-    busy.value = false;
+    if (current === generation) busy.value = false;
   }
 }
 </script>
