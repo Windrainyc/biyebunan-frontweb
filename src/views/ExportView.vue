@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { auth, request, errorText } from '../api/client';
 import { writeAttempt } from '../api/attempt';
 import { display } from '../config/labels';
@@ -10,11 +11,26 @@ const kind = ref('ORDERS'),
   job = ref<Row | null>(null),
   error = ref(''),
   busy = ref(false),
-  download = ref('');
+  download = ref(''),
+  restored = ref(false);
 let expiry: ReturnType<typeof setTimeout> | undefined;
 let timer: ReturnType<typeof setTimeout> | undefined,
   closed = false;
 const attempt = writeAttempt();
+const route = useRoute(),
+  router = useRouter();
+onMounted(async () => {
+  const id = route.query.job;
+  if (typeof id !== 'string') return;
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+    error.value = '导出任务编号格式不正确';
+    return;
+  }
+  restored.value = true;
+  job.value = { id, state: 'PENDING', progress: 0 };
+  busy.value = true;
+  await poll();
+});
 onBeforeUnmount(() => {
   closed = true;
   clearTimeout(timer);
@@ -40,6 +56,7 @@ async function poll() {
 }
 async function create() {
   busy.value = true;
+  restored.value = false;
   error.value = '';
   download.value = '';
   job.value = null;
@@ -52,6 +69,9 @@ async function create() {
       body,
       key: attempt(body),
     });
+    if (closed) return;
+    // 仅保存非秘密任务编号；恢复时仍经服务端检查平台、权限和创建人归属。
+    await router.replace({ query: { ...route.query, job: String(job.value.id) } });
     await poll();
   } catch (e) {
     error.value = errorText(e);
@@ -108,6 +128,8 @@ async function getDownload() {
     <p v-if="error" class="error" role="alert">{{ error }}</p>
     <section v-if="job" class="card export-result">
       <h2>导出任务</h2>
+      <p v-if="restored" class="muted">已恢复之前的导出任务。上方表单用于创建新任务。</p>
+      <p v-if="job.createdAt">创建时间：{{ display(job.createdAt) }}</p>
       <p>状态：{{ display(job.state) }} · 进度：{{ job.progress }}%</p>
       <p v-if="job.errorCode" class="error">任务未完成，请在异步任务中查看处理结果。</p>
       <button class="button" @click="poll">刷新进度</button
