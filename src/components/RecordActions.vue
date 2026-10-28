@@ -70,6 +70,7 @@ const actions = computed(() =>
   (definitions[props.resourceKey] || [])
     .map((d) => ({ ...d, path: `/${auth.platform}/${d.path}` }))
     .filter((d) => {
+      if (props.resourceKey === 'adjudications' && props.record.state !== 'PENDING') return false;
       if (d.path.endsWith('/acceptance') && props.record.stage !== 'ACCEPTANCE') return false;
       if (
         d.path.endsWith('/knowledge/{id}/submit-review') &&

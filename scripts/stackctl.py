@@ -53,6 +53,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('action', choices=['start', 'stop', 'status'])
     parser.add_argument('--fixtures', action='store_true', help='显式开启本机HTTPS短信/模型协议夹具，禁止用于生产')
+    parser.add_argument('--video', action='store_true', help='显式启用宿主FFmpeg视频处理，须已安装ffmpeg和ffprobe')
     parser.add_argument('--build', action='store_true', help='启动前重新构建三个前端镜像')
     args = parser.parse_args()
     os.umask(0o077)
@@ -110,7 +111,8 @@ def main():
                 time.sleep(1)
             else:
                 raise RuntimeError('API未在90秒内就绪')
-            worker = launch('worker', 'start-ui-worker.py', ['--test-model'] if args.fixtures else [])
+            worker_options = (['--test-model'] if args.fixtures else []) + (['--video'] if args.video else [])
+            worker = launch('worker', 'start-ui-worker.py', worker_options)
             # worker无HTTP端口，确认启动日志，不能以进程存在冒充就绪。
             directory = Path(verification['credentialFile']).parent
             for _ in range(60):

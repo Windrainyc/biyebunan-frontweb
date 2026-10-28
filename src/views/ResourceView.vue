@@ -2,7 +2,7 @@
 import { writeAttempt } from '../api/attempt';
 import { computed, onMounted, ref, defineAsyncComponent } from 'vue';
 import { auth, request, errorText } from '../api/client';
-import { operation, schema } from '../config/contract';
+import { operation, schema, updateMethod } from '../config/contract';
 import { label, display } from '../config/labels';
 import type { Resource } from '../config/resources';
 import type { Row, Page } from '../types/api';
@@ -73,16 +73,22 @@ function allowed(method: string, path: string) {
   return !!op && (!op.permission || auth.permissions.includes(op.permission));
 }
 const canCreate = computed(() => !props.resource.readonly && allowed('POST', props.resource.path));
+const editMethod = computed(() => updateMethod(props.resource.path));
 const canEdit = computed(
-  () => !props.resource.readonly && allowed('PUT', props.resource.path + '/{id}'),
+  () =>
+    !props.resource.readonly &&
+    !!editMethod.value &&
+    allowed(editMethod.value, props.resource.path + '/{id}'),
 );
 const canDelete = computed(
   () => !props.resource.readonly && allowed('DELETE', props.resource.path + '/{id}'),
 );
 const fields = computed(() =>
   schema(
-    operation(editing.value ? 'PUT' : 'POST', props.resource.path + (editing.value ? '/{id}' : ''))
-      ?.body,
+    operation(
+      editing.value ? editMethod.value || 'PUT' : 'POST',
+      props.resource.path + (editing.value ? '/{id}' : ''),
+    )?.body,
   ),
 );
 const properties = computed(() =>
@@ -160,7 +166,7 @@ async function save() {
   try {
     const body = formBody(fields.value, form.value);
     await request(props.resource.path + (editing.value ? '/' + editing.value.id : ''), {
-      method: editing.value ? 'PUT' : 'POST',
+      method: editing.value ? editMethod.value : 'POST',
       body,
       version: editing.value?.version,
       key: attempt(body),

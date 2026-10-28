@@ -5,6 +5,7 @@ import { auth, logout, errorText } from '../api/client';
 import { resources, platformNames } from '../config/resources';
 import { loadNavigation, navigationLinks, type Menu } from '../api/navigation';
 import { operation } from '../config/contract';
+import { utilityNavigation } from '../config/navigation-access';
 import PageLoadError from '../components/PageLoadError.vue';
 import type { Component } from 'vue';
 function page(loader: () => Promise<{ default: Component }>) {
@@ -52,17 +53,12 @@ onUnmounted(() => {
   navigationGeneration++;
   window.removeEventListener('focus', refreshNavigation);
 });
+const utilityLinks = computed(() => utilityNavigation(platform.value, auth.permissions));
 const knownPaths = computed(
   () =>
     new Set([
       ...entries.value.map((r) => `/${platform.value}/${r.key}`),
-      ...[
-        'statistics',
-        'notifications',
-        ...(platform.value === 'student'
-          ? ['search', 'profile', 'bind-order', 'chat']
-          : ['exports', ...(platform.value === 'admin' ? ['chat-audit'] : ['profile'])]),
-      ].map((p) => `/${platform.value}/${p}`),
+      ...utilityLinks.value.map((entry) => entry.path),
     ]),
 );
 const configuredLinks = computed(() =>
@@ -108,27 +104,9 @@ async function exit() {
           <p v-if="!configuredLinks.length">暂无可用导航，请联系管理员。</p>
         </template>
         <template v-else>
-          <RouterLink v-if="platform === 'student'" to="/student/search"
-            ><Icon name="book" />知识检索</RouterLink
-          >
-          <RouterLink v-if="platform !== 'student'" :to="`/${platform}/exports`"
-            ><Icon name="file" />数据导出</RouterLink
-          ><RouterLink
-            v-if="platform === 'admin' && auth.permissions.includes('chat:audit')"
-            to="/admin/chat-audit"
-            ><Icon name="shield" />答疑会话审计</RouterLink
-          >
-          <RouterLink v-if="platform !== 'admin'" :to="`/${platform}/profile`"
-            ><Icon name="users" />我的账户</RouterLink
-          >
-          <RouterLink v-if="platform === 'student'" to="/student/bind-order"
-            ><Icon name="bag" />绑定订单</RouterLink
-          >
-          <RouterLink :to="`/${platform}/statistics`"><Icon name="activity" />数据统计</RouterLink
-          ><RouterLink :to="`/${platform}/notifications`"><Icon name="bell" />消息通知</RouterLink>
-          <RouterLink v-if="platform === 'student'" to="/student/chat"
-            ><Icon name="message" />在线答疑</RouterLink
-          >
+          <RouterLink v-for="entry in utilityLinks" :key="entry.key" :to="entry.path">
+            <Icon :name="entry.icon" />{{ entry.title }}
+          </RouterLink>
           <section v-for="group in groups" :key="group">
             <h3>{{ group }}</h3>
             <RouterLink

@@ -53,3 +53,5 @@ python3 scripts/stackctl.py stop
 仅在本机协议联调时使用 `start --fixtures`，显式启用本机HTTPS短信与确定性模型服务，不连接付费供应商。凭据位置以后端docs/ui-verification-state.json为准，勿提交或粘贴到报告。此模式切换后端精确Origin到18780/18781/18782，开发端18770/18771/18772的认证写入不再接受；要回到Vite模式须停止本入口并按后端开发说明恢复API。
 
 停止时只终止记录且身份一致的进程、停止zhixiang-ui容器，不清空卷、不停止中间件。日志在.runtime/stack和后端受保护目录。当前组合使用前端容器与宿主API/worker；独立API/worker镜像另经启动验证，不等于已实现跨主机高可用。
+
+本机视频联调可使用 `python3 scripts/stackctl.py start --fixtures --video`；`--video` 要求已安装 FFmpeg/ffprobe，显式启用隔离 worker 转码，默认关闭。该模式不启用 ASR/OCR。
