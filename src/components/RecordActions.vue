@@ -70,6 +70,8 @@ const actions = computed(() =>
   (definitions[props.resourceKey] || [])
     .map((d) => ({ ...d, path: `/${auth.platform}/${d.path}` }))
     .filter((d) => {
+      // 举报结论只能从OPEN产生；终态不再提供重复处理入口，服务端仍执行CAS与状态校验。
+      if (props.resourceKey === 'reports' && props.record.state !== 'OPEN') return false;
       if (props.resourceKey === 'adjudications' && props.record.state !== 'PENDING') return false;
       if (d.path.endsWith('/acceptance') && props.record.stage !== 'ACCEPTANCE') return false;
       if (
