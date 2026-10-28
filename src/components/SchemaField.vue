@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Schema } from '../types/api';
-import { requiresSelection } from '../config/form';
+import { localDateTime, requiresSelection } from '../config/form';
 import { label, display } from '../config/labels';
 import ReferenceField from './ReferenceField.vue';
 const props = defineProps<{
@@ -16,13 +16,6 @@ function input(event: Event) {
 }
 function required() {
   return requiresSelection(props.field, props.required);
-}
-function localTime(value: unknown) {
-  if (!value) return '';
-  const date = new Date(String(value));
-  if (Number.isNaN(date.getTime())) return String(value);
-  const offset = date.getTimezoneOffset() * 60000;
-  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
 }
 </script>
 <template>
@@ -68,7 +61,7 @@ function localTime(value: unknown) {
     @input="input"
   /><input
     v-else
-    :value="field.format === 'date-time' ? localTime(modelValue) : String(modelValue ?? '')"
+    :value="field.format === 'date-time' ? localDateTime(modelValue) : String(modelValue ?? '')"
     :type="
       field.writeOnly
         ? 'password'
@@ -80,6 +73,7 @@ function localTime(value: unknown) {
               ? 'date'
               : 'text'
     "
+    :step="field.format === 'date-time' ? '0.001' : field.type === 'number' ? 'any' : undefined"
     :min="field.minimum"
     :max="field.maximum"
     :minlength="field.minLength"

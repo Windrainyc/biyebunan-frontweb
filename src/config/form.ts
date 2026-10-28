@@ -32,3 +32,11 @@ export function requiresSelection(field: Schema, required = false): boolean {
   if (!required || (Array.isArray(field.type) && field.type.includes('null'))) return false;
   return field.type !== 'array' || (field.minItems ?? 0) > 0;
 }
+
+/** 将时间转换为浏览器本地输入值，保留秒和毫秒，避免编辑计划时间时截断精度。 */
+export function localDateTime(value: unknown): string {
+  if (!value) return '';
+  const date = new Date(String(value));
+  if (Number.isNaN(date.getTime())) return String(value);
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 23);
+}
