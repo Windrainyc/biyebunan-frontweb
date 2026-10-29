@@ -6,7 +6,8 @@ import { onMounted, onBeforeUnmount, ref, computed } from 'vue';
 import { auth, ApiError, request, errorText } from '../api/client';
 import { writeAttempt } from '../api/attempt';
 import { events } from '../api/stream';
-import { mergeMessagePage } from '../api/messages';
+import { useConversationHistory } from '../composables/useConversationHistory';
+import MarkdownContent from '../components/MarkdownContent.vue';
 import type { Page, Row } from '../types/api';
 interface Citation {
   sourceType: string;
@@ -32,7 +33,6 @@ const conversations = ref<Row[]>([]),
   project = ref(''),
   model = ref(''),
   text = ref(''),
-  messages = ref<Row[]>([]),
   answer = ref(''),
   error = ref(''),
   busy = ref(false),
@@ -52,7 +52,7 @@ const contextProject = computed(() =>
   ),
 );
 async function chooseConversation(id: string) {
-  if (busy.value) return;
+  if (busy.value || pending.value) return;
   conversation.value = id;
   answer.value = '';
   disconnected.value = false;
@@ -63,10 +63,21 @@ const run = ref<Row | null>(null),
   pending = ref<{ key: string; body: Record<string, unknown> } | null>(null);
 let controller: AbortController | undefined;
 const conversationAttempt = writeAttempt();
-const historyPage = ref(1),
-  historyTotal = ref(0),
-  historyLoading = ref(false);
-let historyGeneration = 0;
+const historyState = useConversationHistory(
+  () => conversation.value,
+  (id, page) =>
+    request<Page<Row>>(`/student/conversations/${id}/messages`, {
+      query: { page, size: 20, sort: 'createdAt:desc' },
+    }),
+  errorText,
+);
+const {
+  messages,
+  total: historyTotal,
+  loading: historyLoading,
+  error: historyError,
+  load: history,
+} = historyState;
 const storageKey = () => `zx:active-run:${auth.user?.id}`;
 async function resumeSaved() {
   const id = sessionStorage.getItem(storageKey());
@@ -88,15 +99,22 @@ async function resumeSaved() {
 }
 type Catalog = 'conversations' | 'projects' | 'models';
 const catalogs = {
-  conversations: { rows: conversations, page: ref(0), total: ref(0), loading: ref(false) },
-  projects: { rows: projects, page: ref(0), total: ref(0), loading: ref(false) },
-  models: { rows: models, page: ref(0), total: ref(0), loading: ref(false) },
+  conversations: {
+    rows: conversations,
+    page: ref(0),
+    total: ref(0),
+    loading: ref(false),
+    error: ref(''),
+  },
+  projects: { rows: projects, page: ref(0), total: ref(0), loading: ref(false), error: ref('') },
+  models: { rows: models, page: ref(0), total: ref(0), loading: ref(false), error: ref('') },
 };
 let disposed = false;
 async function loadCatalog(name: Catalog) {
   const catalog = catalogs[name];
   if (catalog.loading.value) return;
   catalog.loading.value = true;
+  catalog.error.value = '';
   try {
     const next = catalog.page.value + 1;
     const result = await request<Page<Row>>(`/student/${name}`, {
@@ -107,8 +125,10 @@ async function loadCatalog(name: Catalog) {
     catalog.rows.value.push(...result.items.filter((row) => !seen.has(row.id)));
     catalog.page.value = next;
     catalog.total.value = result.total;
+    if (name === 'models' && !model.value && !pending.value)
+      model.value = String(models.value[0]?.id || '');
   } catch (e) {
-    if (!disposed) error.value = errorText(e);
+    if (!disposed) catalog.error.value = errorText(e);
   } finally {
     if (!disposed) catalog.loading.value = false;
   }
@@ -143,30 +163,8 @@ async function initialize() {
     if (!disposed) error.value = errorText(e);
   }
 }
-async function history(older = false) {
-  const id = conversation.value;
-  const generation = ++historyGeneration;
-  if (!id) {
-    messages.value = [];
-    historyTotal.value = 0;
-    return;
-  }
-  historyLoading.value = true;
-  const page = older ? historyPage.value + 1 : 1;
-  try {
-    const data = await request<Page<Row>>(`/student/conversations/${id}/messages`, {
-      query: { page, size: 20, sort: 'createdAt:desc' },
-    });
-    if (generation !== historyGeneration || conversation.value !== id) return;
-    // 接口按新到旧分页；聊天按旧到新展示，重叠页按消息ID去重。
-    messages.value = mergeMessagePage(data.items, older ? messages.value : []);
-    historyPage.value = page;
-    historyTotal.value = data.total;
-  } catch (e) {
-    if (generation === historyGeneration) error.value = errorText(e);
-  } finally {
-    if (generation === historyGeneration) historyLoading.value = false;
-  }
+async function retryHistory() {
+  if ((await historyState.retry()) && !busy.value) answer.value = '';
 }
 async function subscribe() {
   if (!run.value?.id) return;
@@ -188,8 +186,7 @@ async function subscribe() {
       pending.value = null;
       sessionStorage.removeItem(storageKey());
       busy.value = false;
-      await history();
-      answer.value = '';
+      if (await history()) answer.value = '';
     } else disconnected.value = true;
   } catch (e) {
     if (!activeController.signal.aborted) {
@@ -263,14 +260,14 @@ async function cancel() {
 onMounted(initialize);
 onBeforeUnmount(() => {
   disposed = true;
-  historyGeneration++;
+  historyState.dispose();
   controller?.abort();
 });
 </script>
 <template>
   <section class="student-chat-layout">
     <aside class="student-chat-sidebar" aria-label="对话列表">
-      <button class="button" :disabled="busy" @click="chooseConversation('')">
+      <button class="button" :disabled="busy || !!pending" @click="chooseConversation('')">
         <Icon name="plus" />新建对话</button
       ><input
         v-model="conversationSearch"
@@ -282,14 +279,22 @@ onBeforeUnmount(() => {
         <button
           v-for="item in filteredConversations"
           :key="String(item.id)"
-          :disabled="busy"
+          :disabled="busy || !!pending"
           :class="{ selected: String(item.id) === conversation }"
           @click="chooseConversation(String(item.id))"
         >
           <strong>{{ item.title }}</strong
           ><small>{{ display(item.updatedAt || item.createdAt) }}</small>
         </button>
-        <p v-if="!filteredConversations.length" class="muted">暂无匹配对话</p>
+        <p v-if="!filteredConversations.length" class="muted">
+          {{
+            catalogs.conversations.loading.value
+              ? '正在读取对话…'
+              : catalogs.conversations.error.value
+                ? '对话读取失败，请重试'
+                : '暂无匹配对话'
+          }}
+        </p>
       </div>
       <RouterLink to="/student/profile" class="text-button">查看账户与可用额度</RouterLink>
     </aside>
@@ -299,35 +304,60 @@ onBeforeUnmount(() => {
       <p v-if="error" class="error" role="alert">{{ error }}</p>
       <p v-if="source" class="notice">
         本次引用：{{ sourceTitle
-        }}<button class="button" :disabled="busy" @click="source = ''">移除引用</button>
+        }}<button class="button" :disabled="busy || !!pending" @click="source = ''">
+          移除引用
+        </button>
       </p>
       <div class="chat-controls">
-        <select v-if="!conversation" v-model="project" aria-label="选择项目">
+        <select
+          v-if="!conversation"
+          v-model="project"
+          :disabled="busy || !!pending"
+          aria-label="选择项目"
+        >
           <option value="">请选择项目</option>
           <option v-for="p in projects" :key="String(p.id)" :value="p.id">
             {{ p.title }}
           </option></select
-        ><select v-model="model" :disabled="busy" aria-label="选择模型">
+        ><select v-model="model" :disabled="busy || !!pending" aria-label="选择模型">
           <option value="">请选择可用模型</option>
           <option v-for="m in models" :key="String(m.id)" :value="m.id">
             {{ m.name }}
           </option>
         </select>
       </div>
-      <div class="chat-controls">
+      <div
+        v-if="
+          Object.values(catalogs).some((c) => c.error.value || c.rows.value.length < c.total.value)
+        "
+        class="chat-controls"
+      >
         <template v-for="(catalog, name) in catalogs" :key="name">
           <button
-            v-if="catalog.rows.value.length < catalog.total.value"
+            v-if="catalog.error.value || catalog.rows.value.length < catalog.total.value"
             class="button"
             :disabled="busy || catalog.loading.value"
             @click="loadCatalog(name)"
           >
-            加载更多{{ name === 'conversations' ? '会话' : name === 'projects' ? '项目' : '模型' }}
+            {{ catalog.error.value ? '重试读取' : '加载更多'
+            }}{{ name === 'conversations' ? '会话' : name === 'projects' ? '项目' : '模型' }}
           </button>
+          <span v-if="catalog.error.value" class="error" role="alert">{{
+            catalog.error.value
+          }}</span>
         </template>
       </div>
-      <p v-if="!models.length" class="notice">当前没有可用模型，请联系平台管理员配置。</p>
-      <div class="messages">
+      <p v-if="!models.length && catalogs.models.page.value > 0" class="notice">
+        当前没有可用模型，请联系平台管理员配置。
+      </p>
+      <div class="messages" :aria-busy="historyLoading">
+        <p v-if="historyError" class="error" role="alert">
+          {{ historyError }}
+          <button class="button" :disabled="historyLoading" @click="retryHistory">
+            重试读取消息
+          </button>
+        </p>
+        <p v-if="historyLoading" class="muted" role="status">正在读取消息…</p>
         <button
           v-if="messages.length < historyTotal"
           class="button"
@@ -342,7 +372,8 @@ onBeforeUnmount(() => {
           :class="['message', message.role === 'USER' ? 'mine' : '']"
         >
           <strong>{{ message.role === 'USER' ? '我的提问' : '智能答疑' }}</strong>
-          <p>{{ message.text }}</p>
+          <p v-if="message.role === 'USER'">{{ message.text }}</p>
+          <MarkdownContent v-else :text="String(message.text || '')" />
           <details v-if="citations(message).length">
             <summary>查看回答引用（{{ citations(message).length }}）</summary>
             <blockquote v-for="citation in citations(message)" :key="citation.chunkId">
@@ -357,9 +388,11 @@ onBeforeUnmount(() => {
         </article>
         <article v-if="answer" class="message">
           <strong>智能答疑</strong>
-          <p>{{ answer }}</p>
+          <MarkdownContent :text="answer" />
         </article>
-        <p v-if="!messages.length && !answer" class="empty">选择项目后，输入你的第一个问题。</p>
+        <p v-if="!messages.length && !answer && !historyLoading && !historyError" class="empty">
+          {{ conversation ? '这段对话还没有消息。' : '选择项目后，输入你的第一个问题。' }}
+        </p>
       </div>
       <div v-if="disconnected" class="notice">
         连接已中断，重新连接只获取已保存的回答，不会重新发起模型调用。<button
@@ -369,18 +402,25 @@ onBeforeUnmount(() => {
           重新连接
         </button>
       </div>
+      <p v-if="pending && !busy" class="notice" role="status">
+        上次提问的提交结果尚未确认。请重试同一次提问，模型和会话暂时锁定，避免重复创建与计费。
+      </p>
       <form class="composer" @submit.prevent="send">
         <textarea
           v-model="text"
-          rows="4"
+          rows="2"
           maxlength="16000"
           placeholder="描述你的问题、报错信息或需要解释的代码"
+          aria-label="提问正文"
           :disabled="busy || !!pending"
         />
         <div>
           <span class="muted">{{ text.length }} / 16000</span
           ><button v-if="busy && run" type="button" class="button" @click="cancel">停止答疑</button
-          ><button class="button primary" :disabled="busy || !models.length">
+          ><button
+            class="button primary"
+            :disabled="busy || (!pending && (!model || !text.trim()))"
+          >
             {{ pending ? '重试同一次提问' : '发送问题' }}
           </button>
         </div>
@@ -415,7 +455,7 @@ onBeforeUnmount(() => {
 .chat-controls {
   display: flex;
   gap: 12px;
-  margin: 24px 0;
+  margin: 12px 0;
   flex-wrap: wrap;
 }
 .messages {
@@ -445,7 +485,7 @@ onBeforeUnmount(() => {
   overflow-wrap: anywhere;
 }
 .composer {
-  margin-top: 20px;
+  margin-top: 12px;
 }
 .composer textarea {
   width: 100%;
