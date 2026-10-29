@@ -144,3 +144,68 @@ body .workspace .filter-actions {
   gap: 10px;
   flex: 0 0 auto;
 }
+
+/* 独立操作页也遵守相同字段间距，避免整行按钮与无边界表单混用。 */
+body .workspace .audit-form,
+body .workspace .binding-form {
+  max-width: 720px;
+  padding: 24px;
+  gap: 20px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: white;
+}
+body .workspace .audit-form > .button,
+body .workspace .binding-form > .button {
+  justify-self: end;
+  min-width: 112px;
+}
+body .workspace .search-form {
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+body .workspace .search-form > input {
+  flex: 1 1 240px;
+  min-width: 180px;
+  max-width: 420px;
+}
+body .workspace .search-form > select {
+  flex: 0 1 172px;
+  min-width: 140px;
+}
+body .workspace .audit-grid {
+  grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr);
+  align-items: start;
+}
+body .workspace .audit-grid > section {
+  min-width: 0;
+}
+body .workspace .audit-grid h2,
+body .workspace .audit-grid h3,
+body .workspace .audit-grid .prose {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 800px) {
+  body .workspace .audit-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  body .workspace .audit-form,
+  body .workspace .binding-form,
+  body .workspace .search-form {
+    padding: 16px;
+  }
+  body .workspace .search-form > input {
+    flex-basis: 100%;
+    max-width: none;
+  }
+  body .workspace .search-form > select {
+    flex: 1 1 140px;
+    min-width: 0;
+  }
+}
