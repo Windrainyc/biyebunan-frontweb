@@ -38,6 +38,7 @@ const conversations = ref<Row[]>([]),
   busy = ref(false),
   disconnected = ref(false);
 const conversationSearch = ref('');
+const conversationListOpen = ref(false);
 const filteredConversations = computed(() =>
   conversations.value.filter((c) => String(c.title).includes(conversationSearch.value)),
 );
@@ -53,6 +54,7 @@ const contextProject = computed(() =>
 );
 async function chooseConversation(id: string) {
   if (busy.value || pending.value) return;
+  conversationListOpen.value = false;
   conversation.value = id;
   answer.value = '';
   disconnected.value = false;
@@ -266,7 +268,20 @@ onBeforeUnmount(() => {
 </script>
 <template>
   <section class="student-chat-layout">
-    <aside class="student-chat-sidebar" aria-label="对话列表">
+    <button
+      class="button conversation-toggle"
+      :aria-expanded="conversationListOpen"
+      aria-controls="conversation-list-panel"
+      @click="conversationListOpen = !conversationListOpen"
+    >
+      <Icon name="menu" />{{ conversationListOpen ? '收起对话列表' : '选择或新建对话' }}
+    </button>
+    <aside
+      id="conversation-list-panel"
+      class="student-chat-sidebar"
+      :class="{ 'is-open': conversationListOpen }"
+      aria-label="对话列表"
+    >
       <button class="button" :disabled="busy || !!pending" @click="chooseConversation('')">
         <Icon name="plus" />新建对话</button
       ><input
@@ -452,6 +467,16 @@ onBeforeUnmount(() => {
   </section>
 </template>
 <style scoped>
+.conversation-toggle {
+  display: none;
+}
+@media (max-width: 800px) {
+  .conversation-toggle {
+    display: flex;
+    margin: 12px 16px 0;
+    justify-self: start;
+  }
+}
 .chat-controls {
   display: flex;
   gap: 12px;

@@ -654,6 +654,8 @@ body .student-workspace .student-chat-main .composer {
   box-shadow: 0 8px 24px #14213b08;
 }
 .student-chat-main .composer textarea {
+  min-height: 64px;
+  max-height: 160px;
   border: 0;
   resize: vertical;
 }
@@ -1453,5 +1455,32 @@ body .student-posts .filters {
     height: 30px;
     font-size: 15px;
     border-radius: 9px;
+  }
+}
+
+/* 小尺寸先保证消息正文宽度，会话目录按需展开，桌面保持三栏。 */
+@media (max-width: 800px) {
+  .student-chat-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .student-chat-sidebar {
+    display: none;
+  }
+  .student-chat-sidebar.is-open {
+    display: flex;
+    max-height: 300px;
+    overflow: auto;
+    border-right: 0;
+    border-bottom: 1px solid #e5e8ef;
+  }
+  .student-chat-main {
+    padding: 20px 16px;
+  }
+  .student-chat-main .chat-controls select {
+    max-width: 100%;
+  }
+  body .student-workspace .student-chat-main .messages {
+    min-height: 180px;
+    max-height: 45vh;
   }
 }
