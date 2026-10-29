@@ -282,7 +282,7 @@ watch(() => [...props.visiblePaths].sort().join('|'), load, { immediate: true })
     <div class="summary-grid">
       <article v-for="card in cards" :key="card.key" class="summary-card">
         <span>{{ card.title }}</span
-        ><Icon :name="card.icon" /><strong>{{ card.value }}</strong
+        ><Icon :name="card.icon" variant="prism" /><strong>{{ card.value }}</strong
         ><small>{{ card.unit }}</small
         ><svg
           v-if="metrics !== null && card.key !== 'students'"
@@ -356,7 +356,7 @@ watch(() => [...props.visiblePaths].sort().join('|'), load, { immediate: true })
           :key="task.key"
           :to="{ path: `/admin/${task.key}`, query: task.query }"
           class="management-todo"
-          ><Icon :name="task.icon" />
+          ><Icon :name="task.icon" variant="prism" />
           <div>
             <strong>{{ task.title }}</strong
             ><small>{{ task.hint }}</small>

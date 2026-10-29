@@ -185,7 +185,7 @@ onBeforeUnmount(() => generation++);
     <div v-if="auth.platform !== 'student'" class="summary-grid">
       <article v-for="card in cards" :key="card.key" class="summary-card">
         <span>{{ card.title }}</span
-        ><Icon :name="card.icon" /><strong>{{ total(card.key) }}</strong
+        ><Icon :name="card.icon" variant="prism" /><strong>{{ total(card.key) }}</strong
         ><small>{{ card.unit }}</small>
       </article>
     </div>
@@ -276,7 +276,7 @@ onBeforeUnmount(() => generation++);
           v-for="entry in availableEntries"
           :key="entry.key"
           :to="`/${auth.platform}/${entry.key}`"
-          ><Icon :name="entry.icon" /><span>{{ entry.title }}</span
+          ><Icon :name="entry.icon" variant="prism" /><span>{{ entry.title }}</span
           ><Icon name="right"
         /></RouterLink>
         <p v-if="!availableEntries.length" class="muted">暂无可用导航，请联系管理员配置。</p>
