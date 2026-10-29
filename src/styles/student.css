@@ -817,3 +817,18 @@ body .student-workspace .student-chat-main .message:not(.mine) {
   background: white;
   padding-left: 0;
 }
+
+.student-knowledge-layout {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.student-knowledge-layout > .data-card {
+  min-width: 0;
+}
+@media (max-width: 800px) {
+  .student-knowledge-layout {
+    grid-template-columns: 1fr;
+  }
+}

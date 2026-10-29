@@ -19,6 +19,7 @@ import RecordActions from '../components/RecordActions.vue';
 const ProjectDetail = defineAsyncComponent(() => import('../components/ProjectDetail.vue'));
 import StatusBadge from '../components/StatusBadge.vue';
 import Icon from '../components/Icon.vue';
+import KnowledgeCategoryNav from '../components/KnowledgeCategoryNav.vue';
 import { formBody, requiresSelection } from '../config/form';
 import SchemaField from '../components/SchemaField.vue';
 let attempt = writeAttempt();
@@ -282,193 +283,209 @@ onMounted(() => {
     />
     <p v-if="notice" role="status" class="notice">{{ notice }}</p>
     <p v-if="error" class="error" role="alert">{{ error }}</p>
-    <div v-if="!(detail && studentCards && resource.key === 'projects')" class="data-card">
-      <form class="filters" @submit.prevent="search">
-        <input
-          v-if="queryNames.has('q')"
-          v-model="q"
-          placeholder="输入关键词搜索"
-          aria-label="搜索关键词"
-          maxlength="100"
-        /><select v-if="queryNames.has('status')" v-model="status" aria-label="筛选状态">
-          <option value="">全部状态</option>
-          <option v-for="value in statusOptions" :key="String(value)" :value="value">
-            {{ display(value) }}
-          </option></select
-        ><select v-if="sorts.length" v-model="sort" aria-label="排序">
-          <option v-for="s in sorts" :key="s" :value="s">
-            {{
-              s === 'createdAt:asc'
-                ? '创建时间从早到晚'
-                : s === 'updatedAt:desc'
-                  ? '最近更新优先'
-                  : '最近创建优先'
-            }}
-          </option></select
-        ><button class="button primary" :disabled="loading">查询</button
-        ><button
-          type="button"
-          class="button"
-          :disabled="loading"
-          @click="
-            q = '';
-            status = '';
-            extraFilters = {};
-            sort = sorts[0] || '';
-            search();
-          "
-        >
-          重置
-        </button>
-        <details v-if="extraFields.length" class="advanced-filters">
-          <summary>更多筛选条件</summary>
-          <div class="form-grid">
-            <label v-for="field in extraFields" :key="field.key">
-              {{ label(field.key) }}
-              <SchemaField
-                v-model="extraFilters[field.key]"
-                :field="field"
-                :context="resource.key"
-                :filters="field.key === 'majorId' ? { schoolId: extraFilters.schoolId } : {}"
-              />
-            </label>
-          </div>
-        </details>
-      </form>
-      <div v-if="studentCards" class="student-resource-grid" :aria-busy="loading">
-        <article v-for="(row, index) in rows" :key="row.id || index" class="student-resource-card">
-          <div
-            v-if="resource.key === 'knowledge'"
-            class="student-knowledge-cover"
-            :class="`cover-${index % 3}`"
+    <div :class="{ 'student-knowledge-layout': studentCards && resource.key === 'knowledge' }">
+      <KnowledgeCategoryNav
+        v-if="studentCards && resource.key === 'knowledge'"
+        :model-value="extraFilters.categoryId"
+        @update:model-value="
+          extraFilters.categoryId = $event;
+          search();
+        "
+      />
+      <div v-if="!(detail && studentCards && resource.key === 'projects')" class="data-card">
+        <form class="filters" @submit.prevent="search">
+          <input
+            v-if="queryNames.has('q')"
+            v-model="q"
+            placeholder="输入关键词搜索"
+            aria-label="搜索关键词"
+            maxlength="100"
+          /><select v-if="queryNames.has('status')" v-model="status" aria-label="筛选状态">
+            <option value="">全部状态</option>
+            <option v-for="value in statusOptions" :key="String(value)" :value="value">
+              {{ display(value) }}
+            </option></select
+          ><select v-if="sorts.length" v-model="sort" aria-label="排序">
+            <option v-for="s in sorts" :key="s" :value="s">
+              {{
+                s === 'createdAt:asc'
+                  ? '创建时间从早到晚'
+                  : s === 'updatedAt:desc'
+                    ? '最近更新优先'
+                    : '最近创建优先'
+              }}
+            </option></select
+          ><button class="button primary" :disabled="loading">查询</button
+          ><button
+            type="button"
+            class="button"
+            :disabled="loading"
+            @click="
+              q = '';
+              status = '';
+              extraFilters = {};
+              sort = sorts[0] || '';
+              search();
+            "
           >
-            <span
-              ><Icon :name="row.type === 'VIDEO' ? 'video' : 'book'" />{{ display(row.type) }}</span
-            ><b>{{ String((page - 1) * size + index + 1).padStart(2, '0') }}</b>
-          </div>
-          <div class="student-resource-card-body">
-            <div class="student-resource-meta">
-              <Icon :name="resource.icon" /><StatusBadge
-                v-if="row.stage || row.state"
-                :value="String(row.stage || row.state)"
-              /><span v-else>知识资料</span>
+            重置
+          </button>
+          <details v-if="extraFields.length" class="advanced-filters">
+            <summary>更多筛选条件</summary>
+            <div class="form-grid">
+              <label v-for="field in extraFields" :key="field.key">
+                {{ label(field.key) }}
+                <SchemaField
+                  v-model="extraFilters[field.key]"
+                  :field="field"
+                  :context="resource.key"
+                  :filters="field.key === 'majorId' ? { schoolId: extraFilters.schoolId } : {}"
+                />
+              </label>
             </div>
-            <h2>
-              <button @click="inspect(row)">{{ display(row.title) }}</button>
-            </h2>
-            <p v-if="row.description || row.summary">{{ row.description || row.summary }}</p>
-            <div v-if="resource.key === 'projects'" class="student-project-progress">
-              <span>项目完成度 {{ row.progress }}%</span
-              ><progress
-                :value="Number(row.progress) || 0"
-                max="100"
-                aria-label="项目完成度"
-              ></progress
-              ><small>计划交付 {{ display(row.deliveryDate) }}</small>
+          </details>
+        </form>
+        <div v-if="studentCards" class="student-resource-grid" :aria-busy="loading">
+          <article
+            v-for="(row, index) in rows"
+            :key="row.id || index"
+            class="student-resource-card"
+          >
+            <div
+              v-if="resource.key === 'knowledge'"
+              class="student-knowledge-cover"
+              :class="`cover-${index % 3}`"
+            >
+              <span
+                ><Icon :name="row.type === 'VIDEO' ? 'video' : 'book'" />{{
+                  display(row.type)
+                }}</span
+              ><b>{{ String((page - 1) * size + index + 1).padStart(2, '0') }}</b>
             </div>
-            <div class="student-resource-meta">
-              <ReferenceName
-                v-if="row.categoryId"
-                field="categoryId"
-                :value="row.categoryId"
-              /><ReferenceName v-if="row.boardId" field="boardId" :value="row.boardId" /><span
-                v-if="row.updatedAt || row.createdAt"
-                >{{ display(row.updatedAt || row.createdAt) }}</span
-              >
-            </div>
-            <div class="student-resource-actions">
-              <button class="text-button" @click="inspect(row)">
-                {{
-                  resource.key === 'projects'
-                    ? '查看项目与交付'
-                    : resource.key === 'knowledge'
-                      ? '阅读资料'
-                      : '查看讨论'
-                }}
-                <Icon name="right" /></button
-              ><button v-if="canEdit" class="text-button" @click="open(row)">编辑</button
-              ><button v-if="canDelete" class="text-button danger" @click="askDelete(row)">
-                删除
-              </button>
-            </div>
-          </div>
-        </article>
-        <p v-if="!rows.length" class="empty">
-          {{
-            loading ? '正在读取数据…' : listFailed ? '读取失败，请重新查询' : '暂无符合条件的数据'
-          }}
-        </p>
-      </div>
-      <div v-else class="table-scroll" :aria-busy="loading">
-        <table>
-          <thead>
-            <tr>
-              <th v-for="column in resource.columns" :key="column">
-                {{ label(column) }}
-              </th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(row, index) in rows" :key="row.id || index">
-              <td v-for="column in resource.columns" :key="column">
-                <StatusBadge
-                  v-if="['state', 'status', 'stage'].includes(column)"
-                  :value="String(row[column] || '')"
-                /><ReferenceName
-                  v-else-if="column.endsWith('Id')"
-                  :field="column"
-                  :value="row[column]"
-                /><template v-else>{{ display(row[column]) }}</template>
-              </td>
-              <td class="actions">
-                <button class="text-button" @click="inspect(row)">查看</button
+            <div class="student-resource-card-body">
+              <div class="student-resource-meta">
+                <Icon :name="resource.icon" /><StatusBadge
+                  v-if="row.stage || row.state"
+                  :value="String(row.stage || row.state)"
+                /><span v-else>知识资料</span>
+              </div>
+              <h2>
+                <button @click="inspect(row)">{{ display(row.title) }}</button>
+              </h2>
+              <p v-if="row.description || row.summary">{{ row.description || row.summary }}</p>
+              <div v-if="resource.key === 'projects'" class="student-project-progress">
+                <span>项目完成度 {{ row.progress }}%</span
+                ><progress
+                  :value="Number(row.progress) || 0"
+                  max="100"
+                  aria-label="项目完成度"
+                ></progress
+                ><small>计划交付 {{ display(row.deliveryDate) }}</small>
+              </div>
+              <div class="student-resource-meta">
+                <ReferenceName
+                  v-if="row.categoryId"
+                  field="categoryId"
+                  :value="row.categoryId"
+                /><ReferenceName v-if="row.boardId" field="boardId" :value="row.boardId" /><span
+                  v-if="row.updatedAt || row.createdAt"
+                  >{{ display(row.updatedAt || row.createdAt) }}</span
+                >
+              </div>
+              <div class="student-resource-actions">
+                <button class="text-button" @click="inspect(row)">
+                  {{
+                    resource.key === 'projects'
+                      ? '查看项目与交付'
+                      : resource.key === 'knowledge'
+                        ? '阅读资料'
+                        : '查看讨论'
+                  }}
+                  <Icon name="right" /></button
                 ><button v-if="canEdit" class="text-button" @click="open(row)">编辑</button
                 ><button v-if="canDelete" class="text-button danger" @click="askDelete(row)">
                   删除
                 </button>
-              </td>
-            </tr>
-            <tr v-if="!rows.length">
-              <td :colspan="resource.columns.length + 1" class="empty">
-                {{
-                  loading
-                    ? '正在读取数据…'
-                    : listFailed
-                      ? '读取失败，请重新查询'
-                      : '暂无符合条件的数据'
-                }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="pagination">
-        <span>{{ loading ? '正在查询…' : listFailed ? '总数暂不可用' : `共 ${total} 条` }}</span
-        ><select v-model.number="size" aria-label="每页条数" @change="search">
-          <option :value="10">每页10条</option>
-          <option :value="20">每页20条</option>
-          <option :value="50">每页50条</option></select
-        ><button
-          class="button"
-          :disabled="page === 1 || loading"
-          @click="
-            page--;
-            load();
-          "
-        >
-          上一页</button
-        ><span>第 {{ page }} 页</span
-        ><button
-          class="button"
-          :disabled="page * size >= total || loading"
-          @click="
-            page++;
-            load();
-          "
-        >
-          下一页
-        </button>
+              </div>
+            </div>
+          </article>
+          <p v-if="!rows.length" class="empty">
+            {{
+              loading ? '正在读取数据…' : listFailed ? '读取失败，请重新查询' : '暂无符合条件的数据'
+            }}
+          </p>
+        </div>
+        <div v-else class="table-scroll" :aria-busy="loading">
+          <table>
+            <thead>
+              <tr>
+                <th v-for="column in resource.columns" :key="column">
+                  {{ label(column) }}
+                </th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(row, index) in rows" :key="row.id || index">
+                <td v-for="column in resource.columns" :key="column">
+                  <StatusBadge
+                    v-if="['state', 'status', 'stage'].includes(column)"
+                    :value="String(row[column] || '')"
+                  /><ReferenceName
+                    v-else-if="column.endsWith('Id')"
+                    :field="column"
+                    :value="row[column]"
+                  /><template v-else>{{ display(row[column]) }}</template>
+                </td>
+                <td class="actions">
+                  <button class="text-button" @click="inspect(row)">查看</button
+                  ><button v-if="canEdit" class="text-button" @click="open(row)">编辑</button
+                  ><button v-if="canDelete" class="text-button danger" @click="askDelete(row)">
+                    删除
+                  </button>
+                </td>
+              </tr>
+              <tr v-if="!rows.length">
+                <td :colspan="resource.columns.length + 1" class="empty">
+                  {{
+                    loading
+                      ? '正在读取数据…'
+                      : listFailed
+                        ? '读取失败，请重新查询'
+                        : '暂无符合条件的数据'
+                  }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <span>{{ loading ? '正在查询…' : listFailed ? '总数暂不可用' : `共 ${total} 条` }}</span
+          ><select v-model.number="size" aria-label="每页条数" @change="search">
+            <option :value="10">每页10条</option>
+            <option :value="20">每页20条</option>
+            <option :value="50">每页50条</option></select
+          ><button
+            class="button"
+            :disabled="page === 1 || loading"
+            @click="
+              page--;
+              load();
+            "
+          >
+            上一页</button
+          ><span>第 {{ page }} 页</span
+          ><button
+            class="button"
+            :disabled="page * size >= total || loading"
+            @click="
+              page++;
+              load();
+            "
+          >
+            下一页
+          </button>
+        </div>
       </div>
     </div>
     <div v-if="formOpen" class="modal-backdrop">
