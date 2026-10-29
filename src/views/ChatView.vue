@@ -118,6 +118,30 @@ async function initialize() {
   if (disposed) return;
   model.value = String(models.value[0]?.id || '');
   await resumeSaved();
+  if (disposed || busy.value || sessionStorage.getItem(storageKey())) return;
+  const conversationId = route.query.conversationId;
+  const projectId = route.query.projectId;
+  try {
+    if (typeof conversationId === 'string' && /^[0-9a-f-]{36}$/i.test(conversationId)) {
+      const selected = await request<Row>(`/student/conversations/${conversationId}`);
+      if (disposed) return;
+      if (!conversations.value.some((row) => row.id === selected.id))
+        conversations.value.unshift(selected);
+      if (selected.projectId && !projects.value.some((row) => row.id === selected.projectId)) {
+        const context = await request<Row>(`/student/projects/${selected.projectId}`);
+        if (disposed) return;
+        projects.value.unshift(context);
+      }
+      await chooseConversation(String(selected.id));
+    } else if (typeof projectId === 'string' && /^[0-9a-f-]{36}$/i.test(projectId)) {
+      const selected = await request<Row>(`/student/projects/${projectId}`);
+      if (disposed) return;
+      if (!projects.value.some((row) => row.id === selected.id)) projects.value.unshift(selected);
+      project.value = String(selected.id);
+    }
+  } catch (e) {
+    if (!disposed) error.value = errorText(e);
+  }
 }
 async function history(older = false) {
   const id = conversation.value;

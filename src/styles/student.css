@@ -749,9 +749,10 @@ body .student-login .login-card h2 {
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  padding: 20px 0;
+  padding: 8px 0 12px;
 }
 .student-project-space h1 {
+  margin: 10px 0 14px;
   font-size: 32px;
 }
 .student-project-stage {
@@ -830,5 +831,295 @@ body .student-workspace .student-chat-main .message:not(.mine) {
 @media (max-width: 800px) {
   .student-knowledge-layout {
     grid-template-columns: 1fr;
+  }
+}
+/* 项目空间按原型采用标签主栏与右侧辅助卡，所有操作继续复用原接口。 */
+.project-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding-left: 0;
+  font-size: 12px;
+}
+.student-project-space > header .muted {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.8;
+}
+.project-progress-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 210px;
+  gap: 32px;
+  padding: 28px;
+  border: 1px solid #e4e8ef;
+  background: white;
+  border-radius: 14px;
+  margin: 24px 0;
+}
+.project-progress-caption {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.project-progress-caption strong {
+  font: 500 34px var(--serif);
+  color: #21365c;
+}
+.project-progress-caption > span {
+  color: #8590a5;
+  font-size: 11px;
+}
+.project-stage-track {
+  list-style: none;
+  display: flex;
+  margin: 22px 0 0;
+  padding: 0;
+}
+.project-stage-track li {
+  position: relative;
+  flex: 1;
+  border-top: 3px solid #e9edf6;
+  padding-top: 14px;
+  font-size: 11px;
+  color: #97a3b9;
+}
+.project-stage-track li > span {
+  position: absolute;
+  top: -5px;
+  left: 0;
+  width: 7px;
+  height: 7px;
+  background: #dce2ef;
+  border-radius: 50%;
+}
+.project-stage-track li.done {
+  border-color: #acb9e7;
+  color: #7284b1;
+}
+.project-stage-track li.current {
+  border-color: #3358d9;
+  color: #3151bd;
+}
+.project-stage-track li.current > span {
+  background: #3358d9;
+  box-shadow: 0 0 0 4px #ebeffc;
+}
+.project-deadline {
+  display: grid;
+  gap: 10px;
+  align-content: center;
+  border-left: 1px solid #e9edf4;
+  padding-left: 28px;
+}
+.project-deadline small,
+.project-deadline span {
+  font-size: 11px;
+  color: #8c96a8;
+}
+.project-deadline strong {
+  font: 22px var(--serif);
+  color: #344765;
+}
+.project-tabs {
+  display: flex;
+  gap: 30px;
+  border-bottom: 1px solid #dfe5ef;
+  margin: 0 0 24px;
+  overflow: auto;
+}
+.project-tabs button {
+  background: transparent;
+  border: 0;
+  padding: 14px 2px;
+  border-bottom: 2px solid transparent;
+  color: #7c889d;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.project-tabs button.active {
+  color: #2e4dc3;
+  border-bottom-color: #2e4dc3;
+}
+.project-detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 24px;
+  align-items: start;
+}
+.project-main-panel {
+  padding: 26px;
+  background: white;
+  border: 1px solid #e4e8ef;
+  border-radius: 14px;
+  min-width: 0;
+}
+.project-panel-heading h2 {
+  font-size: 18px;
+  margin: 0 0 8px;
+}
+.project-panel-heading p {
+  font-size: 12px;
+  color: #8a95a9;
+  margin: 0 0 24px;
+  line-height: 1.8;
+}
+.project-overview-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 26px;
+  padding: 0;
+  margin: 28px 0;
+}
+.project-overview-fields dt {
+  font-size: 11px;
+  color: #8a95a8;
+  margin-bottom: 10px;
+}
+.project-overview-fields dd {
+  margin: 0;
+  font-size: 13px;
+  color: #34435d;
+  line-height: 1.8;
+}
+.project-description {
+  white-space: pre-wrap;
+  line-height: 1.9;
+  color: #65748b;
+  font-size: 13px;
+}
+.project-panel-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+.project-side-panels {
+  display: grid;
+  gap: 18px;
+}
+.project-side-card,
+.project-side-assistant {
+  border: 1px solid #e4e8ef;
+  border-radius: 14px;
+  padding: 24px;
+  background: white;
+}
+.project-side-card > .ali-icon,
+.project-side-assistant > .ali-icon {
+  padding: 10px;
+  border-radius: 10px;
+  background: #edf0fc;
+  color: #526cbe;
+}
+.project-side-card h3,
+.project-side-assistant h3 {
+  font-size: 16px;
+  margin: 18px 0 10px;
+}
+.project-side-card p,
+.project-side-assistant p {
+  font-size: 12px;
+  line-height: 1.9;
+  color: #8590a6;
+  margin-bottom: 20px;
+}
+.project-side-assistant {
+  background: linear-gradient(130deg, #f7f8ff, #e9ecfb);
+}
+.project-conversation {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border-top: 1px solid #edf0f5;
+  padding: 20px 0;
+}
+.project-conversation > .ali-icon:first-child {
+  background: #eef1fc;
+  color: #6177bf;
+  border-radius: 10px;
+  padding: 11px;
+}
+.project-conversation > div {
+  flex: 1;
+  min-width: 0;
+}
+.project-conversation strong {
+  display: block;
+  font-size: 13px;
+  line-height: 1.8;
+}
+.project-conversation small {
+  display: block;
+  font-size: 11px;
+  color: #8d98ab;
+  margin-top: 6px;
+}
+.project-conversation > .ali-icon:last-child {
+  font-size: 12px;
+  color: #9ca7bb;
+}
+body .student-project-space .project-detail {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+body .student-project-space .project-detail h3 {
+  margin: 0 0 22px;
+  font-size: 18px;
+}
+body .student-project-space .delivery {
+  padding: 18px 0;
+  border: 0;
+  border-bottom: 1px solid #e9edf3;
+  border-radius: 0;
+}
+body .student-project-space .milestone {
+  border: 0;
+  border-left: 3px solid #bac8f1;
+  border-radius: 0;
+  background: #f8faff;
+  padding: 17px;
+}
+@media (max-width: 1000px) {
+  .project-detail-layout {
+    grid-template-columns: minmax(0, 1fr) 240px;
+    gap: 18px;
+  }
+}
+@media (max-width: 800px) {
+  .project-detail-layout {
+    grid-template-columns: 1fr;
+  }
+  .project-side-panels {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .project-progress-overview {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 22px;
+  }
+  .project-deadline {
+    border-left: 0;
+    border-top: 1px solid #e9edf4;
+    padding: 16px 0 0;
+  }
+}
+@media (max-width: 520px) {
+  .project-side-panels,
+  .project-overview-fields {
+    grid-template-columns: 1fr;
+  }
+  .project-main-panel {
+    padding: 20px;
+  }
+  .project-stage-track {
+    overflow: auto;
+  }
+  .project-stage-track li {
+    min-width: 70px;
   }
 }

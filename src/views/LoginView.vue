@@ -2,7 +2,6 @@
 import { computed, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { login, errorText } from '../api/client';
-import { platformNames } from '../config/resources';
 import type { Platform } from '../types/api';
 const route = useRoute(),
   router = useRouter();
@@ -27,11 +26,15 @@ async function submit() {
 }
 </script>
 <template>
-  <main class="login-page" :class="{ 'student-login': platform === 'student' }">
+  <main
+    class="login-page"
+    :class="{ 'student-login': platform === 'student', 'management-login': platform !== 'student' }"
+  >
     <section class="login-intro">
       <span class="brand-mark">知</span>
       <h1 v-if="platform === 'student'">从第一个问题，<br />到最后一次交付。</h1>
-      <h1 v-else>{{ platformNames[platform] }}</h1>
+      <h1 v-else-if="platform === 'admin'">有序运营，<br />让每次交付值得信赖。</h1>
+      <h1 v-else>每个项目，<br />都有清晰的下一步。</h1>
       <p>让项目有进度，让问题有答案。</p>
       <p>
         {{
@@ -44,7 +47,15 @@ async function submit() {
       </p>
     </section>
     <form class="login-card" @submit.prevent="submit">
-      <h2>欢迎登录</h2>
+      <h2>
+        {{
+          platform === 'admin'
+            ? '登录管理后台'
+            : platform === 'partner'
+              ? '登录中介协作平台'
+              : '欢迎登录'
+        }}
+      </h2>
       <p class="muted">请使用所属平台的账户登录</p>
       <label
         >手机号<input
@@ -73,6 +84,9 @@ async function submit() {
           maxlength="6"
           placeholder="认证器中的六位验证码"
       /></label>
+      <p v-if="platform === 'admin'" class="muted login-mfa-help">
+        使用已绑定认证器生成的动态验证码（TOTP），并非短信验证码。未绑定认证器时，请向平台管理员领取账户的绑定资料。
+      </p>
       <p v-if="error" class="error" role="alert">{{ error }}</p>
       <button class="button primary" :disabled="busy">
         {{ busy ? '正在登录…' : '登录平台' }}

@@ -2,15 +2,18 @@
 import { computed, ref, defineAsyncComponent, watch, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { auth, logout, errorText } from '../api/client';
-import { resources, platformNames } from '../config/resources';
+import { resources } from '../config/resources';
 import { loadNavigation, navigationLinks, type Menu } from '../api/navigation';
 import { operation } from '../config/contract';
 import { utilityNavigation } from '../config/navigation-access';
+import ManagementNavigation from '../components/ManagementNavigation.vue';
+import { managementSections } from '../config/management-navigation';
 import PageLoadError from '../components/PageLoadError.vue';
 import type { Component } from 'vue';
 function page(loader: () => Promise<{ default: Component }>) {
   return defineAsyncComponent({ loader, errorComponent: PageLoadError, timeout: 15000 });
 }
+const ManagementDashboard = page(() => import('./ManagementDashboard.vue'));
 const DashboardView = page(() => import('./DashboardView.vue'));
 const KnowledgeSearchView = page(() => import('./KnowledgeSearchView.vue'));
 const ExportView = page(() => import('./ExportView.vue'));
@@ -72,7 +75,20 @@ const homeEntries = computed(() =>
       ),
 );
 const selected = computed(() => entries.value.find((r) => r.key === route.params.resource));
-const groups = computed(() => [...new Set(entries.value.map((r) => r.group))]);
+const managementLinks = computed(() => {
+  const candidates = [
+    ...entries.value.map((entry) => ({ ...entry, path: `/${platform.value}/${entry.key}` })),
+    ...utilityLinks.value,
+  ];
+  return navigation.value?.configured === false
+    ? candidates
+    : candidates.filter((entry) => configuredLinks.value.some((link) => link.path === entry.path));
+});
+const managementSection = computed(() =>
+  managementSections(managementLinks.value).find((section) =>
+    section.links.some((link) => link.path === route.path),
+  ),
+);
 const studentMenuOpen = ref(false);
 const accountOpen = ref(false);
 const studentAllowed = (key: string) =>
@@ -113,7 +129,17 @@ async function exit() {
 }
 </script>
 <template>
-  <div class="workspace" :class="{ 'student-workspace': platform === 'student' }">
+  <div
+    class="workspace"
+    :class="{
+      'student-workspace': platform === 'student',
+      'admin-workspace': platform === 'admin',
+      'partner-workspace': platform === 'partner',
+      'has-section-nav':
+        platform === 'admin' && !!managementSection && managementSection.links.length > 1,
+      'has-settings-nav': platform === 'admin' && managementSection?.key === 'settings',
+    }"
+  >
     <header v-if="platform === 'student'" class="student-header">
       <div class="student-header-inner">
         <button
@@ -171,50 +197,16 @@ async function exit() {
         </div>
       </div>
     </header>
-    <aside v-if="platform !== 'student'" class="sidebar">
-      <RouterLink :to="`/${platform}`" class="logo"
-        ><span>知</span><strong>{{ platformNames[platform] }}</strong></RouterLink
-      >
-      <nav aria-label="平台导航">
-        <p v-if="navigationError" role="alert">
-          导航加载失败 <button class="button" @click="refreshNavigation">重试</button>
-        </p>
-        <p v-else-if="!navigation" role="status">正在加载导航…</p>
-        <template v-else-if="navigation.configured">
-          <RouterLink
-            v-for="menu in configuredLinks"
-            :key="menu.id"
-            :to="menu.path"
-            :style="{ paddingLeft: `${12 + Math.min(menu.depth, 4) * 12}px` }"
-            >{{ menu.name }}</RouterLink
-          >
-          <p v-if="!configuredLinks.length">暂无可用导航，请联系管理员。</p>
-        </template>
-        <template v-else>
-          <RouterLink v-for="entry in utilityLinks" :key="entry.key" :to="entry.path">
-            <Icon :name="entry.icon" />{{ entry.title }}
-          </RouterLink>
-          <section v-for="group in groups" :key="group">
-            <h3>{{ group }}</h3>
-            <RouterLink
-              v-for="entry in entries.filter((e) => e.group === group)"
-              :key="entry.key"
-              :to="`/${platform}/${entry.key}`"
-              ><Icon :name="entry.icon" />{{ entry.title }}</RouterLink
-            >
-          </section>
-        </template>
-      </nav>
-      <div class="sidebar-foot">项目答疑 · 交付协作</div>
-    </aside>
+    <ManagementNavigation
+      v-if="platform !== 'student'"
+      :platform="platform"
+      :links="managementLinks"
+      :loading="!navigation && !navigationError"
+      :error="navigationError"
+      @logout="exit"
+      @retry="refreshNavigation"
+    />
     <div class="workspace-body">
-      <header v-if="platform !== 'student'" class="topbar">
-        <span>{{ selected?.title || '工作台' }}</span>
-        <div>
-          <span>{{ auth.user?.displayName }}</span
-          ><button class="button" @click="exit">退出登录</button>
-        </div>
-      </header>
       <main class="page">
         <p v-if="platform === 'student' && navigationError" class="error" role="alert">
           导航加载失败 <button class="button" @click="refreshNavigation">重试</button>
@@ -238,6 +230,9 @@ async function exit() {
           v-else-if="selected"
           :key="selected.path"
           :resource="selected"
+        /><ManagementDashboard
+          v-else-if="platform !== 'student'"
+          :visible-paths="managementLinks.map((link) => link.path)"
         /><DashboardView
           v-else
           :entries="homeEntries"

@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import { useRoute } from 'vue-router';
 import { latestRequest } from '../api/latest';
 import { writeAttempt } from '../api/attempt';
-import { computed, onMounted, onBeforeUnmount, ref, defineAsyncComponent } from 'vue';
+import { computed, onMounted, onBeforeUnmount, ref, watch, defineAsyncComponent } from 'vue';
 import { auth, request, errorText } from '../api/client';
 import { operation, schema, updateMethod } from '../config/contract';
 import { label, display } from '../config/labels';
@@ -16,6 +17,9 @@ const MembershipDetail = defineAsyncComponent(() => import('../components/Member
 import ReferenceName from '../components/ReferenceName.vue';
 const ForumDetail = defineAsyncComponent(() => import('../components/ForumDetail.vue'));
 import RecordActions from '../components/RecordActions.vue';
+const StudentProjectSpace = defineAsyncComponent(
+  () => import('../components/StudentProjectSpace.vue'),
+);
 const ProjectDetail = defineAsyncComponent(() => import('../components/ProjectDetail.vue'));
 import StatusBadge from '../components/StatusBadge.vue';
 import Icon from '../components/Icon.vue';
@@ -34,6 +38,7 @@ function closeDetail() {
   detail.value = null;
 }
 const props = defineProps<{ resource: Resource }>();
+const route = useRoute();
 const studentCards = computed(
   () =>
     auth.platform === 'student' && ['projects', 'knowledge', 'posts'].includes(props.resource.key),
@@ -254,16 +259,35 @@ onBeforeUnmount(() => {
   detailRead.invalidate();
   loadGeneration++;
 });
-onMounted(() => {
+function applyRouteFilters() {
+  q.value = typeof route.query.q === 'string' ? route.query.q : '';
+  status.value =
+    queryNames.value.has('status') && typeof route.query.status === 'string'
+      ? route.query.status
+      : '';
+  extraFilters.value =
+    queryNames.value.has('state') && typeof route.query.state === 'string'
+      ? { state: route.query.state }
+      : {};
   sort.value = sorts.value[0] || '';
+  page.value = 1;
   void load();
-});
+}
+onMounted(applyRouteFilters);
+watch(() => route.query, applyRouteFilters);
+const hasStatusTabs = computed(
+  () =>
+    auth.platform !== 'student' &&
+    ['orders', 'projects', 'users', 'posts', 'reports'].includes(props.resource.key) &&
+    queryNames.value.has('status') &&
+    statusOptions.value.length > 0,
+);
 </script>
 <template>
   <section :class="{ 'student-resource': studentCards, ['student-' + resource.key]: studentCards }">
     <div v-if="!(detail && studentCards && resource.key === 'projects')" class="page-heading">
       <div>
-        <p v-if="studentCards" class="eyebrow">{{ resource.title }}</p>
+        <p class="eyebrow">{{ studentCards ? resource.title : resource.group }}</p>
         <h1 v-if="studentCards && resource.key === 'knowledge'">
           先把问题找对，<br />答案会自己浮现。
         </h1>
@@ -274,7 +298,9 @@ onMounted(() => {
         <p class="muted">{{ resource.subtitle }}</p>
       </div>
       <button v-if="canCreate" class="button primary" @click="open()">
-        {{ resource.key === 'posts' ? '发布帖子' : '新增' + resource.title.replace('管理', '') }}
+        <Icon name="plus" />{{
+          resource.key === 'posts' ? '发布帖子' : '新增' + resource.title.replace('管理', '')
+        }}
       </button>
     </div>
     <PartnerInvitation
@@ -293,6 +319,38 @@ onMounted(() => {
         "
       />
       <div v-if="!(detail && studentCards && resource.key === 'projects')" class="data-card">
+        <div
+          v-if="hasStatusTabs"
+          class="resource-status-tabs"
+          role="group"
+          aria-label="列表状态筛选"
+        >
+          <button
+            type="button"
+            :class="{ active: !status }"
+            :aria-pressed="!status"
+            :disabled="loading"
+            @click="
+              status = '';
+              search();
+            "
+          >
+            全部</button
+          ><button
+            v-for="value in statusOptions"
+            :key="String(value)"
+            type="button"
+            :class="{ active: status === value }"
+            :aria-pressed="status === value"
+            :disabled="loading"
+            @click="
+              status = String(value);
+              search();
+            "
+          >
+            {{ display(value) }}
+          </button>
+        </div>
         <form class="filters" @submit.prevent="search">
           <input
             v-if="queryNames.has('q')"
@@ -300,7 +358,11 @@ onMounted(() => {
             placeholder="输入关键词搜索"
             aria-label="搜索关键词"
             maxlength="100"
-          /><select v-if="queryNames.has('status')" v-model="status" aria-label="筛选状态">
+          /><select
+            v-if="queryNames.has('status') && !hasStatusTabs"
+            v-model="status"
+            aria-label="筛选状态"
+          >
             <option value="">全部状态</option>
             <option v-for="value in statusOptions" :key="String(value)" :value="value">
               {{ display(value) }}
@@ -378,7 +440,7 @@ onMounted(() => {
                 ><progress
                   :value="Number(row.progress) || 0"
                   max="100"
-                  aria-label="项目完成度"
+                  aria-label="完成进度"
                 ></progress
                 ><small>计划交付 {{ display(row.deliveryDate) }}</small>
               </div>
@@ -435,7 +497,14 @@ onMounted(() => {
                     v-else-if="column.endsWith('Id')"
                     :field="column"
                     :value="row[column]"
-                  /><template v-else>{{ display(row[column]) }}</template>
+                  /><span v-else-if="column === 'progress'" class="table-project-progress"
+                    ><progress
+                      :value="Number(row[column]) || 0"
+                      max="100"
+                      aria-label="完成进度"
+                    ></progress
+                    >{{ row[column] }}%</span
+                  ><template v-else>{{ display(row[column]) }}</template>
                 </td>
                 <td class="actions">
                   <button class="text-button" @click="inspect(row)">查看</button
@@ -501,24 +570,39 @@ onMounted(() => {
         aria-labelledby="form-title"
         @submit.prevent="save"
       >
-        <h2 id="form-title">
-          {{
-            resource.key === 'posts'
-              ? editing
-                ? '编辑帖子'
-                : '发布帖子'
-              : (editing ? '编辑' : '新增') + resource.title
-          }}
-        </h2>
+        <div class="resource-modal-heading">
+          <h2 id="form-title">
+            {{
+              resource.key === 'posts'
+                ? editing
+                  ? '编辑帖子'
+                  : '发布帖子'
+                : (editing ? '编辑' : '新增') + resource.title.replace('管理', '')
+            }}
+          </h2>
+          <button
+            type="button"
+            class="modal-close"
+            aria-label="关闭编辑弹窗"
+            :disabled="saving"
+            @click="closeForm"
+          >
+            <Icon name="close" />
+          </button>
+        </div>
         <div class="form-grid">
           <div v-for="field in properties" :key="field.key" class="form-field">
-            <span>{{ label(field.key) }}</span
-            ><span
-              v-if="requiresSelection(field, fields.required?.includes(field.key))"
-              class="danger"
+            <span class="field-caption"
+              >{{ label(field.key)
+              }}<span
+                v-if="requiresSelection(field, fields.required?.includes(field.key))"
+                class="danger"
+                aria-hidden="true"
+              >
+                *</span
+              ></span
             >
-              *</span
-            ><SchemaField
+            <SchemaField
               v-model="form[field.key]"
               :field="field"
               :required="fields.required?.includes(field.key)"
@@ -536,39 +620,17 @@ onMounted(() => {
         </footer>
       </form>
     </div>
-    <section
+    <StudentProjectSpace
       v-if="detail && studentCards && resource.key === 'projects'"
-      class="student-project-space"
-    >
-      <button class="text-button" @click="closeDetail">我的项目 / 返回项目列表</button>
-      <header>
-        <div>
-          <p class="eyebrow">项目空间</p>
-          <h1>{{ detail.title }}</h1>
-          <p class="muted">
-            计划交付 {{ display(detail.deliveryDate) }} · 最近更新 {{ display(detail.updatedAt) }}
-          </p>
-        </div>
-        <RouterLink to="/student/chat" class="button primary"
-          ><Icon name="sparkles" />智能答疑</RouterLink
-        >
-      </header>
-      <div class="student-project-stage">
-        <strong>{{ detail.progress }}%</strong><span>项目完成度</span
-        ><StatusBadge :value="String(detail.stage)" /><progress
-          :value="Number(detail.progress) || 0"
-          max="100"
-          aria-label="项目完成度"
-        ></progress>
-      </div>
-      <ProjectDetail
-        :project="detail"
-        @changed="
-          inspect(detail);
-          load();
-        "
-      />
-    </section>
+      :key="String(detail.id)"
+      :project="detail"
+      @back="closeDetail"
+      @changed="actionChanged"
+      @refresh="
+        inspect(detail);
+        load();
+      "
+    />
     <div v-else-if="detail" class="modal-backdrop">
       <section
         class="modal"
@@ -772,7 +834,8 @@ td {
   background: #13214380;
   display: grid;
   place-items: center;
-  z-index: 10;
+  z-index: 100;
+  grid-template-columns: minmax(0, 1fr);
   padding: 24px;
 }
 .modal {

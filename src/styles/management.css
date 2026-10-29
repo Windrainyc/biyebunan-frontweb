@@ -1,0 +1,1262 @@
+/* 第二版管理/中介原型的独立样式边界，避免改变学生端与表单业务规则。 */
+body .admin-workspace.workspace {
+  display: block;
+  background: #f4f5f8;
+}
+body .admin-workspace .workspace-body {
+  margin-left: 248px;
+  width: calc(100% - 248px);
+  padding-top: 68px;
+}
+body .admin-workspace .page {
+  padding: 28px;
+}
+.management-navigation {
+  font-size: 13px;
+}
+.management-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+  white-space: nowrap;
+}
+.management-brand > span {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: #2c4bdb;
+  color: #fff;
+  font: 700 21px var(--serif);
+}
+.management-brand strong {
+  font: 700 24px var(--serif);
+  letter-spacing: 1px;
+}
+.management-brand small {
+  font-size: 10px;
+  color: #95a2bd;
+  border-left: 1px solid #ffffff20;
+  padding-left: 10px;
+  margin-left: 4px;
+}
+.admin-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 248px;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  padding: 0 13px 14px;
+  color: #c4cde0;
+  background:
+    radial-gradient(circle at 20% 0, #354e913d, transparent 28%),
+    linear-gradient(180deg, #111b31, #0f182b);
+  border-right: 1px solid #ffffff0f;
+}
+.admin-sidebar > .management-brand {
+  min-height: 70px;
+  padding: 0 8px;
+}
+.admin-workspace-label {
+  margin: 9px 0 12px;
+  padding: 13px 11px;
+  border: 1px solid #ffffff14;
+  background: #ffffff05;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.admin-workspace-label > .ali-icon {
+  padding: 9px;
+  border-radius: 8px;
+  background: #263551;
+  color: #bfcdeb;
+}
+.admin-workspace-label strong {
+  color: #e4e9f4;
+  font-size: 12px;
+  font-weight: 500;
+}
+.admin-workspace-label small {
+  display: block;
+  color: #8c9ab6;
+  font-size: 10px;
+  margin-top: 5px;
+}
+.admin-sidebar nav {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #33415b transparent;
+}
+.admin-sidebar nav h3 {
+  margin: 17px 12px 8px;
+  font-size: 10px;
+  font-weight: 400;
+  color: #7f8da9;
+  letter-spacing: 0.07em;
+}
+.admin-sidebar nav a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 41px;
+  margin: 3px 0;
+  padding: 0 13px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #aab7ce;
+}
+.admin-sidebar nav a:hover {
+  background: #ffffff09;
+  color: #fff;
+}
+.admin-sidebar nav a.active {
+  color: #fff;
+  background: linear-gradient(110deg, #2b46bd, #2540ac);
+  border-color: #536ed24d;
+  box-shadow: 0 4px 14px #00000012;
+}
+.admin-sidebar nav .ali-icon {
+  font-size: 16px;
+}
+.nav-state {
+  font-size: 12px;
+  line-height: 1.8;
+  padding: 0 12px;
+}
+.nav-state button {
+  border: 0;
+  background: transparent;
+  color: #a8bfff;
+}
+.admin-sidebar-footer {
+  border-top: 1px solid #ffffff12;
+  margin-top: 16px;
+  padding: 17px 6px 2px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.admin-sidebar-footer strong {
+  font-size: 12px;
+  font-weight: 500;
+  color: #dce4f5;
+}
+.admin-sidebar-footer small {
+  display: block;
+  margin-top: 5px;
+  font-size: 10px;
+  color: #8393af;
+}
+.admin-sidebar-footer button {
+  margin-left: auto;
+  border: 0;
+  background: transparent;
+  color: #97a5bf;
+  padding: 8px;
+}
+.management-avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: #e7eafb;
+  color: #4259aa;
+  font-size: 12px;
+}
+.admin-sidebar-footer .management-avatar {
+  background: #293754;
+  color: #aebfee;
+}
+.management-topbar {
+  position: fixed;
+  top: 0;
+  height: 68px;
+  z-index: 40;
+  border-bottom: 1px solid #e5e8efd9;
+  background: #f4f5f8ed;
+  backdrop-filter: blur(16px);
+}
+.admin-topbar {
+  left: 248px;
+  right: 0;
+  padding: 0 28px;
+}
+.management-topbar-inner {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  height: 100%;
+}
+.management-breadcrumb {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  white-space: nowrap;
+  font-size: 11px;
+}
+.management-breadcrumb > span {
+  color: #9099ab;
+}
+.management-breadcrumb .ali-icon {
+  font-size: 10px;
+  color: #a3aaba;
+}
+.management-breadcrumb strong {
+  font-weight: 500;
+  color: #4b566b;
+}
+.management-search {
+  position: relative;
+  margin-left: 10px;
+  width: min(290px, 23vw);
+}
+.management-search > .ali-icon {
+  position: absolute;
+  left: 11px;
+  top: 11px;
+  color: #8e98ac;
+  font-size: 14px;
+}
+.management-search input {
+  width: 100%;
+  min-height: 36px !important;
+  height: 36px;
+  padding: 0 10px 0 33px !important;
+  border-color: #e5e8ef !important;
+  border-radius: 8px !important;
+  font-size: 11px;
+  background: #ffffffb3 !important;
+}
+.management-search-results {
+  position: absolute;
+  top: 44px;
+  left: 0;
+  right: 0;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: white;
+  box-shadow: 0 12px 28px #13214318;
+}
+.management-search-results a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+.management-search-results a:hover {
+  background: #f2f4fc;
+}
+.management-search-results a .ali-icon:last-child {
+  margin-left: auto;
+  font-size: 10px;
+}
+.management-search-results p {
+  color: var(--muted);
+  font-size: 12px;
+  padding: 6px;
+}
+.management-actions {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-left: auto;
+}
+.management-icon-button {
+  display: grid;
+  place-items: center;
+  border: 1px solid #e4e8ef;
+  background: white;
+  border-radius: 9px;
+  width: 34px;
+  height: 34px;
+  color: #67748b;
+}
+.management-account {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: transparent;
+  border: 0;
+  color: #3b465e;
+  padding: 0;
+  font-size: 12px;
+}
+.management-account > .ali-icon {
+  font-size: 10px;
+  color: #7d879c;
+}
+.management-account-menu {
+  position: absolute;
+  top: 46px;
+  right: 0;
+  min-width: 160px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px;
+  box-shadow: 0 12px 25px #16233c18;
+}
+.management-account-menu a,
+.management-account-menu button {
+  display: flex;
+  width: 100%;
+  gap: 10px;
+  align-items: center;
+  padding: 11px;
+  background: transparent;
+  border: 0;
+  color: #4b566b;
+  font-size: 12px;
+  text-align: left;
+  border-radius: 6px;
+}
+.management-account-menu a:hover,
+.management-account-menu button:hover {
+  background: #f3f5fb;
+}
+.management-menu-button {
+  display: none;
+  background: none;
+  border: 0;
+  padding: 6px;
+  color: #69758e;
+}
+.admin-section-navigation {
+  position: fixed;
+  z-index: 35;
+  top: 68px;
+  left: 276px;
+  right: 28px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24px;
+  min-height: 56px;
+  border-bottom: 1px solid #dfe4ed;
+  background: #f4f5f8f5;
+}
+.admin-section-navigation a {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 17px 0;
+  border-bottom: 2px solid transparent;
+  color: #778297;
+  font-size: 12px;
+}
+.admin-section-navigation a .ali-icon {
+  font-size: 14px;
+}
+.admin-section-navigation a.active {
+  color: #2c4bdb;
+  border-bottom-color: #2c4bdb;
+}
+body .admin-workspace.has-section-nav .page {
+  padding-top: 82px;
+}
+.admin-section-navigation.is-settings {
+  top: 96px;
+  right: auto;
+  width: 166px;
+  display: block;
+  border: 1px solid #e5e8ef;
+  border-radius: 10px;
+  padding: 10px;
+  background: #fff;
+  max-height: calc(100vh - 120px);
+  overflow: auto;
+}
+.admin-section-navigation.is-settings p {
+  padding: 4px 9px 9px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #4d5a70;
+}
+.admin-section-navigation.is-settings a {
+  padding: 12px 9px;
+  border: 0;
+  border-radius: 7px;
+  font-size: 11px;
+  margin-bottom: 3px;
+}
+.admin-section-navigation.is-settings a.active {
+  background: #eef1ff;
+}
+body .admin-workspace.has-settings-nav .page {
+  padding-top: 28px;
+  padding-left: 218px;
+}
+body .admin-workspace .page-heading h1 {
+  margin: 0 0 8px;
+  font: 500 30px/1.4 var(--serif);
+}
+body .admin-workspace .page-heading .eyebrow {
+  margin: 0 0 10px;
+}
+body .admin-workspace .page-heading {
+  margin-bottom: 22px;
+}
+body .admin-workspace .data-card {
+  border-radius: 12px;
+  border-color: #e3e7ef;
+  box-shadow: 0 3px 8px #192d4c03;
+}
+body .admin-workspace .filters {
+  padding: 18px 20px;
+  gap: 10px;
+}
+body .admin-workspace .filters input,
+body .admin-workspace .filters select {
+  min-height: 35px;
+  font-size: 11px;
+}
+body .admin-workspace .filters .button {
+  min-height: 35px;
+  font-size: 11px;
+  padding: 8px 13px;
+}
+body .admin-workspace table th {
+  background: #f7f8fb;
+  color: #8590a3;
+  font-size: 11px;
+  padding: 13px 20px;
+  font-weight: 500;
+}
+body .admin-workspace table td {
+  padding: 17px 20px;
+  font-size: 12px;
+  color: #4b566c;
+}
+body .admin-workspace table tbody tr:hover {
+  background: #fafbff;
+}
+body .admin-workspace table td:first-child {
+  color: #27344e;
+  font-weight: 500;
+}
+body .admin-workspace .pagination {
+  padding: 15px 20px;
+  font-size: 11px;
+}
+body .admin-workspace .dashboard .dash-heading {
+  margin-bottom: 25px;
+}
+body .admin-workspace .dashboard h1 {
+  margin: 8px 0 10px;
+  font-size: 32px;
+}
+body .admin-workspace .summary-grid {
+  gap: 16px;
+  margin: 0 0 22px;
+}
+body .admin-workspace .summary-card {
+  padding: 21px;
+  min-height: 145px;
+}
+body .admin-workspace .summary-card > span {
+  font-size: 11px;
+  margin-bottom: 20px;
+}
+body .admin-workspace .summary-card strong {
+  font-size: 30px;
+}
+.summary-spark {
+  display: block;
+  margin-top: 12px;
+  width: 100%;
+  height: 20px;
+}
+.management-dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.75fr) minmax(270px, 1fr);
+  gap: 20px;
+}
+.management-panel {
+  background: #fff;
+  border: 1px solid #e5e8ef;
+  border-radius: 13px;
+  min-width: 0;
+  overflow: hidden;
+}
+.management-panel > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 22px 23px 12px;
+}
+.management-panel h2 {
+  font-size: 15px;
+  margin: 0 0 5px;
+  font-weight: 600;
+}
+.management-panel header p {
+  margin: 0;
+  color: #8792a6;
+  font-size: 11px;
+  line-height: 1.6;
+}
+.management-panel header > a {
+  color: #516ac1;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.management-panel .panel-empty {
+  padding: 18px 23px;
+  color: #8792a6;
+  font-size: 12px;
+}
+.management-chart {
+  display: block;
+  width: 100%;
+  padding: 10px 20px 0;
+  height: 210px;
+}
+.management-chart-labels {
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  padding: 0 30px 20px;
+  color: #9199ab;
+  font-size: 10px;
+}
+.management-chart-labels li {
+  display: grid;
+  gap: 5px;
+  text-align: center;
+}
+.management-chart-labels b {
+  font-weight: 500;
+  color: #526380;
+}
+.management-chart-note {
+  border-top: 1px solid #edf0f5;
+  padding: 13px 23px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 11px;
+  color: #8390a6;
+  background: #fcfcfe;
+}
+.management-todo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 17px 23px;
+  border-bottom: 1px solid #f0f2f6;
+}
+.management-todo > .ali-icon {
+  border-radius: 9px;
+  padding: 10px;
+  color: #bc8a47;
+  background: #fff5e5;
+}
+.management-todo > div {
+  flex: 1;
+}
+.management-todo strong {
+  font-size: 12px;
+  font-weight: 500;
+  display: block;
+}
+.management-todo small {
+  margin-top: 6px;
+  display: block;
+  font-size: 10px;
+  color: #929aab;
+}
+.management-todo > span {
+  font-size: 14px;
+  color: #455779;
+}
+.management-token-total {
+  margin: 17px 23px 20px;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+.management-token-total > .ali-icon {
+  display: grid;
+  place-items: center;
+  border: 8px solid #e5e9fc;
+  border-radius: 50%;
+  width: 90px;
+  height: 90px;
+  color: #526bc5;
+  font-size: 30px;
+}
+.management-token-total strong {
+  display: block;
+  font: 30px var(--serif);
+}
+.management-token-total small {
+  color: #8b95a7;
+  display: block;
+  margin-top: 8px;
+  font-size: 11px;
+}
+.management-token-details {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0 23px 23px;
+}
+.management-token-details div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11px;
+  color: #7a879d;
+}
+.management-token-details dd {
+  margin: 0;
+  color: #34496e;
+}
+.management-table-scroll {
+  overflow: auto;
+}
+.management-table-scroll table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.management-table-scroll th,
+.management-table-scroll td {
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid #f0f2f6;
+}
+.management-table-scroll .cell-stack {
+  display: grid;
+  gap: 6px;
+}
+.management-table-scroll .cell-stack small {
+  font-size: 10px;
+  color: #9aa3b4;
+  font-weight: 400;
+}
+.management-table-scroll progress {
+  display: inline-block;
+  width: 90px;
+  height: 5px;
+  accent-color: #4b64d6;
+  margin-right: 8px;
+}
+body .partner-workspace.workspace {
+  display: block;
+  background: #f4f5f8;
+}
+body .partner-workspace .workspace-body {
+  margin: 0;
+  width: 100%;
+  padding-top: 72px;
+}
+body .partner-workspace .page {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 30px 32px 50px;
+}
+.partner-topbar {
+  left: 0;
+  right: 0;
+  height: 72px;
+  background: #ffffffed;
+}
+.partner-topbar .management-topbar-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 32px;
+  gap: 42px;
+}
+.partner-topbar .management-brand {
+  color: #202c46;
+}
+.partner-topbar .management-brand small {
+  color: #8893a7;
+  border-color: #e4e8ef;
+}
+.partner-primary {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  height: 100%;
+}
+.partner-primary a {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  border-bottom: 2px solid transparent;
+  font-size: 13px;
+  color: #748096;
+}
+.partner-primary a.active {
+  border-color: #2c4bdb;
+  color: #253c7b;
+}
+.partner-welcome {
+  border: 1px solid #273855;
+  border-radius: 20px;
+  padding: 31px 34px;
+  background:
+    radial-gradient(ellipse at 85% 0, #34416970, transparent 50%),
+    linear-gradient(110deg, #142039, #1d2d4d);
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 25px;
+  margin-bottom: 22px;
+}
+.partner-welcome .eyebrow {
+  color: #a9b6cf;
+  font-size: 11px;
+}
+.partner-welcome h1 {
+  font: 500 32px/1.5 var(--serif);
+  margin: 10px 0;
+}
+.partner-welcome p {
+  color: #a3b1ce;
+  font-size: 12px;
+  line-height: 1.8;
+  margin: 0;
+}
+.partner-welcome-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: end;
+  font-size: 11px;
+  color: #bac5db;
+}
+.partner-welcome-actions .button {
+  background: #ffffff0e;
+  color: #dce5fa;
+  border-color: #ffffff22;
+}
+body .partner-workspace .summary-grid {
+  margin: 0 0 24px;
+}
+body .partner-workspace .summary-card {
+  min-height: 140px;
+}
+body .partner-workspace .management-panel {
+  margin-bottom: 24px;
+}
+body .partner-workspace .management-panel th {
+  padding: 13px 22px;
+  font-size: 11px;
+  color: #8b96ab;
+  background: #f8f9fc;
+  font-weight: 400;
+}
+body .partner-workspace .management-panel td {
+  padding: 19px 22px;
+  font-size: 12px;
+}
+.partner-bottom-grid {
+  display: grid;
+  grid-template-columns: 1.55fr 1fr;
+  gap: 24px;
+}
+.partner-scope {
+  padding: 0 23px 22px;
+  color: #7a879c;
+  font-size: 12px;
+  line-height: 2;
+}
+.partner-bottom-grid .management-todo {
+  padding: 16px 23px;
+}
+.management-nav-error {
+  position: relative;
+  top: 76px;
+  z-index: 40;
+  margin: 0 32px;
+}
+.management-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  background: #0f1d3b66;
+  border: 0;
+}
+body .management-login .login-intro {
+  background:
+    radial-gradient(circle at 15% 5%, #344b8260, transparent 50%),
+    linear-gradient(145deg, #111b31, #1b2c4a);
+}
+body .management-login .login-intro h1 {
+  font: 500 40px/1.6 var(--serif);
+}
+body .management-login .login-card {
+  border: 0;
+  background: transparent;
+  padding: 20px;
+  gap: 23px;
+  box-shadow: none;
+}
+body .management-login .login-card h2 {
+  font: 500 29px var(--serif);
+}
+body .management-login .login-card label {
+  color: #4e5d77;
+  font-size: 12px;
+}
+body .management-login .login-card input {
+  min-height: 44px;
+  font-size: 13px;
+  background: white;
+}
+body .management-login .login-card .primary {
+  min-height: 44px;
+}
+.login-mfa-help {
+  margin-top: -12px !important;
+  font-size: 11px !important;
+  color: #8a94a5 !important;
+  line-height: 1.8;
+}
+@media (max-width: 1100px) {
+  .management-search {
+    display: none;
+  }
+  .management-dashboard-grid {
+    grid-template-columns: minmax(0, 1.5fr) minmax(240px, 1fr);
+    gap: 14px;
+  }
+  .partner-topbar .management-topbar-inner {
+    gap: 26px;
+  }
+  .partner-primary {
+    gap: 18px;
+  }
+}
+@media (max-width: 900px) {
+  .admin-sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+  }
+  .admin-sidebar.open {
+    transform: translateX(0);
+  }
+  body .admin-workspace .workspace-body {
+    margin-left: 0;
+    width: 100%;
+  }
+  .admin-topbar {
+    left: 0;
+  }
+  .management-menu-button {
+    display: inline-grid;
+    place-items: center;
+  }
+  .admin-section-navigation {
+    left: 28px;
+  }
+  .admin-section-navigation.is-settings {
+    position: fixed;
+    left: 20px;
+    right: 20px;
+    top: 68px;
+    width: auto;
+    display: flex;
+    max-height: 100px;
+    padding: 5px 8px;
+    flex-wrap: nowrap;
+    gap: 8px;
+    border-radius: 0;
+    overflow: auto;
+    border: 0;
+    border-bottom: 1px solid #e1e5ef;
+  }
+  .admin-section-navigation.is-settings p {
+    display: none;
+  }
+  .admin-section-navigation.is-settings a {
+    flex-shrink: 0;
+    margin: 0;
+  }
+  body .admin-workspace.has-settings-nav .page {
+    padding: 85px 28px 28px;
+  }
+  .partner-topbar .management-topbar-inner {
+    padding: 0 24px;
+    gap: 14px;
+  }
+  .partner-primary {
+    position: fixed;
+    top: 72px;
+    left: 0;
+    bottom: 0;
+    width: 240px;
+    height: calc(100vh - 72px);
+    background: white;
+    display: none;
+    z-index: 60;
+    padding: 22px;
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .partner-primary.open {
+    display: flex;
+  }
+  .partner-primary a {
+    height: 44px;
+    padding: 0 12px;
+  }
+  .partner-primary a.active {
+    border: 0;
+    border-radius: 8px;
+    background: #eef1fd;
+  }
+  .partner-topbar:has(.partner-primary.open) {
+    z-index: 60;
+  }
+  .partner-welcome {
+    align-items: start;
+    padding: 25px;
+  }
+  .partner-welcome h1 {
+    font-size: 26px;
+  }
+}
+@media (max-width: 650px) {
+  .admin-topbar {
+    padding: 0 18px;
+  }
+  .management-topbar-inner {
+    gap: 10px;
+  }
+  .management-breadcrumb > span,
+  .management-breadcrumb > .ali-icon {
+    display: none;
+  }
+  .management-account > span:not(.management-avatar) {
+    display: none;
+  }
+  .management-actions {
+    gap: 10px;
+  }
+  body .admin-workspace .page {
+    padding: 22px 18px;
+  }
+  .admin-section-navigation {
+    left: 18px;
+    right: 18px;
+    gap: 18px;
+    flex-wrap: nowrap;
+    overflow: auto;
+  }
+  .admin-section-navigation a {
+    white-space: nowrap;
+  }
+  body .admin-workspace.has-settings-nav .page {
+    padding: 85px 18px 22px;
+  }
+  .management-dashboard-grid,
+  .partner-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+  body .admin-workspace .dashboard h1 {
+    font-size: 27px;
+  }
+  body .admin-workspace .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  body .admin-workspace .summary-card {
+    padding: 16px;
+  }
+  body .admin-workspace .summary-card > .ali-icon {
+    display: none;
+  }
+  body .admin-workspace .summary-card strong {
+    font-size: 25px;
+  }
+  .partner-topbar .management-topbar-inner {
+    padding: 0 18px;
+  }
+  .partner-topbar .management-brand small {
+    display: none;
+  }
+  body .partner-workspace .page {
+    padding: 22px 18px;
+  }
+  .partner-welcome {
+    display: block;
+  }
+  .partner-welcome-actions {
+    margin-top: 20px;
+    align-items: start;
+  }
+  .partner-welcome h1 {
+    font-size: 25px;
+  }
+  body .partner-workspace .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  body .partner-workspace .summary-card {
+    padding: 16px;
+  }
+  .management-panel > header {
+    padding: 20px 18px 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-sidebar {
+    transition: none;
+  }
+}
+body .management-dashboard .dash-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 20px;
+}
+body .management-dashboard .dash-heading h1 {
+  font: 500 32px/1.4 var(--serif);
+}
+.management-dash-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.management-range {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid #dfe4ef;
+  border-radius: 7px;
+  background: white;
+  padding: 0 10px;
+  color: #7a879e;
+}
+.management-range select {
+  border: 0;
+  padding: 6px 4px;
+  min-height: 37px;
+  font-size: 12px;
+}
+.management-dashboard .summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0 0 24px;
+}
+.management-dashboard .summary-card {
+  position: relative;
+  padding: 21px;
+  border: 1px solid #e5e8ef;
+  border-radius: 14px;
+  background: white;
+  min-width: 0;
+}
+.management-dashboard .summary-card > span {
+  display: block;
+  font-size: 11px;
+  color: #8790a2;
+  margin-bottom: 20px;
+}
+.management-dashboard .summary-card > .ali-icon {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  padding: 8px;
+  border-radius: 8px;
+  font-size: 15px;
+  background: #edf1ff;
+  color: #5974d6;
+}
+.management-dashboard .summary-card:nth-child(2) > .ali-icon {
+  background: #eaf7f2;
+  color: #4e9c83;
+}
+.management-dashboard .summary-card:nth-child(3) > .ali-icon {
+  background: #fff5e9;
+  color: #c39952;
+}
+.management-dashboard .summary-card:nth-child(4) > .ali-icon {
+  background: #f1ebfc;
+  color: #8f6fc4;
+}
+.management-dashboard .summary-card strong {
+  font: 500 30px var(--serif);
+  font-variant-numeric: tabular-nums;
+}
+.management-dashboard .summary-card small {
+  color: #9aa3b2;
+  font-size: 10px;
+  margin-left: 5px;
+}
+.management-dashboard .summary-card:nth-child(2) .summary-spark polyline {
+  stroke: #b9ded2;
+}
+.management-dashboard .summary-card:nth-child(3) .summary-spark polyline {
+  stroke: #efd4af;
+}
+.management-dashboard .summary-card:nth-child(4) .summary-spark polyline {
+  stroke: #d6c7ed;
+}
+@media (max-width: 650px) {
+  body .management-dashboard .dash-heading {
+    display: block;
+  }
+  .management-dash-actions {
+    margin: 18px 0;
+  }
+  .management-dashboard .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .management-dashboard .summary-card > .ali-icon {
+    display: none;
+  }
+}
+/* 同尺寸浏览器检查发现窄容器挤压，操作区禁止文字逐字换行。 */
+.management-dash-actions {
+  flex-shrink: 0;
+}
+.management-dash-actions .button {
+  white-space: nowrap;
+}
+.management-dashboard .summary-card > span {
+  padding-right: 28px;
+  line-height: 1.7;
+}
+.management-todo > .ali-icon:last-child {
+  padding: 0;
+  background: none;
+  color: #a2acbf;
+  font-size: 11px;
+}
+.management-todo > div {
+  min-width: 0;
+}
+.management-todo strong {
+  line-height: 1.7;
+}
+@media (max-width: 1100px) {
+  body .management-dashboard .dash-heading {
+    align-items: start;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .management-dash-actions {
+    align-self: flex-start;
+    margin-bottom: 16px;
+  }
+}
+@media (max-width: 900px) {
+  .management-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  body .management-dashboard .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .management-dashboard .summary-card > span {
+    padding-right: 36px;
+  }
+  .partner-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.resource-status-tabs {
+  display: flex;
+  gap: 26px;
+  padding: 0 20px;
+  border-bottom: 1px solid #e7ebf3;
+  overflow: auto;
+}
+.resource-status-tabs button {
+  padding: 17px 0 14px;
+  white-space: nowrap;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: #7c879a;
+  font-size: 12px;
+}
+.resource-status-tabs button.active {
+  color: #3152cb;
+  border-bottom-color: #3152cb;
+}
+.table-project-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+}
+.table-project-progress progress {
+  width: 90px;
+  height: 5px;
+  accent-color: #4d68d5;
+}
+.resource-modal-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.resource-modal-heading h2 {
+  margin: 0;
+  font-size: 22px;
+}
+.modal-close {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: #f5f7fb;
+  border: 1px solid #e8ecf3;
+  border-radius: 8px;
+  padding: 8px;
+  color: #8390a5;
+}
+.admin-sidebar-close {
+  display: none;
+}
+@media (max-width: 900px) {
+  .admin-sidebar {
+    visibility: hidden;
+  }
+  .admin-sidebar.open {
+    visibility: visible;
+  }
+  .admin-sidebar-close {
+    display: grid;
+    place-items: center;
+    position: absolute;
+    right: 14px;
+    top: 22px;
+    background: none;
+    border: 0;
+    color: #8fa0bf;
+  }
+  .admin-sidebar > .management-brand small {
+    display: none;
+  }
+}
+@media (max-width: 800px) {
+  body .admin-workspace .page-heading,
+  body .partner-workspace .page-heading {
+    align-items: flex-start;
+  }
+}

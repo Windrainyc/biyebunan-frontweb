@@ -5,7 +5,10 @@ import { writeAttempt } from '../api/attempt';
 import { display } from '../config/labels';
 import type { Row, Page } from '../types/api';
 import AssetUpload from './AssetUpload.vue';
-const props = defineProps<{ project: Row }>();
+const props = withDefaults(
+  defineProps<{ project: Row; section?: 'all' | 'milestones' | 'deliveries' }>(),
+  { section: 'all' },
+);
 const emit = defineEmits<{ changed: [] }>();
 const attempt = writeAttempt();
 const milestoneEdit = ref<Row | null>(null),
@@ -81,6 +84,10 @@ async function load() {
   const generation = ++loadGeneration;
   loading.value = true;
   error.value = '';
+  deliveries.value = [];
+  milestones.value = [];
+  deliveryTotal.value = 0;
+  milestoneTotal.value = 0;
   try {
     const [d, m] = await Promise.all([
       request<Page<Row>>(`/${auth.platform}/projects/${props.project.id}/deliveries`, {
@@ -139,8 +146,15 @@ async function publication(row: Row, publish: boolean) {
 }
 const downloadGrant = ref<{ id: unknown; url: string } | null>(null);
 let downloadTimer: ReturnType<typeof setTimeout> | undefined;
-onBeforeUnmount(() => clearTimeout(downloadTimer));
+let downloadGeneration = 0;
+onBeforeUnmount(() => {
+  downloadGeneration++;
+  clearTimeout(downloadTimer);
+});
 async function download(row: Row) {
+  // 只展示最后一次请求的授权，避免快速切换文件或离开页面后回写旧链接。
+  const generation = ++downloadGeneration;
+  error.value = '';
   downloadGrant.value = null;
   clearTimeout(downloadTimer);
   try {
@@ -148,6 +162,7 @@ async function download(row: Row) {
       `/${auth.platform}/assets/${row.assetId}/download`,
       { method: 'POST' },
     );
+    if (generation !== downloadGeneration) return;
     const url = new URL(grant.url);
     if (!['https:', 'http:'].includes(url.protocol)) throw new Error('下载地址无效');
     const remaining = Date.parse(grant.expiresAt) - Date.now();
@@ -158,139 +173,153 @@ async function download(row: Row) {
       downloadGrant.value = null;
     }, remaining);
   } catch (e) {
-    error.value = errorText(e);
+    if (generation === downloadGeneration) error.value = errorText(e);
   }
 }
 onMounted(load);
 </script>
 <template>
-  <section>
-    <h3>项目里程碑</h3>
-    <button v-if="auth.platform === 'admin'" class="button" @click="editMilestone()">
-      新增里程碑
-    </button>
-    <p v-if="!milestones.length" class="muted">暂无里程碑</p>
-    <div v-for="m in milestones" :key="String(m.id)" class="milestone">
-      <strong>{{ m.name }}</strong
-      ><span
-        >{{ display(m.dueDate) }} · {{ m.weight }}% · {{ m.completed ? '已完成' : '进行中' }}</span
-      >
-      <button v-if="auth.platform === 'admin'" class="button" @click="editMilestone(m)">
-        编辑
+  <section class="project-detail">
+    <p v-if="error" class="error" role="alert">
+      {{ error }} <button class="button" @click="load">重试</button>
+    </p>
+    <p v-if="loading" class="muted" role="status">正在加载项目资料…</p>
+    <template v-if="section !== 'deliveries'">
+      <h3>项目里程碑</h3>
+      <button v-if="auth.platform === 'admin'" class="button" @click="editMilestone()">
+        新增里程碑
       </button>
-    </div>
-    <form v-if="milestoneOpen" class="delivery-form" @submit.prevent="saveMilestone">
-      <label>里程碑名称<input v-model="milestoneName" maxlength="200" required /></label
-      ><label
-        >计划日期<input
-          v-model="milestoneDate"
-          type="date"
-          :max="String(project.deliveryDate)"
-          required /></label
-      ><label
-        >进度权重<input
-          v-model.number="milestoneWeight"
-          type="number"
-          min="1"
-          max="100"
-          required /></label
-      ><label><input v-model="milestoneCompleted" type="checkbox" />已完成</label
-      ><button class="button primary" :disabled="busy">保存里程碑</button
-      ><button type="button" class="button" @click="milestoneOpen = false">取消</button>
-    </form>
-    <div class="detail-pagination" aria-label="里程碑分页">
-      <span>共 {{ milestoneTotal }} 条 · 第 {{ milestonePage }} 页</span>
-      <button
-        class="button"
-        :disabled="loading || milestonePage === 1"
-        @click="
-          milestonePage--;
-          load();
-        "
-      >
-        上一页里程碑
-      </button>
-      <button
-        class="button"
-        :disabled="loading || milestonePage * pageSize >= milestoneTotal"
-        @click="
-          milestonePage++;
-          load();
-        "
-      >
-        下一页里程碑
-      </button>
-    </div>
-    <h3>交付版本</h3>
-    <p v-if="error" class="error" role="alert">{{ error }}</p>
-    <p v-if="!deliveries.length" class="muted">暂无可查看的交付版本</p>
-    <article v-for="d in deliveries" :key="String(d.id)" class="delivery">
-      <div>
-        <strong>{{ kinds[String(d.kind)] || '交付文件' }}</strong
-        ><span>第{{ d.versionNumber }}版 · {{ display(d.state) }}</span>
+      <p v-if="!loading && !error && !milestones.length" class="muted">暂无里程碑</p>
+      <div v-for="m in milestones" :key="String(m.id)" class="milestone">
+        <strong>{{ m.name }}</strong
+        ><span
+          >{{ display(m.dueDate) }} · {{ m.weight }}% ·
+          {{ m.completed ? '已完成' : '进行中' }}</span
+        >
+        <button v-if="auth.platform === 'admin'" class="button" @click="editMilestone(m)">
+          编辑
+        </button>
       </div>
-      <p>{{ d.note }}</p>
-      <button class="button" @click="download(d)">下载文件</button
-      ><a
-        v-if="downloadGrant && downloadGrant.id === d.id"
-        class="button"
-        :href="downloadGrant.url"
-        rel="noopener noreferrer"
-        >保存已授权文件</a
-      ><template v-if="auth.platform === 'admin'"
-        ><button
-          v-if="d.state === 'READY'"
+      <form v-if="milestoneOpen" class="delivery-form" @submit.prevent="saveMilestone">
+        <label>里程碑名称<input v-model="milestoneName" maxlength="200" required /></label
+        ><label
+          >计划日期<input
+            v-model="milestoneDate"
+            type="date"
+            :max="String(project.deliveryDate)"
+            required /></label
+        ><label
+          >进度权重<input
+            v-model.number="milestoneWeight"
+            type="number"
+            min="1"
+            max="100"
+            required /></label
+        ><label><input v-model="milestoneCompleted" type="checkbox" />已完成</label
+        ><button class="button primary" :disabled="busy">保存里程碑</button
+        ><button type="button" class="button" @click="milestoneOpen = false">取消</button>
+      </form>
+      <div class="detail-pagination" aria-label="里程碑分页">
+        <span>共 {{ milestoneTotal }} 条 · 第 {{ milestonePage }} 页</span>
+        <button
           class="button"
-          :disabled="busy || !reason"
-          @click="publication(d, true)"
+          :disabled="loading || milestonePage === 1"
+          @click="
+            milestonePage--;
+            load();
+          "
         >
-          发布版本</button
-        ><button
-          v-if="d.state === 'PUBLISHED'"
+          上一页里程碑
+        </button>
+        <button
           class="button"
-          :disabled="busy || !reason"
-          @click="publication(d, false)"
+          :disabled="loading || milestonePage * pageSize >= milestoneTotal"
+          @click="
+            milestonePage++;
+            load();
+          "
         >
-          撤回版本
-        </button></template
+          下一页里程碑
+        </button>
+      </div>
+    </template>
+    <template v-if="section !== 'milestones'">
+      <h3>交付版本</h3>
+      <p v-if="!loading && !error && !deliveries.length" class="muted">暂无可查看的交付版本</p>
+      <article v-for="d in deliveries" :key="String(d.id)" class="delivery">
+        <div>
+          <strong>{{ kinds[String(d.kind)] || '交付文件' }}</strong
+          ><span>第{{ d.versionNumber }}版 · {{ display(d.state) }}</span>
+        </div>
+        <p>{{ d.note }}</p>
+        <button class="button" @click="download(d)">下载文件</button
+        ><a
+          v-if="downloadGrant && downloadGrant.id === d.id"
+          class="button"
+          :href="downloadGrant.url"
+          rel="noopener noreferrer"
+          >保存已授权文件</a
+        ><template v-if="auth.platform === 'admin'"
+          ><button
+            v-if="d.state === 'READY'"
+            class="button"
+            :disabled="busy || !reason"
+            @click="publication(d, true)"
+          >
+            发布版本</button
+          ><button
+            v-if="d.state === 'PUBLISHED'"
+            class="button"
+            :disabled="busy || !reason"
+            @click="publication(d, false)"
+          >
+            撤回版本
+          </button></template
+        >
+      </article>
+      <div class="detail-pagination" aria-label="交付版本分页">
+        <span>共 {{ deliveryTotal }} 条 · 第 {{ deliveryPage }} 页</span>
+        <button
+          class="button"
+          :disabled="loading || deliveryPage === 1"
+          @click="
+            deliveryPage--;
+            load();
+          "
+        >
+          上一页版本
+        </button>
+        <button
+          class="button"
+          :disabled="loading || deliveryPage * pageSize >= deliveryTotal"
+          @click="
+            deliveryPage++;
+            load();
+          "
+        >
+          下一页版本
+        </button>
+      </div>
+      <template v-if="auth.platform === 'admin'"
+        ><label>发布或撤回原因<input v-model="reason" maxlength="200" /></label>
+        <h3>新增不可覆盖的交付版本</h3>
+        <AssetUpload
+          owner-type="PROJECT"
+          :owner-id="String(project.id)"
+          @ready="uploaded = $event"
+        />
+        <form v-if="uploaded" class="delivery-form" @submit.prevent="add">
+          <label
+            >资料类型<select v-model="kind">
+              <option v-for="(title, value) in kinds" :key="value" :value="value">
+                {{ title }}
+              </option>
+            </select></label
+          ><label>版本说明<input v-model="note" maxlength="200" required /></label
+          ><button class="button primary" :disabled="busy">创建交付版本</button>
+        </form></template
       >
-    </article>
-    <div class="detail-pagination" aria-label="交付版本分页">
-      <span>共 {{ deliveryTotal }} 条 · 第 {{ deliveryPage }} 页</span>
-      <button
-        class="button"
-        :disabled="loading || deliveryPage === 1"
-        @click="
-          deliveryPage--;
-          load();
-        "
-      >
-        上一页版本
-      </button>
-      <button
-        class="button"
-        :disabled="loading || deliveryPage * pageSize >= deliveryTotal"
-        @click="
-          deliveryPage++;
-          load();
-        "
-      >
-        下一页版本
-      </button>
-    </div>
-    <template v-if="auth.platform === 'admin'"
-      ><label>发布或撤回原因<input v-model="reason" maxlength="200" /></label>
-      <h3>新增不可覆盖的交付版本</h3>
-      <AssetUpload owner-type="PROJECT" :owner-id="String(project.id)" @ready="uploaded = $event" />
-      <form v-if="uploaded" class="delivery-form" @submit.prevent="add">
-        <label
-          >资料类型<select v-model="kind">
-            <option v-for="(title, value) in kinds" :key="value" :value="value">{{ title }}</option>
-          </select></label
-        ><label>版本说明<input v-model="note" maxlength="200" required /></label
-        ><button class="button primary" :disabled="busy">创建交付版本</button>
-      </form></template
-    >
+    </template>
   </section>
 </template>
 <style scoped>

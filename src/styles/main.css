@@ -97,6 +97,7 @@ textarea:focus {
   min-height: 28px;
   font-size: 12px;
 }
+.text-button,
 .btn-link {
   border: 0;
   background: transparent;
