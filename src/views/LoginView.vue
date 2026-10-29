@@ -27,10 +27,11 @@ async function submit() {
 }
 </script>
 <template>
-  <main class="login-page">
+  <main class="login-page" :class="{ 'student-login': platform === 'student' }">
     <section class="login-intro">
       <span class="brand-mark">知</span>
-      <h1>{{ platformNames[platform] }}</h1>
+      <h1 v-if="platform === 'student'">从第一个问题，<br />到最后一次交付。</h1>
+      <h1 v-else>{{ platformNames[platform] }}</h1>
       <p>让项目有进度，让问题有答案。</p>
       <p>
         {{

@@ -17,6 +17,10 @@ const metrics = ref<Metric[] | null>(null),
   projects = ref<Row[]>([]),
   loading = ref(true),
   error = ref('');
+const milestones = ref<Row[]>([]),
+  deliveries = ref<Row[]>([]),
+  community = ref<Row[]>([]),
+  learning = ref<Row[]>([]);
 let generation = 0;
 const now = new Date();
 const today = new Intl.DateTimeFormat('en-CA', {
@@ -42,6 +46,10 @@ async function load() {
   error.value = '';
   metrics.value = null;
   projects.value = [];
+  milestones.value = [];
+  deliveries.value = [];
+  community.value = [];
+  learning.value = [];
   const statsPath = `/${auth.platform}/statistics`,
     projectPath = `/${auth.platform}/projects`;
   const results = await Promise.allSettled([
@@ -54,13 +62,40 @@ async function load() {
   ]);
   if (current !== generation) return;
   const stats = results[0],
-    project = results[1];
+    projectResult = results[1];
   if (stats.status === 'fulfilled') metrics.value = stats.value?.items || null;
-  if (project.status === 'fulfilled') projects.value = project.value?.items || [];
+  if (projectResult.status === 'fulfilled') projects.value = projectResult.value?.items || [];
   error.value = results
     .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
     .map((r) => errorText(r.reason))
     .join('；');
+  if (auth.platform === 'student') {
+    const chosen = project.value;
+    const sections = await Promise.allSettled([
+      chosen
+        ? request<Page<Row>>(`/student/projects/${chosen.id}/milestones`, {
+            query: { page: 1, size: 4 },
+          })
+        : Promise.resolve(null),
+      chosen
+        ? request<Page<Row>>(`/student/projects/${chosen.id}/deliveries`, {
+            query: { page: 1, size: 4 },
+          })
+        : Promise.resolve(null),
+      request<Page<Row>>('/student/posts', { query: { page: 1, size: 3 } }),
+      request<Page<Row>>('/student/knowledge', { query: { page: 1, size: 3 } }),
+    ]);
+    if (current !== generation) return;
+    [milestones, deliveries, community, learning].forEach((target, index) => {
+      const result = sections[index];
+      if (result.status === 'fulfilled') target.value = result.value?.items || [];
+    });
+    const sectionErrors = sections
+      .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+      .map((r) => errorText(r.reason));
+    if (sectionErrors.length)
+      error.value = [error.value, ...sectionErrors].filter(Boolean).join('；');
+  }
   loading.value = false;
 }
 const cards = computed(() => [
@@ -235,7 +270,7 @@ onBeforeUnmount(() => generation++);
         >
         <p v-else class="muted">{{ loading ? '正在加载统计…' : '当前未取得统计数据' }}</p>
       </section>
-      <section class="quick-card card">
+      <section v-if="auth.platform !== 'student'" class="quick-card card">
         <div class="section-heading"><h2>常用功能</h2></div>
         <RouterLink
           v-for="entry in availableEntries"
@@ -247,13 +282,79 @@ onBeforeUnmount(() => generation++);
         <p v-if="!availableEntries.length" class="muted">暂无可用导航，请联系管理员配置。</p>
       </section>
     </div>
-    <div v-if="auth.platform === 'student'" class="summary-grid">
-      <article v-for="card in cards" :key="card.key" class="summary-card">
-        <span>{{ card.title }}</span
-        ><Icon :name="card.icon" /><strong>{{ total(card.key) }}</strong
-        ><small>{{ card.unit }}</small>
-      </article>
-    </div>
+    <template v-if="auth.platform === 'student'">
+      <section class="student-overview-panel">
+        <header>
+          <h2>接下来要做</h2>
+          <RouterLink to="/student/projects">项目里程碑 <Icon name="right" /></RouterLink>
+        </header>
+        <div v-for="item in milestones" :key="String(item.id)" class="student-overview-row">
+          <Icon :name="item.completed ? 'check' : 'clock'" />
+          <div>
+            <strong>{{ item.name }}</strong
+            ><small>{{ item.completed ? '已完成' : '待完成' }} · {{ display(item.dueDate) }}</small>
+          </div>
+        </div>
+        <p v-if="!milestones.length" class="muted">
+          {{ loading ? '正在读取里程碑…' : '当前项目暂无里程碑' }}
+        </p>
+      </section>
+      <section class="student-overview-panel">
+        <header>
+          <h2>项目交付物</h2>
+          <RouterLink to="/student/projects">全部 <Icon name="right" /></RouterLink>
+        </header>
+        <RouterLink
+          v-for="item in deliveries"
+          :key="String(item.id)"
+          to="/student/projects"
+          class="student-overview-row"
+          ><Icon name="file" />
+          <div>
+            <strong>{{ item.title || item.name || display(item.kind) }}</strong
+            ><small>{{ display(item.updatedAt || item.createdAt) }}</small>
+          </div></RouterLink
+        >
+        <p v-if="!deliveries.length" class="muted">
+          {{ loading ? '正在读取交付物…' : '当前项目暂无已发布交付物' }}
+        </p>
+      </section>
+      <section class="student-overview-panel">
+        <header>
+          <h2>答疑动态</h2>
+          <RouterLink to="/student/posts">去广场 <Icon name="right" /></RouterLink>
+        </header>
+        <RouterLink
+          v-for="item in community"
+          :key="String(item.id)"
+          to="/student/posts"
+          class="student-overview-row"
+          ><Icon name="message" />
+          <div>
+            <strong>{{ item.title }}</strong
+            ><small>{{ display(item.createdAt) }}</small>
+          </div></RouterLink
+        >
+        <p v-if="!community.length" class="muted">
+          {{ loading ? '正在读取讨论…' : '暂无可访问的讨论' }}
+        </p>
+      </section>
+      <section class="student-learning">
+        <div>
+          <p class="eyebrow">学习内容</p>
+          <h2>继续探索，<br />让项目更进一步。</h2>
+          <p class="muted">浏览当前可访问的知识资料</p>
+        </div>
+        <RouterLink v-for="item in learning" :key="String(item.id)" to="/student/knowledge"
+          ><small>{{ display(item.type) }}</small>
+          <h3>{{ item.title }}</h3>
+          <span>阅读资料 <Icon name="right" /></span
+        ></RouterLink>
+        <p v-if="!learning.length" class="muted">
+          {{ loading ? '正在读取资料…' : '暂无可访问的知识资料' }}
+        </p>
+      </section>
+    </template>
   </section>
 </template>
 <style scoped>

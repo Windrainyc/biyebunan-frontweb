@@ -18,6 +18,7 @@ const ForumDetail = defineAsyncComponent(() => import('../components/ForumDetail
 import RecordActions from '../components/RecordActions.vue';
 const ProjectDetail = defineAsyncComponent(() => import('../components/ProjectDetail.vue'));
 import StatusBadge from '../components/StatusBadge.vue';
+import Icon from '../components/Icon.vue';
 import { formBody, requiresSelection } from '../config/form';
 import SchemaField from '../components/SchemaField.vue';
 let attempt = writeAttempt();
@@ -32,6 +33,10 @@ function closeDetail() {
   detail.value = null;
 }
 const props = defineProps<{ resource: Resource }>();
+const studentCards = computed(
+  () =>
+    auth.platform === 'student' && ['projects', 'knowledge', 'posts'].includes(props.resource.key),
+);
 const rows = ref<Row[]>([]),
   total = ref(0),
   page = ref(1),
@@ -254,10 +259,17 @@ onMounted(() => {
 });
 </script>
 <template>
-  <section>
-    <div class="page-heading">
+  <section :class="{ 'student-resource': studentCards, ['student-' + resource.key]: studentCards }">
+    <div v-if="!(detail && studentCards && resource.key === 'projects')" class="page-heading">
       <div>
-        <h1>{{ resource.title }}</h1>
+        <p v-if="studentCards" class="eyebrow">{{ resource.title }}</p>
+        <h1 v-if="studentCards && resource.key === 'knowledge'">
+          先把问题找对，<br />答案会自己浮现。
+        </h1>
+        <h1 v-else-if="studentCards && resource.key === 'posts'">
+          有人一起，<br />问题就没那么难。
+        </h1>
+        <h1 v-else>{{ resource.title }}</h1>
         <p class="muted">{{ resource.subtitle }}</p>
       </div>
       <button v-if="canCreate" class="button primary" @click="open()">
@@ -270,7 +282,7 @@ onMounted(() => {
     />
     <p v-if="notice" role="status" class="notice">{{ notice }}</p>
     <p v-if="error" class="error" role="alert">{{ error }}</p>
-    <div class="data-card">
+    <div v-if="!(detail && studentCards && resource.key === 'projects')" class="data-card">
       <form class="filters" @submit.prevent="search">
         <input
           v-if="queryNames.has('q')"
@@ -323,7 +335,71 @@ onMounted(() => {
           </div>
         </details>
       </form>
-      <div class="table-scroll" :aria-busy="loading">
+      <div v-if="studentCards" class="student-resource-grid" :aria-busy="loading">
+        <article v-for="(row, index) in rows" :key="row.id || index" class="student-resource-card">
+          <div
+            v-if="resource.key === 'knowledge'"
+            class="student-knowledge-cover"
+            :class="`cover-${index % 3}`"
+          >
+            <span
+              ><Icon :name="row.type === 'VIDEO' ? 'video' : 'book'" />{{ display(row.type) }}</span
+            ><b>{{ String((page - 1) * size + index + 1).padStart(2, '0') }}</b>
+          </div>
+          <div class="student-resource-card-body">
+            <div class="student-resource-meta">
+              <Icon :name="resource.icon" /><StatusBadge
+                v-if="row.stage || row.state"
+                :value="String(row.stage || row.state)"
+              /><span v-else>知识资料</span>
+            </div>
+            <h2>
+              <button @click="inspect(row)">{{ display(row.title) }}</button>
+            </h2>
+            <p v-if="row.description || row.summary">{{ row.description || row.summary }}</p>
+            <div v-if="resource.key === 'projects'" class="student-project-progress">
+              <span>项目完成度 {{ row.progress }}%</span
+              ><progress
+                :value="Number(row.progress) || 0"
+                max="100"
+                aria-label="项目完成度"
+              ></progress
+              ><small>计划交付 {{ display(row.deliveryDate) }}</small>
+            </div>
+            <div class="student-resource-meta">
+              <ReferenceName
+                v-if="row.categoryId"
+                field="categoryId"
+                :value="row.categoryId"
+              /><ReferenceName v-if="row.boardId" field="boardId" :value="row.boardId" /><span
+                v-if="row.updatedAt || row.createdAt"
+                >{{ display(row.updatedAt || row.createdAt) }}</span
+              >
+            </div>
+            <div class="student-resource-actions">
+              <button class="text-button" @click="inspect(row)">
+                {{
+                  resource.key === 'projects'
+                    ? '查看项目与交付'
+                    : resource.key === 'knowledge'
+                      ? '阅读资料'
+                      : '查看讨论'
+                }}
+                <Icon name="right" /></button
+              ><button v-if="canEdit" class="text-button" @click="open(row)">编辑</button
+              ><button v-if="canDelete" class="text-button danger" @click="askDelete(row)">
+                删除
+              </button>
+            </div>
+          </div>
+        </article>
+        <p v-if="!rows.length" class="empty">
+          {{
+            loading ? '正在读取数据…' : listFailed ? '读取失败，请重新查询' : '暂无符合条件的数据'
+          }}
+        </p>
+      </div>
+      <div v-else class="table-scroll" :aria-busy="loading">
         <table>
           <thead>
             <tr>
@@ -443,7 +519,40 @@ onMounted(() => {
         </footer>
       </form>
     </div>
-    <div v-if="detail" class="modal-backdrop">
+    <section
+      v-if="detail && studentCards && resource.key === 'projects'"
+      class="student-project-space"
+    >
+      <button class="text-button" @click="closeDetail">我的项目 / 返回项目列表</button>
+      <header>
+        <div>
+          <p class="eyebrow">项目空间</p>
+          <h1>{{ detail.title }}</h1>
+          <p class="muted">
+            计划交付 {{ display(detail.deliveryDate) }} · 最近更新 {{ display(detail.updatedAt) }}
+          </p>
+        </div>
+        <RouterLink to="/student/chat" class="button primary"
+          ><Icon name="sparkles" />智能答疑</RouterLink
+        >
+      </header>
+      <div class="student-project-stage">
+        <strong>{{ detail.progress }}%</strong><span>项目完成度</span
+        ><StatusBadge :value="String(detail.stage)" /><progress
+          :value="Number(detail.progress) || 0"
+          max="100"
+          aria-label="项目完成度"
+        ></progress>
+      </div>
+      <ProjectDetail
+        :project="detail"
+        @changed="
+          inspect(detail);
+          load();
+        "
+      />
+    </section>
+    <div v-else-if="detail" class="modal-backdrop">
       <section
         class="modal"
         v-dialog="closeDetail"

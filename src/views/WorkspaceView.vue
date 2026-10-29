@@ -73,6 +73,36 @@ const homeEntries = computed(() =>
 );
 const selected = computed(() => entries.value.find((r) => r.key === route.params.resource));
 const groups = computed(() => [...new Set(entries.value.map((r) => r.group))]);
+const studentMenuOpen = ref(false);
+const accountOpen = ref(false);
+const studentAllowed = (key: string) =>
+  navigation.value?.configured
+    ? configuredLinks.value.some((entry) => entry.path === `/student/${key}`)
+    : navigation.value?.configured === false && knownPaths.value.has(`/student/${key}`);
+const studentPrimary = computed(() =>
+  [
+    { key: 'projects', title: '我的项目', icon: 'folder' },
+    { key: 'chat', title: '智能答疑', icon: 'sparkles' },
+    { key: 'knowledge', title: '知识库', icon: 'book' },
+    { key: 'posts', title: '答疑广场', icon: 'message' },
+  ].filter((entry) => studentAllowed(entry.key)),
+);
+const studentSecondary = computed(() =>
+  [
+    ...utilityLinks.value,
+    ...entries.value.map((entry) => ({ ...entry, path: `/student/${entry.key}` })),
+  ].filter(
+    (entry) =>
+      studentAllowed(entry.key) && !studentPrimary.value.some((main) => main.key === entry.key),
+  ),
+);
+watch(
+  () => route.fullPath,
+  () => {
+    studentMenuOpen.value = false;
+    accountOpen.value = false;
+  },
+);
 async function exit() {
   try {
     await logout();
@@ -83,8 +113,65 @@ async function exit() {
 }
 </script>
 <template>
-  <div class="workspace">
-    <aside class="sidebar">
+  <div class="workspace" :class="{ 'student-workspace': platform === 'student' }">
+    <header v-if="platform === 'student'" class="student-header">
+      <div class="student-header-inner">
+        <button
+          class="student-menu-button"
+          aria-label="展开学生导航"
+          :aria-expanded="studentMenuOpen"
+          @click="studentMenuOpen = !studentMenuOpen"
+        >
+          <Icon name="menu" />
+        </button>
+        <RouterLink to="/student" class="student-brand"
+          ><span>知</span><strong>知项</strong></RouterLink
+        >
+        <nav class="student-nav" :class="{ open: studentMenuOpen }" aria-label="学生端主导航">
+          <RouterLink to="/student" exact-active-class="is-active"
+            ><Icon name="grid" />工作台</RouterLink
+          >
+          <RouterLink
+            v-for="entry in studentPrimary"
+            :key="entry.key"
+            :to="`/student/${entry.key}`"
+            active-class="is-active"
+            ><Icon :name="entry.icon" />{{ entry.title }}</RouterLink
+          >
+        </nav>
+        <div class="student-header-actions">
+          <RouterLink v-if="studentAllowed('search')" to="/student/search" aria-label="搜索知识库"
+            ><Icon name="search"
+          /></RouterLink>
+          <RouterLink
+            v-if="studentAllowed('notifications')"
+            to="/student/notifications"
+            aria-label="消息通知"
+            ><Icon name="bell"
+          /></RouterLink>
+          <RouterLink v-if="studentAllowed('bind-order')" to="/student/bind-order" class="button"
+            >绑定订单</RouterLink
+          >
+          <button
+            class="student-profile"
+            :aria-expanded="accountOpen"
+            aria-label="账户菜单"
+            @click="accountOpen = !accountOpen"
+          >
+            <span class="student-avatar">{{ auth.user?.displayName?.slice(0, 1) }}</span
+            ><span class="student-profile-name"
+              >{{ auth.user?.displayName }}<small>学生账户</small></span
+            ><Icon name="down" />
+          </button>
+          <div v-if="accountOpen" class="student-account-menu">
+            <RouterLink v-for="entry in studentSecondary" :key="entry.key" :to="entry.path"
+              ><Icon :name="entry.icon" />{{ entry.title }}</RouterLink
+            ><button @click="exit">退出登录</button>
+          </div>
+        </div>
+      </div>
+    </header>
+    <aside v-if="platform !== 'student'" class="sidebar">
       <RouterLink :to="`/${platform}`" class="logo"
         ><span>知</span><strong>{{ platformNames[platform] }}</strong></RouterLink
       >
@@ -121,7 +208,7 @@ async function exit() {
       <div class="sidebar-foot">项目答疑 · 交付协作</div>
     </aside>
     <div class="workspace-body">
-      <header class="topbar">
+      <header v-if="platform !== 'student'" class="topbar">
         <span>{{ selected?.title || '工作台' }}</span>
         <div>
           <span>{{ auth.user?.displayName }}</span
@@ -129,6 +216,9 @@ async function exit() {
         </div>
       </header>
       <main class="page">
+        <p v-if="platform === 'student' && navigationError" class="error" role="alert">
+          导航加载失败 <button class="button" @click="refreshNavigation">重试</button>
+        </p>
         <p v-if="error" class="error" role="alert">{{ error }}</p>
         <KnowledgeSearchView
           v-if="platform === 'student' && route.params.resource === 'search'"
