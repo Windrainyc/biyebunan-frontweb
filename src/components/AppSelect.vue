@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { CSSProperties } from 'vue';
 import { selectLayout } from './select-layout';
-import { ref, computed, onMounted, onBeforeUnmount, nextTick, useAttrs, useId } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, useAttrs, useId, watch } from 'vue';
 defineOptions({ inheritAttrs: false });
 const props = defineProps<{
   modelValue?: unknown;
@@ -31,7 +31,14 @@ function sync() {
       o.disabled || (o.parentElement instanceof HTMLOptGroupElement && o.parentElement.disabled),
   }));
   // Vue会重新写入option属性；值未变时必须保持状态引用，避免观察器与渲染互相触发。
-  if (JSON.stringify(next) !== JSON.stringify(options.value)) options.value = next;
+  if (JSON.stringify(next) !== JSON.stringify(options.value)) {
+    options.value = next;
+    // 异步刷新可能移除/重排选项，关闭旧菜单，避免旧高亮索引选择到另一条数据。
+    if (open.value) {
+      close();
+      trigger.value?.focus();
+    }
+  }
 }
 function close() {
   open.value = false;
@@ -51,7 +58,14 @@ async function show() {
   popup.value?.focus();
   reveal();
 }
+watch(
+  () => props.disabled,
+  (disabled) => {
+    if (disabled) close();
+  },
+);
 function choose(index: number) {
+  if (props.disabled) return;
   const option = options.value[index];
   if (!option || option.disabled) return;
   const value =
@@ -172,7 +186,9 @@ onBeforeUnmount(() => {
       @click="show"
       @keydown="key"
     >
-      <span>{{ selected?.label || options[0]?.label || '请选择' }}</span
+      <span>{{
+        selected?.label || options.find((option) => option.value === '')?.label || '请选择'
+      }}</span
       ><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 7.5 5 5 5-5" /></svg>
     </button>
     <Teleport to="body"
