@@ -23,12 +23,14 @@ const selected = computed(() =>
 );
 let observer: MutationObserver | undefined;
 function sync() {
-  options.value = Array.from(native.value?.options ?? []).map((o) => ({
+  const next = Array.from(native.value?.options ?? []).map((o) => ({
     value: o.value,
     label: o.text.trim(),
     disabled:
       o.disabled || (o.parentElement instanceof HTMLOptGroupElement && o.parentElement.disabled),
   }));
+  // Vue会重新写入option属性；值未变时必须保持状态引用，避免观察器与渲染互相触发。
+  if (JSON.stringify(next) !== JSON.stringify(options.value)) options.value = next;
 }
 function close() {
   open.value = false;
