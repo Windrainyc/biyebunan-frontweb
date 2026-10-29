@@ -87,8 +87,13 @@ def main():
             with socket.socket() as probe:
                 if probe.connect_ex(('127.0.0.1', port)) == 0:
                     raise RuntimeError(f'{port}被占用，拒绝接管或停止外部进程')
-        if args.build:
-            subprocess.run(DOCKER + ['build'], check=True)
+        # 本机协议夹具固定使用非商业测试说明，与隔离API版本一致；不写入生产默认配置。
+        if args.build or args.fixtures:
+            build_env = os.environ.copy()
+            if args.fixtures:
+                build_env.update(VITE_TERMS_URL='http://127.0.0.1:18780/local-test-terms.html',
+                                 VITE_TERMS_VERSION='ui-test-nonbinding')
+            subprocess.run(DOCKER + ['build'], check=True, env=build_env)
         state = {}
 
         def launch(name, script, options):

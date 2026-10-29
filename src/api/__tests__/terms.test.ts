@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { termsConfiguration } from '../../config/terms';
 describe('注册协议配置', () => {
+  it('非商业测试版本只允许本机地址，防止误作线上协议', () => {
+    expect(termsConfiguration('https://example.com/terms', 'ui-test-nonbinding')).toBeNull();
+    expect(
+      termsConfiguration('http://127.0.0.1:18780/local-test-terms.html', 'ui-test-nonbinding'),
+    ).not.toBeNull();
+  });
   it('地址与版本缺一不可', () => {
     expect(termsConfiguration(undefined, 'v1')).toBeNull();
     expect(termsConfiguration('https://example.com/terms', '')).toBeNull();

@@ -4,6 +4,7 @@ export function termsConfiguration(url: unknown, version: unknown) {
   try {
     const parsed = new URL(url.trim());
     const local = ['localhost', '127.0.0.1', '[::1]'].includes(parsed.hostname);
+    if (version.trim() === 'ui-test-nonbinding' && !local) return null;
     if (
       parsed.username ||
       parsed.password ||

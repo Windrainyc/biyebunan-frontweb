@@ -25,7 +25,7 @@ npm run build
 npm test
 ```
 
-目前类型检查和构建通过，67项协议/会话/表单/导航测试通过。登录页已在真实浏览器检查；管理员MFA登录、刷新恢复、院校新增编辑搜索、专业关联保存已通过真实浏览器；尚未完成三端全流程浏览器验收，不能把模拟请求单元测试视为端到端测试。
+目前类型检查和构建通过，68项协议/会话/表单/导航测试通过。登录页已在真实浏览器检查；管理员MFA登录、刷新恢复、院校新增编辑搜索、专业关联保存已通过真实浏览器；尚未完成三端全流程浏览器验收，不能把模拟请求单元测试视为端到端测试。
 
 ## 已接入与待完成
 
@@ -57,3 +57,5 @@ python3 scripts/stackctl.py stop
 本机视频联调可使用 `python3 scripts/stackctl.py start --fixtures --video`；`--video` 要求已安装 FFmpeg/ffprobe，显式启用隔离 worker 转码，默认关闭。该模式不启用 ASR/OCR。
 
 注册与中介激活需要运营方确认的真实服务协议地址和版本。容器构建从环境变量 `VITE_TERMS_URL`、`VITE_TERMS_VERSION` 读取，修改后执行 `docker --context colima-zhixiang compose -p zhixiang-ui -f deploy/compose.yaml build` 并 `up -d`。地址要求HTTPS（仅本机联调允许localhost HTTP），不允许嵌入凭据；两个值缺失或不合法时按钮保持禁用。版本须与后端接受的版本一致。这里不提供虚构协议，也不会自动替用户勾选同意。
+
+用户已授权配置本地测试说明：`start --fixtures`自动将前端地址设为`http://127.0.0.1:18780/local-test-terms.html`，版本`ui-test-nonbinding`，与测试API一致，并重建镜像防止旧配置残留。该说明非商业协议且仅用于隔离测试；普通模式仍须自行配置正式协议。不要把测试镜像发布到生产。

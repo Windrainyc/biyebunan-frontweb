@@ -225,7 +225,7 @@ async function submit() {
           :href="termsUrl"
           target="_blank"
           rel="noopener noreferrer"
-          >服务协议</a
+          >{{ termsVersion === 'ui-test-nonbinding' ? '本地测试使用说明' : '服务协议' }}</a
         ></label
       >
       <p v-if="error" class="error" role="alert">{{ error }}</p>
