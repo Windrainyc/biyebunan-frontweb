@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { CSSProperties } from 'vue';
+import { selectLayout } from './select-layout';
 import { ref, computed, onMounted, onBeforeUnmount, nextTick, useAttrs, useId } from 'vue';
 defineOptions({ inheritAttrs: false });
 const props = defineProps<{
@@ -45,17 +46,7 @@ async function show() {
     options.value.findIndex((o) => o.value === String(props.modelValue ?? '')),
   );
   const r = trigger.value!.getBoundingClientRect();
-  const below = window.innerHeight - r.bottom - 12;
-  const above = r.top - 12;
-  const height = Math.min(280, Math.max(below, above));
-  position.value = {
-    left: `${Math.max(8, Math.min(r.left, window.innerWidth - r.width - 8))}px`,
-    width: `${Math.min(r.width, window.innerWidth - 16)}px`,
-    maxHeight: `${height}px`,
-    ...(below >= Math.min(280, above)
-      ? { top: `${r.bottom + 6}px` }
-      : { bottom: `${window.innerHeight - r.top + 6}px` }),
-  };
+  position.value = selectLayout(r, { width: window.innerWidth, height: window.innerHeight });
   await nextTick();
   popup.value?.focus();
   reveal();
