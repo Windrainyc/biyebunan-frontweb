@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { auth, request, errorText } from '../api/client';
 import { writeAttempt } from '../api/attempt';
 import { display } from '../config/labels';
 import type { Row, Page } from '../types/api';
 import AssetUpload from './AssetUpload.vue';
 import RecordActions from './RecordActions.vue';
+import MarkdownContent from './MarkdownContent.vue';
 const props = defineProps<{ post: Row }>(),
   emit = defineEmits<{ changed: [] }>();
 const comments = ref<Row[]>([]),
@@ -17,6 +18,12 @@ const comments = ref<Row[]>([]),
   busy = ref(false);
 const attempt = writeAttempt();
 const deleting = ref<Row | null>(null);
+const replyInput = ref<HTMLTextAreaElement | null>(null);
+const notice = ref('');
+function reply(comment: Row) {
+  parent.value = comment;
+  void nextTick(() => replyInput.value?.focus());
+}
 async function removeComment() {
   if (!deleting.value || busy.value) return;
   busy.value = true;
@@ -46,6 +53,7 @@ function clearDownload() {
 }
 async function download(id: string) {
   clearDownload();
+  error.value = '';
   const current = downloadGeneration;
   try {
     const grant = await request<{ url: string; expiresAt: string }>(
@@ -68,11 +76,14 @@ async function download(id: string) {
   }
 }
 const loading = ref(false);
+const readError = ref('');
 let generation = 0;
 async function load() {
   const current = ++generation;
   loading.value = true;
-  error.value = '';
+  readError.value = '';
+  comments.value = [];
+  total.value = 0;
   try {
     const data = await request<Page<Row>>(`/${auth.platform}/posts/${props.post.id}/comments`, {
       query: { page: page.value, size: 20 },
@@ -80,14 +91,21 @@ async function load() {
     if (current !== generation) return;
     comments.value = data.items;
     total.value = data.total;
+    if (page.value > Math.max(1, Math.ceil(data.total / 20))) {
+      page.value = Math.max(1, Math.ceil(data.total / 20));
+      await load();
+    }
   } catch (e) {
-    if (current === generation) error.value = errorText(e);
+    if (current === generation) readError.value = errorText(e);
   } finally {
     if (current === generation) loading.value = false;
   }
 }
 async function send() {
+  if (busy.value || !body.value.trim()) return;
   busy.value = true;
+  error.value = '';
+  notice.value = '';
   try {
     const data = { body: body.value, parentId: parent.value?.id || null };
     await request(`/student/posts/${props.post.id}/comments`, {
@@ -97,6 +115,7 @@ async function send() {
     });
     body.value = '';
     parent.value = null;
+    notice.value = '回复已提交';
     await load();
   } catch (e) {
     error.value = errorText(e);
@@ -162,14 +181,21 @@ onBeforeUnmount(() => {
         >
       </div>
     </template>
-    <h3>交流回复</h3>
+    <h3>
+      交流回复 <small v-if="!loading && !readError">{{ total }} 条</small>
+    </h3>
     <p v-if="error" class="error" role="alert">{{ error }}</p>
+    <p v-if="readError" class="error" role="alert">
+      {{ readError }} <button class="button" :disabled="loading" @click="load">重试读取回复</button>
+    </p>
+    <p v-if="loading" class="muted" role="status">正在读取回复…</p>
+    <p v-if="notice" class="success" role="status">{{ notice }}</p>
     <article v-for="comment in comments" :key="String(comment.id)" class="comment">
       <span
         >{{ comment.authorId === auth.user?.id ? '我的回复' : '社区成员' }} ·
         {{ display(comment.createdAt) }}</span
       >
-      <p>{{ comment.body }}</p>
+      <MarkdownContent :text="String(comment.body || '')" />
       <span>{{ display(comment.state) }}</span>
       <RecordActions
         v-if="auth.platform === 'admin'"
@@ -186,9 +212,9 @@ onBeforeUnmount(() => {
         删除我的回复
       </button>
       <button
-        v-if="auth.platform === 'student' && !comment.parentId"
+        v-if="auth.platform === 'student' && post.state === 'PUBLISHED' && !comment.parentId"
         class="button"
-        @click="parent = comment"
+        @click="reply(comment)"
       >
         回复
       </button>
@@ -198,11 +224,13 @@ onBeforeUnmount(() => {
       <button class="button" :disabled="busy" @click="removeComment">确认删除回复</button>
       <button class="button" :disabled="busy" @click="deleting = null">取消删除</button>
     </div>
-    <p v-if="!comments.length" class="muted">暂无回复</p>
+    <p v-if="!loading && !readError && !comments.length" class="muted">
+      暂无回复，分享你的思路吧。
+    </p>
     <div class="pagination">
       <button
         class="button"
-        :disabled="loading || busy || page === 1"
+        :disabled="loading || busy || !!readError || page === 1"
         @click="
           page--;
           load();
@@ -212,7 +240,7 @@ onBeforeUnmount(() => {
       ><span>第{{ page }}页 · 共{{ total }}条</span
       ><button
         class="button"
-        :disabled="loading || busy || page * 20 >= total"
+        :disabled="loading || busy || !!readError || page * 20 >= total"
         @click="
           page++;
           load();
@@ -227,13 +255,20 @@ onBeforeUnmount(() => {
         }}<button type="button" class="button" @click="parent = null">取消回复</button>
       </p>
       <textarea
+        ref="replyInput"
         v-model="body"
         rows="4"
         maxlength="5000"
         required
         aria-label="回复正文"
         placeholder="写下你的思路或补充信息"
-      /><button class="button primary" :disabled="busy">发表回复</button>
+      />
+      <div class="reply-submit">
+        <span>{{ body.length }} / 5000</span
+        ><button class="button primary" :disabled="busy || !body.trim()">
+          {{ busy ? '提交中…' : '发表回复' }}
+        </button>
+      </div>
     </form>
     <template
       v-if="
@@ -241,12 +276,57 @@ onBeforeUnmount(() => {
         post.authorId === auth.user?.id &&
         ['PENDING', 'PUBLISHED'].includes(String(post.state))
       "
-      ><h3>补充附件</h3>
-      <AssetUpload owner-type="FORUM" :owner-id="String(post.id)" @ready="attach"
-    /></template>
+      ><details class="forum-attachments-editor">
+        <summary>补充帖子附件</summary>
+        <AssetUpload owner-type="FORUM" :owner-id="String(post.id)" @ready="attach" /></details
+    ></template>
   </section>
 </template>
 <style scoped>
+h3 {
+  margin-top: 28px;
+  font-size: 16px;
+}
+h3 small {
+  font-size: 12px;
+  font-weight: 400;
+  color: #8a96ab;
+  margin-left: 8px;
+}
+.reply-submit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  color: #8a96ab;
+}
+.forum-attachments-editor {
+  border-top: 1px solid #e5eaf2;
+  margin-top: 24px;
+  padding-top: 18px;
+}
+.forum-attachments-editor summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: #5b6e8c;
+  margin-bottom: 14px;
+}
+.comment .button {
+  margin: 8px 8px 0 0;
+  padding: 6px 10px;
+  min-height: 30px;
+  font-size: 12px;
+}
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  margin: 20px 0;
+  color: #8290a5;
+}
 .comment {
   padding: 16px;
   border-bottom: 1px solid #e2e6ef;

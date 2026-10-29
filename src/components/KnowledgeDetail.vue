@@ -5,6 +5,7 @@ import { writeAttempt } from '../api/attempt';
 import type { Row, Page } from '../types/api';
 import { display } from '../config/labels';
 import AssetUpload from './AssetUpload.vue';
+import MarkdownContent from './MarkdownContent.vue';
 const props = defineProps<{ content: Row }>(),
   emit = defineEmits<{ changed: [] }>();
 const items = ref<Row[]>([]),
@@ -28,6 +29,8 @@ async function load() {
   const current = ++generation;
   loading.value = true;
   error.value = '';
+  items.value = [];
+  total.value = 0;
   try {
     const data = await request<Page<Row>>(
       `/${auth.platform}/knowledge/${props.content.id}/versions`,
@@ -72,6 +75,7 @@ async function attach(asset: Row) {
 }
 async function download(asset: unknown, play = false) {
   const current = ++downloadGeneration;
+  error.value = '';
   downloadUrl.value = '';
   video.value = '';
   clearTimeout(downloadTimer);
@@ -115,8 +119,10 @@ watch(
 </script>
 <template>
   <section>
-    <p v-if="error" class="error" role="alert">{{ error }}</p>
-    <p v-if="content.markdown" class="prose">{{ content.markdown }}</p>
+    <p v-if="error" class="error" role="alert">
+      {{ error }} <button class="button" @click="load">重新加载版本</button>
+    </p>
+    <MarkdownContent v-if="content.markdown" :text="String(content.markdown)" />
     <template v-if="content.assetId"
       ><button class="button" @click="download(content.assetId)">下载资料</button
       ><button
@@ -136,38 +142,43 @@ watch(
     <p v-if="downloadUrl">
       <a :href="downloadUrl" rel="noopener noreferrer" class="button">保存已授权资料</a>
     </p>
-    <h3>内容版本</h3>
-    <article v-for="item in items" :key="String(item.id)" class="version">
-      <strong>第{{ item.versionNumber }}版 · {{ display(item.state) }}</strong
-      ><span>{{ display(item.createdAt) }}</span>
-      <p v-if="item.markdown" class="prose">{{ item.markdown }}</p>
-      <button v-if="item.assetId" class="button" @click="download(item.assetId)">
-        下载版本文件
-      </button>
-    </article>
-    <p v-if="!items.length" class="muted">暂无已发布版本</p>
-    <div class="pagination">
-      <button
-        class="button"
-        :disabled="loading || page === 1"
-        @click="
-          page--;
-          load();
-        "
-      >
-        上一页</button
-      ><span>第{{ page }}页 · 共{{ total }}条</span
-      ><button
-        class="button"
-        :disabled="loading || page * 20 >= total"
-        @click="
-          page++;
-          load();
-        "
-      >
-        下一页
-      </button>
-    </div>
+    <details class="knowledge-version-history" :open="auth.platform === 'admin'">
+      <summary>
+        内容版本<span>{{ loading ? '读取中…' : '共' + total + '个版本' }}</span>
+      </summary>
+      <p v-if="loading" class="muted" role="status">正在读取内容版本…</p>
+      <article v-for="item in items" :key="String(item.id)" class="version">
+        <strong>第{{ item.versionNumber }}版 · {{ display(item.state) }}</strong
+        ><span>{{ display(item.createdAt) }}</span>
+        <MarkdownContent v-if="item.markdown" :text="String(item.markdown)" />
+        <button v-if="item.assetId" class="button" @click="download(item.assetId)">
+          下载版本文件
+        </button>
+      </article>
+      <p v-if="!loading && !error && !items.length" class="muted">暂无已发布版本</p>
+      <div class="pagination">
+        <button
+          class="button"
+          :disabled="loading || page === 1"
+          @click="
+            page--;
+            load();
+          "
+        >
+          上一页</button
+        ><span>第{{ page }}页 · 共{{ total }}条</span
+        ><button
+          class="button"
+          :disabled="loading || page * 20 >= total"
+          @click="
+            page++;
+            load();
+          "
+        >
+          下一页
+        </button>
+      </div>
+    </details>
     <template
       v-if="
         auth.platform === 'admin' && content.state !== 'PUBLISHED' && content.type !== 'MARKDOWN'
@@ -178,6 +189,30 @@ watch(
   </section>
 </template>
 <style scoped>
+.knowledge-version-history {
+  border-top: 1px solid #e6ebf3;
+  margin-top: 28px;
+  padding-top: 20px;
+}
+.knowledge-version-history summary {
+  cursor: pointer;
+  font-size: 14px;
+  color: #34486a;
+  padding-bottom: 16px;
+}
+.knowledge-version-history summary span {
+  margin-left: 12px;
+  font-size: 12px;
+  color: #8a96a9;
+}
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0;
+  font-size: 12px;
+}
 .version {
   padding: 18px;
   border: 1px solid #e2e6ef;

@@ -389,9 +389,9 @@ body .student-workspace .summary-card strong {
 .student-knowledge-cover {
   height: 150px;
   padding: 20px;
-  background: linear-gradient(135deg, #dfe5fc, #becbef);
+  background: linear-gradient(135deg, #2745cd, #142157);
   position: relative;
-  color: #344675;
+  color: #fff;
 }
 .student-knowledge-cover > span {
   display: flex;
@@ -409,12 +409,12 @@ body .student-workspace .summary-card strong {
   opacity: 0.25;
 }
 .student-knowledge-cover.cover-1 {
-  background: linear-gradient(135deg, #e5ece2, #becdbb);
-  color: #3e6048;
+  background: linear-gradient(135deg, #bf6b31, #5a2a19);
+  color: #fff;
 }
 .student-knowledge-cover.cover-2 {
-  background: linear-gradient(135deg, #f1e7dd, #dec9b9);
-  color: #856448;
+  background: linear-gradient(135deg, #14755e, #0c2c27);
+  color: #fff;
 }
 .student-project-progress {
   display: grid;
@@ -1121,5 +1121,337 @@ body .student-project-space .milestone {
   }
   .project-stage-track li {
     min-width: 70px;
+  }
+}
+/* 知识库搜索与类型筛选采用确认原型结构；计数仅使用本次真实查询的total。 */
+.student-knowledge-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: 34px;
+  margin-bottom: 24px;
+  border-radius: 18px;
+  color: white;
+  background:
+    radial-gradient(circle at 85% 0%, #5f7cff54, transparent 36%),
+    radial-gradient(circle at 5% 110%, #ef67472b, transparent 30%),
+    linear-gradient(135deg, #101b36, #172951 62%, #1f3466);
+}
+.student-knowledge-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.1;
+  background-image:
+    linear-gradient(#ffffff4d 1px, transparent 1px),
+    linear-gradient(90deg, #ffffff4d 1px, transparent 1px);
+  background-size: 54px 54px;
+  mask-image: radial-gradient(circle at 75% 50%, black, transparent 70%);
+}
+.knowledge-hero-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+}
+.student-knowledge-hero .eyebrow {
+  color: #9eacd2;
+  margin: 0;
+}
+.student-knowledge-hero .eyebrow::before {
+  background: #ff9478;
+}
+.student-knowledge-hero h1 {
+  font: 600 clamp(30px, 3.4vw, 42px) / 1.25 var(--serif);
+  letter-spacing: -0.035em;
+  margin: 13px 0 8px;
+}
+.knowledge-hero-top p:not(.eyebrow) {
+  color: #a5b2d1;
+  font-size: 12px;
+  line-height: 1.7;
+  margin: 8px 0;
+}
+.knowledge-result-count {
+  display: grid;
+  gap: 6px;
+  min-width: 112px;
+  text-align: center;
+  border: 1px solid #ffffff21;
+  border-radius: 11px;
+  background: #ffffff0f;
+  padding: 14px 20px;
+}
+.knowledge-result-count strong {
+  font: 26px var(--serif);
+}
+.knowledge-result-count span {
+  font-size: 11px;
+  color: #aab9d9;
+}
+.knowledge-hero-search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: min(100%, 710px);
+  min-height: 51px;
+  margin-top: 24px;
+  padding: 5px 5px 5px 16px;
+  border-radius: 12px;
+  background: #fffffffa;
+  box-shadow: 0 20px 40px -25px #0008;
+  color: #8a96ab;
+}
+body .student-knowledge .knowledge-hero-search input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  background: transparent;
+  font-size: 13px;
+}
+.knowledge-hero-search button {
+  white-space: nowrap;
+}
+.knowledge-quick-search {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 15px;
+  color: #8c9bbd;
+  font-size: 11px;
+}
+.knowledge-quick-search button {
+  padding: 4px 10px;
+  border: 1px solid #ffffff26;
+  border-radius: 99px;
+  background: #ffffff0d;
+  color: #b5c0da;
+  font-size: 11px;
+}
+.knowledge-quick-search button:hover {
+  background: #ffffff20;
+  color: white;
+}
+body .student-knowledge .data-card {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+.knowledge-type-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.knowledge-type-toolbar button {
+  border: 1px solid #e2e7f0;
+  padding: 8px 14px;
+  border-radius: 99px;
+  background: white;
+  font-size: 12px;
+  color: #758199;
+}
+.knowledge-type-toolbar button.active {
+  background: #334bba;
+  color: white;
+  border-color: #334bba;
+}
+body .knowledge-type-toolbar select {
+  margin-left: auto;
+  font-size: 12px;
+  min-height: 34px;
+  padding: 6px 10px;
+}
+.knowledge-type-toolbar .knowledge-reset {
+  border: 0;
+  background: none;
+  color: #687a9d;
+  padding: 6px;
+}
+.knowledge-extra-filters {
+  margin-bottom: 18px;
+  font-size: 12px;
+  color: #7a88a2;
+}
+.knowledge-extra-filters summary {
+  cursor: pointer;
+  padding: 5px 0;
+}
+.knowledge-extra-filters form {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  background: white;
+  border: 1px solid #e5e9f2;
+  border-radius: 10px;
+  padding: 14px;
+  margin-top: 8px;
+}
+.knowledge-extra-filters label {
+  display: grid;
+  gap: 8px;
+  min-width: 220px;
+}
+@media (max-width: 650px) {
+  .student-knowledge-hero {
+    padding: 24px;
+  }
+  .knowledge-result-count {
+    min-width: 90px;
+    padding: 12px;
+  }
+  .knowledge-hero-top {
+    gap: 14px;
+  }
+  .student-knowledge-hero h1 {
+    font-size: 28px;
+  }
+  body .knowledge-type-toolbar select {
+    margin-left: 0;
+  }
+  .knowledge-extra-filters form {
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 420px) {
+  .knowledge-hero-top {
+    flex-direction: column;
+  }
+  .knowledge-result-count {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+  }
+  .knowledge-result-count strong {
+    font-size: 22px;
+  }
+}
+
+.student-knowledge-cover {
+  isolation: isolate;
+  height: 136px;
+}
+.student-knowledge-cover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.2;
+  background-image:
+    linear-gradient(#fff3 1px, transparent 1px), linear-gradient(90deg, #fff3 1px, transparent 1px);
+  background-size: 26px 26px;
+  mask-image: linear-gradient(120deg, black, transparent 80%);
+}
+.student-knowledge-cover::after {
+  content: '';
+  position: absolute;
+  right: -35px;
+  bottom: -60px;
+  width: 150px;
+  height: 150px;
+  border: 1px solid #fff3;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 22px #ffffff0d,
+    0 0 0 44px #ffffff08;
+  z-index: -1;
+}
+.student-knowledge-cover > span {
+  display: inline-flex;
+  font-size: 11px;
+  border: 1px solid #fff3;
+  background: #ffffff18;
+  padding: 4px 7px;
+  border-radius: 5px;
+}
+.student-knowledge .student-resource-card-body {
+  padding: 16px;
+}
+.student-knowledge .student-resource-card h2 {
+  font-size: 16px;
+}
+@media (max-width: 1280px) {
+  .student-knowledge .student-resource-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .student-knowledge .student-resource-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.student-forum-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 292px;
+  gap: 24px;
+  align-items: start;
+}
+.student-forum-layout > .data-card {
+  min-width: 0;
+}
+.student-posts .student-resource-card {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 16px;
+  padding: 22px;
+}
+.student-posts .student-resource-card-body {
+  padding: 0;
+}
+.student-posts .student-resource-card h2 {
+  margin: 10px 0;
+  font-size: 17px;
+}
+.forum-author-avatar {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #eff0fc;
+  color: #5e5eb4;
+  font: 18px var(--serif);
+}
+.forum-excerpt {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: pre-wrap;
+  margin: 8px 0;
+}
+.student-posts .student-resource-actions {
+  margin-top: 12px;
+  padding-top: 12px;
+}
+body .student-posts .filters {
+  padding: 14px;
+  gap: 8px;
+}
+.student-posts .filters input,
+.student-posts .filters select {
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .student-forum-layout {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 520px) {
+  .student-posts .student-resource-card {
+    grid-template-columns: 30px minmax(0, 1fr);
+    padding: 16px;
+    gap: 12px;
+  }
+  .forum-author-avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 15px;
+    border-radius: 9px;
   }
 }

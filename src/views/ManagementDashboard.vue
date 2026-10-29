@@ -396,7 +396,7 @@ watch(() => [...props.visiblePaths].sort().join('|'), load, { immediate: true })
                 </td>
                 <td>¥{{ order.amount }}</td>
                 <td><StatusBadge :value="order.status" /></td>
-                <td>{{ String(order.createdAt || '').slice(0, 10) }}</td>
+                <td>{{ display(order.createdAt).split(' ')[0] }}</td>
               </tr>
             </tbody>
           </table>
@@ -476,7 +476,9 @@ watch(() => [...props.visiblePaths].sort().join('|'), load, { immediate: true })
                 <td>
                   <span class="cell-stack"
                     ><strong>{{ project.title }}</strong
-                    ><small>最近更新 {{ display(project.updatedAt) }}</small></span
+                    ><small v-if="project.updatedAt"
+                      >最近更新 {{ display(project.updatedAt) }}</small
+                    ></span
                   >
                 </td>
                 <td><StatusBadge :value="project.stage" /></td>

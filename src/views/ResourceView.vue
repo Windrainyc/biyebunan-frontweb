@@ -7,10 +7,14 @@ import { auth, request, errorText } from '../api/client';
 import { operation, schema, updateMethod } from '../config/contract';
 import { label, display } from '../config/labels';
 import type { Resource } from '../config/resources';
+import { studentPostActions } from '../config/forum-actions';
 import type { Row, Page } from '../types/api';
 const InvitationDetail = defineAsyncComponent(() => import('../components/InvitationDetail.vue'));
 const UsageDetail = defineAsyncComponent(() => import('../components/UsageDetail.vue'));
 const OrderDetail = defineAsyncComponent(() => import('../components/OrderDetail.vue'));
+const StudentReadingDialog = defineAsyncComponent(
+  () => import('../components/StudentReadingDialog.vue'),
+);
 const KnowledgeDetail = defineAsyncComponent(() => import('../components/KnowledgeDetail.vue'));
 const PartnerInvitation = defineAsyncComponent(() => import('../components/PartnerInvitation.vue'));
 const MembershipDetail = defineAsyncComponent(() => import('../components/MembershipDetail.vue'));
@@ -24,6 +28,7 @@ const ProjectDetail = defineAsyncComponent(() => import('../components/ProjectDe
 import StatusBadge from '../components/StatusBadge.vue';
 import Icon from '../components/Icon.vue';
 import KnowledgeCategoryNav from '../components/KnowledgeCategoryNav.vue';
+import ForumSidebar from '../components/ForumSidebar.vue';
 import { formBody, requiresSelection } from '../config/form';
 import SchemaField from '../components/SchemaField.vue';
 let attempt = writeAttempt();
@@ -42,6 +47,10 @@ const route = useRoute();
 const studentCards = computed(
   () =>
     auth.platform === 'student' && ['projects', 'knowledge', 'posts'].includes(props.resource.key),
+);
+const isStudentKnowledge = computed(() => studentCards.value && props.resource.key === 'knowledge');
+const knowledgeTypes = computed(
+  () => schema(listOp.value?.parameters.find((p) => p.name === 'contentType')?.schema).enum || [],
 );
 const rows = ref<Row[]>([]),
   total = ref(0),
@@ -63,9 +72,18 @@ const editing = ref<Row | null>(null),
   remove = ref<Row | null>(null);
 const detailFields = computed(() => {
   const excluded = ['id', 'version'];
+  if (['knowledge', 'contents'].includes(props.resource.key)) excluded.push('markdown');
   if (props.resource.key === 'projects' && auth.platform === 'partner') excluded.push('milestones');
   return Object.fromEntries(
-    Object.entries(detail.value || {}).filter(([key]) => !excluded.includes(key)),
+    Object.entries(detail.value || {})
+      .filter(([key]) => !excluded.includes(key))
+      .sort(([a], [b]) => {
+        const rank = (key: string) => {
+          const index = props.resource.columns.indexOf(key);
+          return index >= 0 ? index : ['createdAt', 'updatedAt'].includes(key) ? 1000 : 100;
+        };
+        return rank(a) - rank(b);
+      }),
   );
 });
 const extraFilters = ref<Record<string, unknown>>({});
@@ -76,7 +94,22 @@ const queryNames = computed(
 );
 const extraFields = computed(() =>
   (listOp.value?.parameters || [])
-    .filter((p) => p.in === 'query' && !['page', 'size', 'q', 'status', 'sort'].includes(p.name))
+    .filter(
+      (p) =>
+        p.in === 'query' &&
+        ![
+          'page',
+          'size',
+          'q',
+          'status',
+          'sort',
+          ...(isStudentKnowledge.value
+            ? ['categoryId', 'contentType']
+            : props.resource.key === 'posts' && studentCards.value
+              ? ['boardId']
+              : []),
+        ].includes(p.name),
+    )
     .map((p) => ({ key: p.name, ...schema(p.schema) })),
 );
 const statusOptions = computed(() => {
@@ -106,6 +139,11 @@ const canEdit = computed(
 const canDelete = computed(
   () => !props.resource.readonly && allowed('DELETE', props.resource.path + '/{id}'),
 );
+function rowActions(row: Row) {
+  return auth.platform === 'student' && props.resource.key === 'posts'
+    ? studentPostActions(row, auth.user?.id)
+    : { edit: true, remove: true };
+}
 const fields = computed(() =>
   schema(
     operation(
@@ -117,7 +155,13 @@ const fields = computed(() =>
 const properties = computed(() =>
   Object.entries(fields.value.properties || {})
     .filter(([, v]) => !v.readOnly)
-    .map(([key, value]) => ({ key, ...schema(value) })),
+    .map(([key, value]) => ({ key, ...schema(value) }))
+    .sort((a, b) => {
+      if (props.resource.key !== 'posts') return 0;
+      const order = ['title', 'boardId', 'tagIds', 'body', 'assetIds'];
+      const rank = (key: string) => (order.includes(key) ? order.indexOf(key) : order.length);
+      return rank(a.key) - rank(b.key);
+    }),
 );
 async function load() {
   const generation = ++loadGeneration;
@@ -285,7 +329,43 @@ const hasStatusTabs = computed(
 </script>
 <template>
   <section :class="{ 'student-resource': studentCards, ['student-' + resource.key]: studentCards }">
-    <div v-if="!(detail && studentCards && resource.key === 'projects')" class="page-heading">
+    <section v-if="isStudentKnowledge" class="student-knowledge-hero">
+      <div class="knowledge-hero-top">
+        <div>
+          <p class="eyebrow">基础知识库</p>
+          <h1>先把问题找对，<br />答案会自己浮现。</h1>
+          <p>从开题、开发到论文与答辩，查找当前可访问的项目资料。</p>
+        </div>
+        <div class="knowledge-result-count">
+          <strong>{{ loading || listFailed ? '—' : total }}</strong
+          ><span>当前筛选结果</span>
+        </div>
+      </div>
+      <form class="knowledge-hero-search" @submit.prevent="search">
+        <Icon name="search" /><input
+          v-model="q"
+          type="search"
+          maxlength="100"
+          aria-label="搜索知识库内容"
+          placeholder="搜索开题报告、论文模板、答辩问题…"
+        /><button class="button primary" :disabled="loading">搜索</button>
+      </form>
+      <div class="knowledge-quick-search">
+        <span>快速查找</span
+        ><button
+          v-for="keyword in ['开题报告', '论文模板', '答辩', 'RAG', '任务书']"
+          :key="keyword"
+          :disabled="loading"
+          @click="
+            q = keyword;
+            search();
+          "
+        >
+          {{ keyword }}
+        </button>
+      </div>
+    </section>
+    <div v-else-if="!(detail && studentCards && resource.key === 'projects')" class="page-heading">
       <div>
         <p class="eyebrow">{{ studentCards ? resource.title : resource.group }}</p>
         <h1 v-if="studentCards && resource.key === 'knowledge'">
@@ -309,7 +389,12 @@ const hasStatusTabs = computed(
     />
     <p v-if="notice" role="status" class="notice">{{ notice }}</p>
     <p v-if="error" class="error" role="alert">{{ error }}</p>
-    <div :class="{ 'student-knowledge-layout': studentCards && resource.key === 'knowledge' }">
+    <div
+      :class="{
+        'student-knowledge-layout': studentCards && resource.key === 'knowledge',
+        'student-forum-layout': studentCards && resource.key === 'posts',
+      }"
+    >
       <KnowledgeCategoryNav
         v-if="studentCards && resource.key === 'knowledge'"
         :model-value="extraFilters.categoryId"
@@ -351,7 +436,68 @@ const hasStatusTabs = computed(
             {{ display(value) }}
           </button>
         </div>
-        <form class="filters" @submit.prevent="search">
+        <div v-if="isStudentKnowledge" class="knowledge-type-toolbar" aria-label="知识内容类型">
+          <button
+            :class="{ active: !extraFilters.contentType }"
+            :aria-pressed="!extraFilters.contentType"
+            :disabled="loading"
+            @click="
+              extraFilters.contentType = '';
+              search();
+            "
+          >
+            全部内容</button
+          ><button
+            v-for="type in knowledgeTypes"
+            :key="String(type)"
+            :class="{ active: extraFilters.contentType === type }"
+            :aria-pressed="extraFilters.contentType === type"
+            :disabled="loading"
+            @click="
+              extraFilters.contentType = type;
+              search();
+            "
+          >
+            {{ type === 'MARKDOWN' ? 'Markdown' : display(type) }}
+          </button>
+          <select v-model="sort" aria-label="知识内容排序" @change="search">
+            <option v-for="s in sorts" :key="s" :value="s">
+              {{
+                s === 'createdAt:asc'
+                  ? '创建时间从早到晚'
+                  : s === 'updatedAt:desc'
+                    ? '最近更新优先'
+                    : '最近创建优先'
+              }}
+            </option>
+          </select>
+          <button
+            class="knowledge-reset"
+            :disabled="loading"
+            @click="
+              q = '';
+              status = '';
+              extraFilters = {};
+              sort = sorts[0] || '';
+              search();
+            "
+          >
+            重置筛选
+          </button>
+        </div>
+        <details v-if="isStudentKnowledge && extraFields.length" class="knowledge-extra-filters">
+          <summary>按标签进一步筛选</summary>
+          <form @submit.prevent="search">
+            <label v-for="field in extraFields" :key="field.key"
+              >{{ label(field.key)
+              }}<SchemaField
+                v-model="extraFilters[field.key]"
+                :field="field"
+                :context="resource.key" /></label
+            ><button class="button" :disabled="loading">应用筛选</button>
+          </form>
+        </details>
+        <form v-if="!isStudentKnowledge" class="filters" @submit.prevent="search">
           <input
             v-if="queryNames.has('q')"
             v-model="q"
@@ -413,13 +559,16 @@ const hasStatusTabs = computed(
             :key="row.id || index"
             class="student-resource-card"
           >
+            <div v-if="resource.key === 'posts'" class="forum-author-avatar" aria-hidden="true">
+              {{ row.authorId === auth.user?.id ? '我' : '问' }}
+            </div>
             <div
               v-if="resource.key === 'knowledge'"
               class="student-knowledge-cover"
               :class="`cover-${index % 3}`"
             >
               <span
-                ><Icon :name="row.type === 'VIDEO' ? 'video' : 'book'" />{{
+                ><Icon :name="row.type === 'VIDEO' ? 'right' : 'book'" />{{
                   display(row.type)
                 }}</span
               ><b>{{ String((page - 1) * size + index + 1).padStart(2, '0') }}</b>
@@ -434,7 +583,8 @@ const hasStatusTabs = computed(
               <h2>
                 <button @click="inspect(row)">{{ display(row.title) }}</button>
               </h2>
-              <p v-if="row.description || row.summary">{{ row.description || row.summary }}</p>
+              <p v-if="resource.key === 'posts'" class="forum-excerpt">{{ row.body }}</p>
+              <p v-else-if="row.description || row.summary">{{ row.description || row.summary }}</p>
               <div v-if="resource.key === 'projects'" class="student-project-progress">
                 <span>项目完成度 {{ row.progress }}%</span
                 ><progress
@@ -464,8 +614,17 @@ const hasStatusTabs = computed(
                         : '查看讨论'
                   }}
                   <Icon name="right" /></button
-                ><button v-if="canEdit" class="text-button" @click="open(row)">编辑</button
-                ><button v-if="canDelete" class="text-button danger" @click="askDelete(row)">
+                ><button
+                  v-if="canEdit && rowActions(row).edit"
+                  class="text-button"
+                  @click="open(row)"
+                >
+                  编辑</button
+                ><button
+                  v-if="canDelete && rowActions(row).remove"
+                  class="text-button danger"
+                  @click="askDelete(row)"
+                >
                   删除
                 </button>
               </div>
@@ -508,8 +667,17 @@ const hasStatusTabs = computed(
                 </td>
                 <td class="actions">
                   <button class="text-button" @click="inspect(row)">查看</button
-                  ><button v-if="canEdit" class="text-button" @click="open(row)">编辑</button
-                  ><button v-if="canDelete" class="text-button danger" @click="askDelete(row)">
+                  ><button
+                    v-if="canEdit && rowActions(row).edit"
+                    class="text-button"
+                    @click="open(row)"
+                  >
+                    编辑</button
+                  ><button
+                    v-if="canDelete && rowActions(row).remove"
+                    class="text-button danger"
+                    @click="askDelete(row)"
+                  >
                     删除
                   </button>
                 </td>
@@ -556,10 +724,18 @@ const hasStatusTabs = computed(
           </button>
         </div>
       </div>
+      <ForumSidebar
+        v-if="studentCards && resource.key === 'posts'"
+        :model-value="extraFilters.boardId"
+        @update:model-value="
+          extraFilters.boardId = $event;
+          search();
+        "
+      />
     </div>
     <div v-if="formOpen" class="modal-backdrop">
       <form
-        class="modal"
+        class="modal resource-form-modal"
         v-dialog="
           () => {
             if (!saving) closeForm();
@@ -590,29 +766,44 @@ const hasStatusTabs = computed(
             <Icon name="close" />
           </button>
         </div>
-        <div class="form-grid">
-          <div v-for="field in properties" :key="field.key" class="form-field">
-            <span class="field-caption"
-              >{{ label(field.key)
-              }}<span
-                v-if="requiresSelection(field, fields.required?.includes(field.key))"
-                class="danger"
-                aria-hidden="true"
-              >
-                *</span
-              ></span
+        <div class="resource-form-body">
+          <div class="form-grid">
+            <div
+              v-for="field in properties"
+              :key="field.key"
+              class="form-field"
+              :class="{
+                wide:
+                  field.key === 'assetIds' ||
+                  (resource.key === 'posts' && field.key === 'title') ||
+                  (!!field.maxLength &&
+                    field.maxLength > 500 &&
+                    field.format !== 'uri' &&
+                    !field.writeOnly),
+              }"
             >
-            <SchemaField
-              v-model="form[field.key]"
-              :field="field"
-              :required="fields.required?.includes(field.key)"
-              :context="resource.key"
-              :filters="field.key === 'majorId' ? { schoolId: form.schoolId } : {}"
-            />
+              <span class="field-caption"
+                >{{ label(field.key)
+                }}<span
+                  v-if="requiresSelection(field, fields.required?.includes(field.key))"
+                  class="danger"
+                  aria-hidden="true"
+                >
+                  *</span
+                ></span
+              >
+              <SchemaField
+                v-model="form[field.key]"
+                :field="field"
+                :required="fields.required?.includes(field.key)"
+                :context="resource.key"
+                :filters="field.key === 'majorId' ? { schoolId: form.schoolId } : {}"
+              />
+            </div>
           </div>
+          <p v-if="error" class="error" role="alert">{{ error }}</p>
         </div>
-        <p v-if="error" class="error" role="alert">{{ error }}</p>
-        <footer>
+        <footer class="resource-form-footer">
           <button type="button" class="button" :disabled="saving" @click="closeForm">取消</button
           ><button class="button primary" :disabled="saving">
             {{ saving ? '保存中…' : '保存' }}
@@ -631,96 +822,125 @@ const hasStatusTabs = computed(
         load();
       "
     />
+    <StudentReadingDialog
+      v-else-if="detail && studentCards && ['knowledge', 'posts'].includes(resource.key)"
+      :key="String(detail.id)"
+      :content="detail"
+      :kind="resource.key === 'posts' ? 'forum' : 'knowledge'"
+      @changed="
+        inspect(detail);
+        load();
+      "
+      @close="closeDetail"
+    />
     <div v-else-if="detail" class="modal-backdrop">
       <section
-        class="modal"
+        class="modal resource-detail-modal"
         v-dialog="closeDetail"
         role="dialog"
         aria-modal="true"
         aria-label="记录详情"
       >
-        <h2>{{ resource.title }}详情</h2>
-        <p v-if="detail.evidenceSource === 'CORRECTED_ORIGINAL_CALL'" class="notice">
-          已按迟到原调用证据更正。原始用量和预占状态保留，当前计费以有效词元和净费用为准。
-        </p>
-        <dl class="detail-grid">
-          <template v-for="(value, key) in detailFields" :key="key"
-            ><dt>{{ label(key) }}</dt>
-            <dd><ReferenceName :field="key" :value="value" /></dd
-          ></template>
-        </dl>
-        <section v-if="resource.key === 'projects' && auth.platform === 'partner'">
-          <h3>项目里程碑</h3>
-          <p v-if="!Array.isArray(detail.milestones) || !detail.milestones.length" class="muted">
-            暂无里程碑
+        <div class="resource-modal-heading">
+          <h2>{{ resource.title }}详情</h2>
+          <button class="modal-close" aria-label="关闭记录详情" @click="closeDetail">
+            <Icon name="close" />
+          </button>
+        </div>
+        <div class="resource-detail-body">
+          <p v-if="detail.evidenceSource === 'CORRECTED_ORIGINAL_CALL'" class="notice">
+            已按迟到原调用证据更正。原始用量和预占状态保留，当前计费以有效词元和净费用为准。
           </p>
-          <article
-            v-for="milestone in (detail.milestones as Row[]) || []"
-            :key="String(milestone.id)"
-            class="card"
-          >
-            <h4>{{ milestone.name }}</h4>
-            <p>
-              计划日期：{{ display(milestone.dueDate) }} · 权重：{{ milestone.weight }}% ·
-              {{ milestone.completed ? '已完成' : '未完成' }}
+          <dl class="detail-grid">
+            <div
+              v-for="(value, key) in detailFields"
+              :key="key"
+              class="resource-detail-item"
+              :class="{ wide: ['body', 'description', 'remark', 'reason'].includes(String(key)) }"
+            >
+              <dt>{{ label(key) }}</dt>
+              <dd>
+                <StatusBadge
+                  v-if="['status', 'state', 'stage', 'receiptStatus'].includes(String(key))"
+                  :value="value"
+                />
+                <ReferenceName v-else :field="String(key)" :value="value" />
+              </dd>
+            </div>
+          </dl>
+          <section v-if="resource.key === 'projects' && auth.platform === 'partner'">
+            <h3>项目里程碑</h3>
+            <p v-if="!Array.isArray(detail.milestones) || !detail.milestones.length" class="muted">
+              暂无里程碑
             </p>
-          </article>
-        </section>
-        <InvitationDetail
-          v-if="auth.platform === 'admin' && resource.key === 'users'"
-          :user="detail"
-        />
-        <UsageDetail
-          v-if="resource.key === 'usage'"
-          :usage="detail"
-          @changed="refreshUsage"
-        /><OrderDetail
-          v-if="resource.key === 'orders'"
-          :order="detail"
-          @changed="
-            inspect(detail);
-            load();
-          "
-        /><KnowledgeDetail
-          v-if="['contents', 'knowledge'].includes(resource.key)"
-          :content="detail"
-          @changed="
-            inspect(detail);
-            load();
-          "
-        /><MembershipDetail
-          v-if="
-            auth.platform === 'admin' &&
-            (resource.key === 'membership-plans' ||
-              (resource.key === 'users' && detail.platform === 'student'))
-          "
-          :key="'membership-' + detail.id"
-          :record="detail"
-          :mode="resource.key === 'users' ? 'user' : 'plan'"
-          @changed="
-            inspect(detail);
-            load();
-          "
-        /><ForumDetail
-          v-if="resource.key === 'posts'"
-          :post="detail"
-          @changed="
-            inspect(detail);
-            load();
-          "
-        /><RecordActions
-          :resource-key="resource.key"
-          :record="detail"
-          @changed="actionChanged"
-        /><ProjectDetail
-          v-if="resource.key === 'projects' && auth.platform !== 'partner'"
-          :project="detail"
-          @changed="
-            inspect(detail);
-            load();
-          "
-        />
-        <footer>
+            <article
+              v-for="milestone in (detail.milestones as Row[]) || []"
+              :key="String(milestone.id)"
+              class="card"
+            >
+              <h4>{{ milestone.name }}</h4>
+              <p>
+                计划日期：{{ display(milestone.dueDate) }} · 权重：{{ milestone.weight }}% ·
+                {{ milestone.completed ? '已完成' : '未完成' }}
+              </p>
+            </article>
+          </section>
+          <InvitationDetail
+            v-if="auth.platform === 'admin' && resource.key === 'users'"
+            :user="detail"
+          />
+          <UsageDetail
+            v-if="resource.key === 'usage'"
+            :usage="detail"
+            @changed="refreshUsage"
+          /><OrderDetail
+            v-if="resource.key === 'orders'"
+            :order="detail"
+            @changed="
+              inspect(detail);
+              load();
+            "
+          /><KnowledgeDetail
+            v-if="['contents', 'knowledge'].includes(resource.key)"
+            :content="detail"
+            @changed="
+              inspect(detail);
+              load();
+            "
+          /><MembershipDetail
+            v-if="
+              auth.platform === 'admin' &&
+              (resource.key === 'membership-plans' ||
+                (resource.key === 'users' && detail.platform === 'student'))
+            "
+            :key="'membership-' + detail.id"
+            :record="detail"
+            :mode="resource.key === 'users' ? 'user' : 'plan'"
+            @changed="
+              inspect(detail);
+              load();
+            "
+          /><ForumDetail
+            v-if="resource.key === 'posts'"
+            :post="detail"
+            @changed="
+              inspect(detail);
+              load();
+            "
+          /><RecordActions
+            :resource-key="resource.key"
+            :record="detail"
+            @changed="actionChanged"
+          /><ProjectDetail
+            v-if="resource.key === 'projects' && auth.platform !== 'partner'"
+            :project="detail"
+            @changed="
+              inspect(detail);
+              load();
+            "
+          />
+        </div>
+        <footer class="resource-detail-footer">
           <button class="button" @click="closeDetail">关闭</button>
         </footer>
       </section>
@@ -863,22 +1083,79 @@ td {
   justify-content: flex-end;
   margin-top: 28px;
 }
+.resource-detail-modal,
+.resource-form-modal {
+  width: min(880px, 100%);
+  padding: 0;
+  overflow: hidden;
+  max-height: calc(100dvh - 48px);
+}
+.resource-form-modal {
+  width: min(760px, 100%);
+}
+.resource-detail-modal > .resource-modal-heading,
+.resource-form-modal > .resource-modal-heading {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 22px 28px;
+  border-bottom: 1px solid #e8ecf4;
+}
+.resource-detail-body,
+.resource-form-body {
+  padding: 8px 28px 24px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.resource-form-body {
+  padding-top: 24px;
+}
+.resource-detail-modal > .resource-detail-footer,
+.resource-form-modal > .resource-form-footer {
+  flex-shrink: 0;
+  padding: 16px 28px;
+  margin: 0;
+  border-top: 1px solid #e8ecf4;
+  background: #fcfdff;
+}
 .detail-grid {
   display: grid;
-  grid-template-columns: 140px 1fr;
-  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0 28px;
+  padding: 0;
+  margin: 0 0 24px;
+}
+.resource-detail-item {
+  padding: 16px 0;
+  border-bottom: 1px solid #edf0f5;
+  min-width: 0;
+  font-size: 14px;
+}
+.resource-detail-item.wide {
+  grid-column: 1 / -1;
 }
 .detail-grid dd {
   margin: 0;
   overflow-wrap: anywhere;
 }
 .detail-grid dt {
-  color: #718096;
+  color: #8591a4;
+  font-size: 12px;
+  margin-bottom: 8px;
 }
 .notice {
   color: #148357;
 }
 @media (max-width: 650px) {
+  .resource-detail-body {
+    padding: 4px 18px 20px;
+  }
+  .resource-detail-modal > .resource-modal-heading,
+  .resource-detail-modal > .resource-detail-footer {
+    padding: 16px 18px;
+  }
+  .detail-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
   .form-grid {
     grid-template-columns: 1fr;
   }

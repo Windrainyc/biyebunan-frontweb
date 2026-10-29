@@ -202,6 +202,11 @@ watch(
   display: flex;
   gap: 6px;
 }
+.search .button {
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding: 8px 12px;
+}
 .search input {
   min-width: 0;
   width: 100%;
@@ -220,6 +225,7 @@ watch(
 }
 .reference-foot {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   font-size: 11px;
   align-items: center;

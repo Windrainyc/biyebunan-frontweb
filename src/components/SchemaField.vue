@@ -57,7 +57,7 @@ function required() {
     :maxlength="field.maxLength"
     :required="required()"
     :aria-label="label(field.key)"
-    rows="4"
+    :rows="['body', 'markdown'].includes(field.key) ? 8 : 4"
     @input="input"
   /><input
     v-else

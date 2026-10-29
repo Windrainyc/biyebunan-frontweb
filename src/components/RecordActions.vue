@@ -7,7 +7,7 @@ import { jobRecovery } from '../config/job-recovery';
 import { formBody } from '../config/form';
 import { label, display } from '../config/labels';
 import type { Row } from '../types/api';
-const props = defineProps<{ resourceKey: string; record: Row }>(),
+const props = defineProps<{ resourceKey: string; record: Row; compact?: boolean }>(),
   emit = defineEmits<{ changed: [result: Row] }>();
 const selected = ref(''),
   values = ref<Record<string, string>>({}),
@@ -137,8 +137,12 @@ async function submit() {
 }
 </script>
 <template>
-  <section v-if="actions.length || resourceKey === 'jobs'" class="record-actions">
-    <h3>业务操作</h3>
+  <section
+    v-if="actions.length || resourceKey === 'jobs'"
+    class="record-actions"
+    :class="{ compact }"
+  >
+    <h3 v-if="!compact">业务操作</h3>
     <p v-if="resourceKey === 'jobs'" class="muted">{{ recovery.message }}</p>
     <div class="action-buttons">
       <button
@@ -181,6 +185,20 @@ async function submit() {
   </section>
 </template>
 <style scoped>
+.record-actions.compact {
+  margin: 16px 0;
+  padding: 0;
+  border: 0;
+}
+.compact .action-buttons {
+  justify-content: flex-end;
+}
+.compact .action-buttons .button {
+  min-height: 30px;
+  padding: 5px 10px;
+  font-size: 12px;
+  color: #7b8798;
+}
 .record-actions {
   border-top: 1px solid #e2e6ef;
   padding-top: 16px;

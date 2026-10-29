@@ -64,9 +64,42 @@ onBeforeUnmount(() => {
     <button v-if="!error && rows.length < total" :disabled="busy" @click="load">
       加载更多分类
     </button>
+    <div class="knowledge-category-help">
+      <Icon name="sparkles" /><strong>找不到想要的？</strong>
+      <p>进入智能答疑，围绕项目问题继续交流。</p>
+      <RouterLink to="/student/chat">去提问 <Icon name="right" /></RouterLink>
+    </div>
   </aside>
 </template>
 <style scoped>
+.knowledge-category-help {
+  border-top: 1px solid #e8ecf4;
+  margin: 20px 12px 0;
+  padding-top: 20px;
+  color: #7887a2;
+}
+.knowledge-category-help > .ali-icon {
+  display: block;
+  color: #525fbb;
+  margin-bottom: 12px;
+}
+.knowledge-category-help strong {
+  display: block;
+  color: #445572;
+  font-size: 13px;
+}
+.knowledge-category-help p {
+  padding: 0;
+  line-height: 1.8;
+  font-size: 12px;
+}
+.knowledge-category-help a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #455ab5;
+  font-size: 12px;
+}
 .knowledge-category-nav {
   align-self: start;
   background: white;
@@ -101,5 +134,27 @@ button:hover {
 p {
   font-size: 12px;
   padding: 0 12px;
+}
+@media (max-width: 800px) {
+  .knowledge-category-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    overflow-x: auto;
+    max-width: 100%;
+    padding: 8px;
+  }
+  .knowledge-category-nav h2,
+  .knowledge-category-help {
+    display: none;
+  }
+  .knowledge-category-nav button {
+    width: auto;
+    min-width: max-content;
+    padding: 10px 12px;
+  }
+  .knowledge-category-nav p {
+    min-width: 160px;
+  }
 }
 </style>
