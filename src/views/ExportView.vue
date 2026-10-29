@@ -141,14 +141,27 @@ async function getDownload() {
 </template>
 <style scoped>
 .export-form {
-  max-width: 600px;
+  max-width: 720px;
   display: grid;
-  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
   padding: 24px;
   background: white;
   border: 1px solid #e2e6ef;
   border-radius: 12px;
   margin-top: 24px;
+}
+.export-form > label:first-child {
+  grid-column: 1 / -1;
+}
+.export-form > .button {
+  grid-column: 1 / -1;
+  justify-self: end;
+}
+@media (max-width: 640px) {
+  .export-form {
+    grid-template-columns: 1fr;
+  }
 }
 .export-form label {
   display: grid;

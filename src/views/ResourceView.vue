@@ -522,22 +522,25 @@ const hasStatusTabs = computed(
                     ? '最近更新优先'
                     : '最近创建优先'
               }}
-            </option></select
-          ><button class="button primary" :disabled="loading">查询</button
-          ><button
-            type="button"
-            class="button"
-            :disabled="loading"
-            @click="
-              q = '';
-              status = '';
-              extraFilters = {};
-              sort = sorts[0] || '';
-              search();
-            "
-          >
-            重置
-          </button>
+            </option>
+          </select>
+          <div class="filter-actions">
+            <button class="button primary" :disabled="loading">查询</button
+            ><button
+              type="button"
+              class="button"
+              :disabled="loading"
+              @click="
+                q = '';
+                status = '';
+                extraFilters = {};
+                sort = sorts[0] || '';
+                search();
+              "
+            >
+              重置
+            </button>
+          </div>
           <details v-if="extraFields.length" class="advanced-filters">
             <summary>更多筛选条件</summary>
             <div class="form-grid">
@@ -997,8 +1000,8 @@ const hasStatusTabs = computed(
   padding: 20px;
   flex-wrap: wrap;
 }
-.filters input {
-  min-width: 220px;
+.filters > input {
+  min-width: 180px;
 }
 .table-scroll {
   overflow: auto;

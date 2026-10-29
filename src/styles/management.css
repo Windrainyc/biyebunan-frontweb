@@ -415,20 +415,6 @@ body .admin-workspace .data-card {
   border-color: #e3e7ef;
   box-shadow: 0 3px 8px #192d4c03;
 }
-body .admin-workspace .filters {
-  padding: 18px 20px;
-  gap: 10px;
-}
-body .admin-workspace .filters input,
-body .admin-workspace .filters select {
-  min-height: 35px;
-  font-size: 11px;
-}
-body .admin-workspace .filters .button {
-  min-height: 35px;
-  font-size: 11px;
-  padding: 8px 13px;
-}
 body .admin-workspace table th {
   background: #f7f8fb;
   color: #8590a3;

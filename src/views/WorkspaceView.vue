@@ -3,11 +3,12 @@ import { computed, ref, defineAsyncComponent, watch, onMounted, onUnmounted } fr
 import { useRoute, useRouter } from 'vue-router';
 import { auth, logout, errorText } from '../api/client';
 import { resources } from '../config/resources';
-import { loadNavigation, navigationLinks, type Menu } from '../api/navigation';
+import { loadNavigation, navigationLinks } from '../api/navigation';
 import { operation } from '../config/contract';
 import { utilityNavigation } from '../config/navigation-access';
 import ManagementNavigation from '../components/ManagementNavigation.vue';
 import { managementSections } from '../config/management-navigation';
+import { useNavigationState } from '../composables/useNavigationState';
 import PageLoadError from '../components/PageLoadError.vue';
 import type { Component } from 'vue';
 function page(loader: () => Promise<{ default: Component }>) {
@@ -36,24 +37,16 @@ const entries = computed(() =>
     return op && (!op.permission || auth.permissions.includes(op.permission));
   }),
 );
-const navigation = ref<{ configured: boolean; items: Menu[] } | null>(null);
-const navigationError = ref('');
-let navigationGeneration = 0;
-async function refreshNavigation() {
-  const current = ++navigationGeneration;
-  navigation.value = null;
-  navigationError.value = '';
-  try {
-    const result = await loadNavigation();
-    if (current === navigationGeneration) navigation.value = result;
-  } catch (e) {
-    if (current === navigationGeneration) navigationError.value = errorText(e);
-  }
-}
+const navigationState = useNavigationState(
+  () => `${platform.value}:${auth.user?.id || ''}`,
+  loadNavigation,
+  errorText,
+);
+const { navigation, error: navigationError, refresh: refreshNavigation } = navigationState;
 watch(() => [route.fullPath, auth.user?.id], refreshNavigation, { immediate: true });
 onMounted(() => window.addEventListener('focus', refreshNavigation));
 onUnmounted(() => {
-  navigationGeneration++;
+  navigationState.dispose();
   window.removeEventListener('focus', refreshNavigation);
 });
 const utilityLinks = computed(() => utilityNavigation(platform.value, auth.permissions));

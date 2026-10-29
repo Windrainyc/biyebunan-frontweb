@@ -5,4 +5,5 @@ import { router } from './router';
 import './styles/main.css';
 import './styles/student.css';
 import './styles/management.css';
+import './styles/controls.css';
 createApp(App).directive('dialog', dialog).use(router).mount('#app');

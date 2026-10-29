@@ -1,0 +1,147 @@
+/* 三端共用控件尺度。按钮、输入与选择统一基线，文本域及业务展示不强行定高。 */
+:root {
+  --control-height: 40px;
+  --control-radius: 7px;
+  --control-font: 13px;
+  --form-gap: 20px;
+}
+body .workspace .button,
+body .workspace .btn {
+  min-height: var(--control-height);
+  padding: 9px 16px;
+  font-size: var(--control-font);
+  line-height: 20px;
+  border-radius: var(--control-radius);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+body
+  .workspace
+  input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not(
+    .validation
+  ),
+body .workspace select {
+  height: var(--control-height);
+  min-height: var(--control-height);
+  padding: 9px 12px;
+  font-size: var(--control-font);
+  line-height: 20px;
+  border-radius: var(--control-radius);
+  max-width: 100%;
+}
+body .workspace textarea {
+  font-size: var(--control-font);
+  padding: 12px;
+  border-radius: var(--control-radius);
+}
+body .workspace .filters {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 20px;
+}
+body .workspace .filters > input {
+  flex: 1 1 200px;
+  min-width: 180px;
+  max-width: 360px;
+}
+body .workspace .filters > select {
+  flex: 0 1 172px;
+  min-width: 140px;
+}
+body .workspace .filters > label {
+  flex: 0 1 220px;
+}
+body .workspace .filters > label,
+body .workspace .form-grid > label,
+body .workspace .form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  font-size: var(--control-font);
+  line-height: 20px;
+}
+body .workspace .form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--form-gap);
+  align-items: start;
+}
+body .workspace .form-field > input:not([type='checkbox']):not([type='radio']),
+body .workspace .form-field > select,
+body .workspace .form-field > textarea,
+body .workspace .form-grid > label > input,
+body .workspace .form-grid > label > select,
+body .workspace .filters > label > input,
+body .workspace .filters > label > select {
+  width: 100%;
+  min-width: 0;
+}
+body .workspace .form-field > input[type='checkbox'] {
+  align-self: flex-start;
+  width: 18px;
+  height: 18px;
+  margin: 11px 0;
+}
+body .workspace .advanced-filters summary {
+  margin: 4px 0;
+  font-size: var(--control-font);
+  line-height: 24px;
+}
+body .workspace .advanced-filters[open] .form-grid {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+body .workspace .resource-form-footer .button,
+body .workspace .modal-footer .button {
+  min-width: 88px;
+}
+body .workspace .reference .search {
+  gap: 8px;
+  align-items: center;
+}
+body .workspace .reference .search input {
+  flex: 1 1 0;
+  min-width: 0;
+}
+body .workspace .pagination {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+body .workspace .pagination select {
+  width: 112px;
+}
+@media (max-width: 640px) {
+  body .workspace .form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  body .workspace .filters {
+    padding: 16px;
+    gap: 10px;
+  }
+  body .workspace .filters > input {
+    flex-basis: 100%;
+    max-width: none;
+  }
+  body .workspace .filters > select,
+  body .workspace .filters > label {
+    flex: 1 1 150px;
+    min-width: 0;
+  }
+  body .workspace .resource-form-body {
+    padding: 20px;
+  }
+  body .workspace .resource-form-modal > .resource-modal-heading,
+  body .workspace .resource-form-modal > .resource-form-footer {
+    padding: 16px 20px;
+  }
+}
+
+body .workspace .filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
