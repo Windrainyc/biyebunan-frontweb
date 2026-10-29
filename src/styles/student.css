@@ -1262,7 +1262,7 @@ body .student-knowledge .data-card {
   color: white;
   border-color: #334bba;
 }
-body .knowledge-type-toolbar select {
+body .knowledge-type-toolbar :is(select, .app-select) {
   margin-left: auto;
   font-size: 12px;
   min-height: 34px;
@@ -1312,7 +1312,7 @@ body .knowledge-type-toolbar select {
   .student-knowledge-hero h1 {
     font-size: 28px;
   }
-  body .knowledge-type-toolbar select {
+  body .knowledge-type-toolbar :is(select, .app-select) {
     margin-left: 0;
   }
   .knowledge-extra-filters form {
@@ -1436,7 +1436,7 @@ body .student-posts .filters {
   gap: 8px;
 }
 .student-posts .filters input,
-.student-posts .filters select {
+.student-posts .filters :is(select, .app-select) {
   font-size: 12px;
 }
 @media (max-width: 900px) {
@@ -1476,7 +1476,7 @@ body .student-posts .filters {
   .student-chat-main {
     padding: 20px 16px;
   }
-  .student-chat-main .chat-controls select {
+  .student-chat-main .chat-controls :is(select, .app-select) {
     max-width: 100%;
   }
   body .student-workspace .student-chat-main .messages {

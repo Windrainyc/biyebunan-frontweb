@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppSelect from '../components/AppSelect.vue';
 import { computed, ref, watch, onBeforeUnmount } from 'vue';
 import { auth, request, errorText } from '../api/client';
 import { operation } from '../config/contract';
@@ -243,7 +244,7 @@ watch(() => [...props.visiblePaths].sort().join('|'), load, { immediate: true })
       </div>
       <div class="management-dash-actions">
         <label class="management-range"
-          ><Icon name="calendar" /><select
+          ><Icon name="calendar" /><AppSelect
             v-model.number="daysCount"
             aria-label="总览统计时间范围"
             :disabled="loading"
@@ -251,7 +252,7 @@ watch(() => [...props.visiblePaths].sort().join('|'), load, { immediate: true })
           >
             <option :value="7">近7日</option>
             <option :value="30">近30日</option>
-          </select></label
+          </AppSelect></label
         ><RouterLink
           v-if="can('statistics') && visiblePaths.includes('/admin/exports')"
           class="button"

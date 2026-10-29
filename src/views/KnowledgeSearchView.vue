@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppSelect from '../components/AppSelect.vue';
 import { onBeforeUnmount, ref } from 'vue';
 import { request, errorText } from '../api/client';
 import type { Page, Row } from '../types/api';
@@ -77,14 +78,14 @@ async function open(hit: Row) {
         required
         placeholder="输入知识点、问题或报错关键词"
         aria-label="知识检索关键词"
-      /><select v-model="mode" aria-label="检索方式">
+      /><AppSelect v-model="mode" aria-label="检索方式">
         <option value="KEYWORD">关键词检索</option>
-        <option value="SEMANTIC">语义检索</option></select
-      ><select v-model="type" aria-label="内容类型">
+        <option value="SEMANTIC">语义检索</option></AppSelect
+      ><AppSelect v-model="type" aria-label="内容类型">
         <option value="">全部资料</option>
         <option value="MARKDOWN">知识文章</option>
         <option value="DOCUMENT">文档资料</option>
-        <option value="VIDEO">视频录屏</option></select
+        <option value="VIDEO">视频录屏</option></AppSelect
       ><button class="button primary" :disabled="busy">搜索</button>
     </form>
     <p v-if="mode === 'SEMANTIC'" class="notice">

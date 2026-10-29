@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppSelect from './AppSelect.vue';
 import { computed, ref } from 'vue';
 import { auth, request, errorText } from '../api/client';
 import { writeAttempt } from '../api/attempt';
@@ -158,11 +159,11 @@ async function submit() {
     <form v-if="selected" class="action-form" @submit.prevent="submit">
       <label v-for="field in fields" :key="field.key"
         >{{ label(field.key)
-        }}<select v-if="field.enum" v-model="values[field.key]" required>
+        }}<AppSelect v-if="field.enum" v-model="values[field.key]" required>
           <option value="">请选择</option>
           <option v-for="value in field.enum" :key="String(value)" :value="value">
             {{ display(value) }}
-          </option></select
+          </option></AppSelect
         ><input
           v-else-if="field.writeOnly"
           v-model="values[field.key]"

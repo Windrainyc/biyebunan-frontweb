@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppSelect from '../components/AppSelect.vue';
 import { useRoute } from 'vue-router';
 import { latestRequest } from '../api/latest';
 import { writeAttempt } from '../api/attempt';
@@ -460,7 +461,7 @@ const hasStatusTabs = computed(
           >
             {{ type === 'MARKDOWN' ? 'Markdown' : display(type) }}
           </button>
-          <select v-model="sort" aria-label="知识内容排序" @change="search">
+          <AppSelect v-model="sort" aria-label="知识内容排序" @change="search">
             <option v-for="s in sorts" :key="s" :value="s">
               {{
                 s === 'createdAt:asc'
@@ -470,7 +471,7 @@ const hasStatusTabs = computed(
                     : '最近创建优先'
               }}
             </option>
-          </select>
+          </AppSelect>
           <button
             class="knowledge-reset"
             :disabled="loading"
@@ -504,7 +505,7 @@ const hasStatusTabs = computed(
             placeholder="输入关键词搜索"
             aria-label="搜索关键词"
             maxlength="100"
-          /><select
+          /><AppSelect
             v-if="queryNames.has('status') && !hasStatusTabs"
             v-model="status"
             aria-label="筛选状态"
@@ -512,8 +513,8 @@ const hasStatusTabs = computed(
             <option value="">全部状态</option>
             <option v-for="value in statusOptions" :key="String(value)" :value="value">
               {{ display(value) }}
-            </option></select
-          ><select v-if="sorts.length" v-model="sort" aria-label="排序">
+            </option></AppSelect
+          ><AppSelect v-if="sorts.length" v-model="sort" aria-label="排序">
             <option v-for="s in sorts" :key="s" :value="s">
               {{
                 s === 'createdAt:asc'
@@ -523,7 +524,7 @@ const hasStatusTabs = computed(
                     : '最近创建优先'
               }}
             </option>
-          </select>
+          </AppSelect>
           <div class="filter-actions">
             <button class="button primary" :disabled="loading">查询</button
             ><button
@@ -705,10 +706,10 @@ const hasStatusTabs = computed(
         </div>
         <div class="pagination">
           <span>{{ loading ? '正在查询…' : listFailed ? '总数暂不可用' : `共 ${total} 条` }}</span
-          ><select v-model.number="size" aria-label="每页条数" @change="search">
+          ><AppSelect v-model.number="size" aria-label="每页条数" @change="search">
             <option :value="10">每页10条</option>
             <option :value="20">每页20条</option>
-            <option :value="50">每页50条</option></select
+            <option :value="50">每页50条</option></AppSelect
           ><button
             class="button"
             :disabled="page === 1 || loading"

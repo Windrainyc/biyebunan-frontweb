@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppSelect from './AppSelect.vue';
 import { computed, ref, watch } from 'vue';
 import { auth, request, errorText } from '../api/client';
 import { writeAttempt } from '../api/attempt';
@@ -99,17 +100,17 @@ async function submit() {
     </p>
     <form @submit.prevent="submit">
       <label
-        >处理方式<select v-model="mode">
+        >处理方式<AppSelect v-model="mode">
           <option v-if="modes.includes('reconcile')" value="reconcile">核对原调用凭据</option>
           <option v-if="modes.includes('adjust')" value="adjust">追加金额调整</option>
           <option v-if="modes.includes('adjudicate')" value="adjudicate">提交人工证据裁决</option>
-        </select></label
+        </AppSelect></label
       ><template v-if="mode === 'adjust'"
         ><label
-          >调整方向<select v-model="direction">
+          >调整方向<AppSelect v-model="direction">
             <option value="CREDIT">退还金额</option>
             <option value="DEBIT">追加扣减</option>
-          </select></label
+          </AppSelect></label
         ><label
           >金额（元）<input
             v-model="amount"
@@ -117,11 +118,11 @@ async function submit() {
             required /></label></template
       ><template v-if="mode === 'adjudicate'"
         ><label
-          >凭据结论<select v-model="kind">
+          >凭据结论<AppSelect v-model="kind">
             <option value="USAGE">已确认实际用量</option>
             <option value="NO_CHARGE">已确认未计费</option>
             <option value="CORRECTION">按迟到原调用证据更正</option>
-          </select></label
+          </AppSelect></label
         >
         <p v-if="kind === 'CORRECTION'" class="notice">
           仅适用于已批准人工裁决后收到不同的原调用证据。服务器提供更正用量，另一名管理员复核后追加差额；原始账单保持不变。已有人工退费冲突时必须先处理金额调整。

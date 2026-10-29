@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppSelect from './AppSelect.vue';
 import { onMounted, onBeforeUnmount, ref } from 'vue';
 import { auth, request, errorText } from '../api/client';
 import { writeAttempt } from '../api/attempt';
@@ -310,11 +311,11 @@ onMounted(load);
         />
         <form v-if="uploaded" class="delivery-form" @submit.prevent="add">
           <label
-            >资料类型<select v-model="kind">
+            >资料类型<AppSelect v-model="kind">
               <option v-for="(title, value) in kinds" :key="value" :value="value">
                 {{ title }}
               </option>
-            </select></label
+            </AppSelect></label
           ><label>版本说明<input v-model="note" maxlength="200" required /></label
           ><button class="button primary" :disabled="busy">创建交付版本</button>
         </form></template

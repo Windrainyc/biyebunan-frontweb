@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppSelect from '../components/AppSelect.vue';
 import { useRoute } from 'vue-router';
 import Icon from '../components/Icon.vue';
 import { display } from '../config/labels';
@@ -324,7 +325,7 @@ onBeforeUnmount(() => {
         </button>
       </p>
       <div class="chat-controls">
-        <select
+        <AppSelect
           v-if="!conversation"
           v-model="project"
           :disabled="busy || !!pending"
@@ -333,13 +334,13 @@ onBeforeUnmount(() => {
           <option value="">请选择项目</option>
           <option v-for="p in projects" :key="String(p.id)" :value="p.id">
             {{ p.title }}
-          </option></select
-        ><select v-model="model" :disabled="busy || !!pending" aria-label="选择模型">
+          </option></AppSelect
+        ><AppSelect v-model="model" :disabled="busy || !!pending" aria-label="选择模型">
           <option value="">请选择可用模型</option>
           <option v-for="m in models" :key="String(m.id)" :value="m.id">
             {{ m.name }}
           </option>
-        </select>
+        </AppSelect>
       </div>
       <div
         v-if="

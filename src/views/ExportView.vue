@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppSelect from '../components/AppSelect.vue';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { auth, request, errorText } from '../api/client';
@@ -113,12 +114,12 @@ async function getDownload() {
     <p class="muted">生成指定期间的数据文件，按当前权限和数据归属过滤。最长可查询366天。</p>
     <form class="export-form" @submit.prevent="create">
       <label
-        >数据类型<select v-model="kind">
+        >数据类型<AppSelect v-model="kind">
           <option value="ORDERS">软件订单</option>
           <option value="PROJECTS">软件项目</option>
           <option v-if="auth.platform === 'admin'" value="USAGE">模型用量</option>
           <option v-if="auth.platform === 'admin'" value="AUDIT">审计记录</option>
-        </select></label
+        </AppSelect></label
       ><label>开始日期<input v-model="from" type="date" :max="to" required /></label
       ><label>结束日期<input v-model="to" type="date" :min="from" required /></label
       ><button class="button primary" :disabled="busy">

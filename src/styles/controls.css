@@ -20,7 +20,7 @@ body
   input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not(
     .validation
   ),
-body .workspace select {
+body .workspace :is(select, .app-select) {
   height: var(--control-height);
   min-height: var(--control-height);
   padding: 9px 12px;
@@ -45,7 +45,7 @@ body .workspace .filters > input {
   min-width: 180px;
   max-width: 360px;
 }
-body .workspace .filters > select {
+body .workspace .filters > :is(select, .app-select) {
   flex: 0 1 172px;
   min-width: 140px;
 }
@@ -68,12 +68,12 @@ body .workspace .form-grid {
   align-items: start;
 }
 body .workspace .form-field > input:not([type='checkbox']):not([type='radio']),
-body .workspace .form-field > select,
+body .workspace .form-field > :is(select, .app-select),
 body .workspace .form-field > textarea,
 body .workspace .form-grid > label > input,
-body .workspace .form-grid > label > select,
+body .workspace .form-grid > label > :is(select, .app-select),
 body .workspace .filters > label > input,
-body .workspace .filters > label > select {
+body .workspace .filters > label > :is(select, .app-select) {
   width: 100%;
   min-width: 0;
 }
@@ -109,7 +109,7 @@ body .workspace .pagination {
   flex-wrap: wrap;
   gap: 10px;
 }
-body .workspace .pagination select {
+body .workspace .pagination :is(select, .app-select) {
   width: 112px;
 }
 @media (max-width: 640px) {
@@ -124,7 +124,7 @@ body .workspace .pagination select {
     flex-basis: 100%;
     max-width: none;
   }
-  body .workspace .filters > select,
+  body .workspace .filters > :is(select, .app-select),
   body .workspace .filters > label {
     flex: 1 1 150px;
     min-width: 0;
@@ -173,7 +173,7 @@ body .workspace .search-form > input {
   min-width: 180px;
   max-width: 420px;
 }
-body .workspace .search-form > select {
+body .workspace .search-form > :is(select, .app-select) {
   flex: 0 1 172px;
   min-width: 140px;
 }
@@ -204,7 +204,7 @@ body .workspace .audit-grid .prose {
     flex-basis: 100%;
     max-width: none;
   }
-  body .workspace .search-form > select {
+  body .workspace .search-form > :is(select, .app-select) {
     flex: 1 1 140px;
     min-width: 0;
   }

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppSelect from './AppSelect.vue';
 import type { Schema } from '../types/api';
 import { localDateTime, requiresSelection } from '../config/form';
 import { label, display } from '../config/labels';
@@ -32,17 +33,17 @@ function required() {
     :required="required()"
     :aria-label="label(field.key)"
     @update:model-value="emit('update:modelValue', $event)"
-  /><select
+  /><AppSelect
     v-else-if="field.enum"
-    :value="modelValue"
+    :model-value="modelValue"
     :required="required()"
     :aria-label="label(field.key)"
-    @change="input"
+    @update:model-value="emit('update:modelValue', $event)"
   >
     <option value="">请选择</option>
     <option v-for="value in field.enum" :key="String(value)" :value="value">
       {{ display(value) }}
-    </option></select
+    </option></AppSelect
   ><input
     v-else-if="field.type === 'boolean'"
     type="checkbox"
