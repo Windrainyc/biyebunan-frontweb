@@ -27,7 +27,6 @@ body .workspace select {
   font-size: var(--control-font);
   line-height: 20px;
   border-radius: var(--control-radius);
-  max-width: 100%;
 }
 body .workspace textarea {
   font-size: var(--control-font);

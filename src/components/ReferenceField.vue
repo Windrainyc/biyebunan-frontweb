@@ -40,8 +40,11 @@ const resource: Record<string, string> = {
 };
 const path = computed(() => {
   const name =
-    (props.field === 'parentId' && props.context === 'menus' ? 'menus' : resource[props.field]) ||
-    '';
+    (props.field === 'studentId' && auth.platform === 'partner'
+      ? 'students'
+      : props.field === 'parentId' && props.context === 'menus'
+        ? 'menus'
+        : resource[props.field]) || '';
   const direct = `/${auth.platform}/${name}`;
   return operation('GET', direct) ? direct : `/${auth.platform}/dictionaries/${name}`;
 });
@@ -87,7 +90,7 @@ async function load() {
         size: 20,
         q: query.value,
         ...props.filters,
-        ...(props.field === 'studentId'
+        ...(props.field === 'studentId' && auth.platform === 'admin'
           ? { platform: 'student' }
           : props.field === 'partnerId'
             ? { platform: 'partner' }
