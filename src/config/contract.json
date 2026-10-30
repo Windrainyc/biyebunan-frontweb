@@ -1,5 +1,5 @@
 {
-  "version": "1.0.34",
+  "version": "1.0.35",
   "schemas": {
     "SchoolWrite": {
       "type": "object",
@@ -3393,9 +3393,14 @@
           "type": "string",
           "description": "UTC 时间",
           "format": "date-time"
+        },
+        "announcementId": {
+          "type": ["string", "null"],
+          "format": "uuid",
+          "description": "关联公告，普通业务提醒为空"
         }
       },
-      "required": ["id", "title", "body", "read", "createdAt"]
+      "required": ["id", "title", "body", "read", "createdAt", "announcementId"]
     },
     "Membership": {
       "type": "object",
@@ -5962,6 +5967,174 @@
           "description": "只读PDF字节Base64，原始字节最多20MiB"
         }
       }
+    },
+    "Announcement": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "body": {
+          "type": "string",
+          "maxLength": 10000
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["ANNOUNCEMENT", "REMINDER"]
+        },
+        "audience": {
+          "type": "string",
+          "enum": ["ALL", "SELECTED"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "recipientCount": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "仅有公告查询权限的管理员可见统计"
+        },
+        "deliveredCount": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "仅有公告查询权限的管理员可见统计"
+        },
+        "readCount": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "仅有公告查询权限的管理员可见统计"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "body",
+        "kind",
+        "audience",
+        "createdAt",
+        "recipientCount",
+        "deliveredCount",
+        "readCount"
+      ]
+    },
+    "AnnouncementPublish": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string",
+          "maxLength": 200,
+          "minLength": 1
+        },
+        "body": {
+          "type": "string",
+          "maxLength": 10000,
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["ANNOUNCEMENT", "REMINDER"]
+        },
+        "audience": {
+          "type": "string",
+          "enum": ["ALL", "SELECTED"]
+        },
+        "recipientIds": {
+          "type": "array",
+          "maxItems": 200,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "description": "ALL必须为空；SELECTED必须包含1至200个启用用户"
+        }
+      },
+      "required": ["title", "body", "kind", "audience", "recipientIds"]
+    },
+    "AnnouncementRecipient": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "platform": {
+          "type": "string",
+          "enum": ["admin", "student", "partner"]
+        },
+        "phoneMasked": {
+          "type": "string"
+        }
+      },
+      "required": ["id", "displayName", "platform", "phoneMasked"]
+    },
+    "AnnouncementPage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/Announcement"
+          }
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        }
+      },
+      "required": ["items", "page", "size", "total"]
+    },
+    "AnnouncementRecipientPage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/AnnouncementRecipient"
+          }
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        }
+      },
+      "required": ["items", "page", "size", "total"]
     }
   },
   "operations": {
@@ -19711,6 +19884,262 @@
       ],
       "response": {
         "$ref": "#/components/schemas/DocumentPreview"
+      }
+    },
+    "GET /admin/announcements": {
+      "operationId": "get_admin_announcements",
+      "summary": "查询公告发送记录",
+      "permission": "announcements:read",
+      "body": null,
+      "parameters": [
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1
+          }
+        },
+        {
+          "name": "size",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20
+          }
+        },
+        {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "description": "",
+            "maxLength": 100
+          }
+        },
+        {
+          "name": "X-Request-ID",
+          "in": "header",
+          "required": false,
+          "description": "可选关联 ID；服务端生成可信 traceId",
+          "schema": {
+            "type": "string",
+            "description": "",
+            "maxLength": 128
+          }
+        }
+      ],
+      "response": {
+        "$ref": "#/components/schemas/AnnouncementPage"
+      }
+    },
+    "POST /admin/announcements": {
+      "operationId": "post_admin_announcements",
+      "summary": "发布公告或提醒",
+      "permission": "announcements:write",
+      "body": {
+        "$ref": "#/components/schemas/AnnouncementPublish"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "description": "",
+            "minLength": 16,
+            "maxLength": 128
+          }
+        },
+        {
+          "name": "X-Request-ID",
+          "in": "header",
+          "required": false,
+          "description": "可选关联 ID；服务端生成可信 traceId",
+          "schema": {
+            "type": "string",
+            "description": "",
+            "maxLength": 128
+          }
+        }
+      ],
+      "response": {
+        "$ref": "#/components/schemas/Announcement"
+      }
+    },
+    "GET /admin/announcements/recipients": {
+      "operationId": "get_admin_announcements_recipients",
+      "summary": "分页选择脱敏接收用户",
+      "permission": "announcements:write",
+      "body": null,
+      "parameters": [
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1
+          }
+        },
+        {
+          "name": "size",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20
+          }
+        },
+        {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "description": "",
+            "maxLength": 100
+          }
+        },
+        {
+          "name": "X-Request-ID",
+          "in": "header",
+          "required": false,
+          "description": "可选关联 ID；服务端生成可信 traceId",
+          "schema": {
+            "type": "string",
+            "description": "",
+            "maxLength": 128
+          }
+        },
+        {
+          "name": "platform",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "enum": ["admin", "student", "partner"]
+          }
+        }
+      ],
+      "response": {
+        "$ref": "#/components/schemas/AnnouncementRecipientPage"
+      }
+    },
+    "GET /admin/announcements/{id}": {
+      "operationId": "get_admin_announcements_id",
+      "summary": "读取授权公告正文",
+      "permission": "get_admin_notifications",
+      "body": null,
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "description": "资源标识",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "X-Request-ID",
+          "in": "header",
+          "required": false,
+          "description": "可选关联 ID；服务端生成可信 traceId",
+          "schema": {
+            "type": "string",
+            "description": "",
+            "maxLength": 128
+          }
+        }
+      ],
+      "response": {
+        "$ref": "#/components/schemas/Announcement"
+      }
+    },
+    "GET /student/announcements/{id}": {
+      "operationId": "get_student_announcements_id",
+      "summary": "读取授权公告正文",
+      "permission": "get_student_notifications",
+      "body": null,
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "description": "资源标识",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "X-Request-ID",
+          "in": "header",
+          "required": false,
+          "description": "可选关联 ID；服务端生成可信 traceId",
+          "schema": {
+            "type": "string",
+            "description": "",
+            "maxLength": 128
+          }
+        }
+      ],
+      "response": {
+        "$ref": "#/components/schemas/Announcement"
+      }
+    },
+    "GET /partner/announcements/{id}": {
+      "operationId": "get_partner_announcements_id",
+      "summary": "读取授权公告正文",
+      "permission": "get_partner_notifications",
+      "body": null,
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "description": "资源标识",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "X-Request-ID",
+          "in": "header",
+          "required": false,
+          "description": "可选关联 ID；服务端生成可信 traceId",
+          "schema": {
+            "type": "string",
+            "description": "",
+            "maxLength": 128
+          }
+        }
+      ],
+      "response": {
+        "$ref": "#/components/schemas/Announcement"
       }
     }
   }

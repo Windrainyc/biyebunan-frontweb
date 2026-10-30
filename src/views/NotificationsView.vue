@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref } from 'vue';
 import Icon from '../components/Icon.vue';
+import AnnouncementManager from '../components/AnnouncementManager.vue';
 import { auth, request, errorText } from '../api/client';
 import type { Page } from '../types/api';
 import { display } from '../config/labels';
@@ -10,6 +11,7 @@ interface Notification {
   body: string;
   read: boolean;
   createdAt: string;
+  announcementId?: string;
 }
 const items = ref<Notification[]>([]),
   page = ref(1),
@@ -18,6 +20,22 @@ const items = ref<Notification[]>([]),
   busy = ref(false),
   failed = ref(false),
   reading = ref(new Set<string>());
+const announcement = ref<{ title: string; body: string } | null>(null);
+let detailGeneration = 0;
+async function showAnnouncement(item: Notification) {
+  const g = ++detailGeneration;
+  error.value = '';
+  try {
+    const result = await request<{ title: string; body: string }>(
+      `/${auth.platform}/announcements/${item.announcementId}`,
+    );
+    if (disposed || g !== detailGeneration) return;
+    announcement.value = result;
+    await read(item);
+  } catch (e) {
+    if (!disposed && g === detailGeneration) error.value = errorText(e);
+  }
+}
 let generation = 0;
 let disposed = false;
 async function load() {
@@ -77,6 +95,9 @@ onBeforeUnmount(() => {
         {{ failed ? '重试查询' : '刷新消息' }}
       </button>
     </header>
+    <AnnouncementManager
+      v-if="auth.platform === 'admin' && auth.permissions.includes('announcements:read')"
+    />
     <p v-if="error" role="alert" class="error">{{ error }}</p>
     <article
       v-for="item in items"
@@ -91,6 +112,9 @@ onBeforeUnmount(() => {
           <span>{{ display(item.createdAt) }}</span>
         </div>
         <p>{{ item.body }}</p>
+        <button v-if="item.announcementId" class="button" @click="showAnnouncement(item)">
+          查看详情
+        </button>
         <button
           v-if="!item.read"
           class="button"
@@ -133,9 +157,44 @@ onBeforeUnmount(() => {
         下一页
       </button>
     </div>
+    <div v-if="announcement" class="announcement-overlay" @keydown.esc="announcement = null">
+      <section
+        v-dialog="() => (announcement = null)"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="announcement-heading"
+      >
+        <button class="button" @click="announcement = null">关闭</button>
+        <h2 id="announcement-heading">{{ announcement.title }}</h2>
+        <p>{{ announcement.body }}</p>
+      </section>
+    </div>
   </section>
 </template>
 <style scoped>
+.announcement-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: #15243b55;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+.announcement-overlay section {
+  background: white;
+  border-radius: 16px;
+  padding: 28px;
+  width: min(700px, 100%);
+  max-height: 85dvh;
+  overflow: auto;
+}
+.announcement-overlay p {
+  white-space: pre-wrap;
+  line-height: 1.9;
+  overflow-wrap: anywhere;
+}
+
 .notifications-page {
   max-width: 1100px;
   margin: 0 auto;
