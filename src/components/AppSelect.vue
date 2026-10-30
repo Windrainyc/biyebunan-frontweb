@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { CSSProperties } from 'vue';
 import { selectLayout } from './select-layout';
+import { stableSelectOptions } from './select-options';
 import { ref, computed, onMounted, onBeforeUnmount, nextTick, useAttrs, useId, watch } from 'vue';
 defineOptions({ inheritAttrs: false });
 const props = defineProps<{
@@ -31,7 +32,7 @@ function sync() {
       o.disabled || (o.parentElement instanceof HTMLOptGroupElement && o.parentElement.disabled),
   }));
   // Vue会重新写入option属性；值未变时必须保持状态引用，避免观察器与渲染互相触发。
-  if (JSON.stringify(next) !== JSON.stringify(options.value)) {
+  if (stableSelectOptions(options.value, next) !== options.value) {
     options.value = next;
     // 异步刷新可能移除/重排选项，关闭旧菜单，避免旧高亮索引选择到另一条数据。
     if (open.value) {
