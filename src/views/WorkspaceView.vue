@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import NotificationBell from '../components/NotificationBell.vue';
 import { computed, ref, defineAsyncComponent, watch, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { auth, logout, errorText } from '../api/client';
@@ -167,7 +168,7 @@ async function exit() {
             v-if="studentAllowed('notifications')"
             to="/student/notifications"
             aria-label="消息通知"
-            ><Icon name="bell"
+            ><NotificationBell
           /></RouterLink>
           <RouterLink v-if="studentAllowed('bind-order')" to="/student/bind-order" class="button"
             >绑定订单</RouterLink

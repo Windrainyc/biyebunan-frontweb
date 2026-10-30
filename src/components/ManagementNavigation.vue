@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import NotificationBell from './NotificationBell.vue';
 import { computed, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { auth } from '../api/client';
@@ -163,7 +164,7 @@ function close() {
             :to="notification.path"
             class="management-icon-button"
             aria-label="消息通知"
-            ><Icon name="bell"
+            ><NotificationBell
           /></RouterLink>
           <button class="management-account" :aria-expanded="account" @click="account = !account">
             <span class="management-avatar">{{ auth.user?.displayName?.slice(0, 1) }}</span

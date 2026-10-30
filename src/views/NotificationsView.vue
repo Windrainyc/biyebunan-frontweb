@@ -70,6 +70,7 @@ async function read(item: Notification) {
     if (disposed) return;
     const current = items.value.find((row) => row.id === item.id);
     if (current) current.read = true;
+    window.dispatchEvent(new Event('zx:notifications-changed'));
   } catch (e) {
     if (!disposed) error.value = errorText(e);
   } finally {
