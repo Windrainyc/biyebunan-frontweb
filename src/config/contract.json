@@ -1,5 +1,5 @@
 {
-  "version": "1.0.32",
+  "version": "1.0.33",
   "schemas": {
     "SchoolWrite": {
       "type": "object",
@@ -5954,6 +5954,18 @@
         }
       },
       "required": ["items", "page", "size", "total"]
+    },
+    "DocumentPreview": {
+      "type": "object",
+      "required": ["pdfBase64"],
+      "additionalProperties": false,
+      "properties": {
+        "pdfBase64": {
+          "type": "string",
+          "contentEncoding": "base64",
+          "description": "只读PDF字节Base64，原始字节最多20MiB"
+        }
+      }
     }
   },
   "operations": {
@@ -19637,6 +19649,72 @@
       ],
       "response": {
         "$ref": "#/components/schemas/AssetPage"
+      }
+    },
+    "POST /admin/assets/{id}/preview": {
+      "operationId": "post_admin_assets_id_preview",
+      "summary": "私有Office文档转PDF预览",
+      "permission": "post_admin_assets_id_download",
+      "body": null,
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "description": "资源标识",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "X-Request-ID",
+          "in": "header",
+          "required": false,
+          "description": "可选关联 ID；服务端生成可信 traceId",
+          "schema": {
+            "type": "string",
+            "description": "",
+            "maxLength": 128
+          }
+        }
+      ],
+      "response": {
+        "$ref": "#/components/schemas/DocumentPreview"
+      }
+    },
+    "POST /student/assets/{id}/preview": {
+      "operationId": "post_student_assets_id_preview",
+      "summary": "私有Office文档转PDF预览",
+      "permission": "post_student_assets_id_download",
+      "body": null,
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "description": "资源标识",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "X-Request-ID",
+          "in": "header",
+          "required": false,
+          "description": "可选关联 ID；服务端生成可信 traceId",
+          "schema": {
+            "type": "string",
+            "description": "",
+            "maxLength": 128
+          }
+        }
+      ],
+      "response": {
+        "$ref": "#/components/schemas/DocumentPreview"
       }
     }
   }

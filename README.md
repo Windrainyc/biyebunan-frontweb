@@ -59,3 +59,11 @@ python3 scripts/stackctl.py stop
 注册与中介激活需要运营方确认的真实服务协议地址和版本。容器构建从环境变量 `VITE_TERMS_URL`、`VITE_TERMS_VERSION` 读取，修改后执行 `docker --context colima-zhixiang compose -p zhixiang-ui -f deploy/compose.yaml build` 并 `up -d`。地址要求HTTPS（仅本机联调允许localhost HTTP），不允许嵌入凭据；两个值缺失或不合法时按钮保持禁用。版本须与后端接受的版本一致。这里不提供虚构协议，也不会自动替用户勾选同意。
 
 用户已授权配置本地测试说明：`start --fixtures`自动将前端地址设为`http://127.0.0.1:18780/local-test-terms.html`，版本`ui-test-nonbinding`，与测试API一致，并重建镜像防止旧配置残留。该说明非商业协议且仅用于隔离测试；普通模式仍须自行配置正式协议。不要把测试镜像发布到生产。
+
+### 知识编辑、Office预览与消息
+
+知识库正文已支持Tiptap可视化编辑和Markdown源码模式；复杂Markdown保留源码，避免无提示丢失内容。
+
+本机完整验证启动：`python3 scripts/stackctl.py start --fixtures --office --video --build`。`--office`构建独立kkFileView Office专用转换镜像，API私有预览接口仍负责权限校验；仅本机18790转换入口，前端不直接访问。转换器处理20MiB以内Office文件并返回PDF；DOCX、RTF已实际验证，其他Office格式仍需兼容测试。省略此参数时Office预览明确不可用，图片/PDF/视频等原有预览不受影响。停止脚本会一并停止其管理的Office容器。
+
+订单绑定、项目阶段及交付通知使用独立RabbitMQ通知订阅并落库，页面沿用消息中心和刷新操作；不是WebSocket实时推送，也未接入真实短信/邮件。业务触发、死信及恢复说明见后端`docs/编辑预览与消息接入开发方案.md`。

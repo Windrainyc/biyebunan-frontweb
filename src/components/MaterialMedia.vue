@@ -4,6 +4,7 @@ import { auth, request, errorText } from '../api/client';
 import { previewKind, previewBlob } from './material-preview';
 const PdfPreview = defineAsyncComponent(() => import('./PdfPreview.vue'));
 const props = defineProps<{ id: unknown; mime: string; name: string; expanded?: boolean }>();
+const office = () => /\.(docx?|xlsx?|pptx?|odt|ods|odp|rtf)$/i.test(props.name);
 const url = ref(''),
   error = ref(''),
   text = ref('');
@@ -20,10 +21,21 @@ async function load() {
   error.value = '';
   text.value = '';
   const kind = previewKind(props.mime);
-  if (kind === 'file' || (!props.expanded && kind === 'text')) return;
+  if ((kind === 'file' && (!office() || !props.expanded)) || (!props.expanded && kind === 'text'))
+    return;
   controller = new AbortController();
   const signal = controller.signal;
   try {
+    if (kind === 'file' && office()) {
+      const result = await request<{ pdfBase64: string }>(
+        `/${auth.platform}/assets/${props.id}/preview`,
+        { method: 'POST' },
+      );
+      if (current !== generation) return;
+      const bytes = Uint8Array.from(atob(result.pdfBase64), (c) => c.charCodeAt(0));
+      url.value = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+      return;
+    }
     const grant = await request<{ url: string }>(`/${auth.platform}/assets/${props.id}/download`, {
       method: 'POST',
     });
@@ -70,7 +82,7 @@ onBeforeUnmount(() => {
       @error="error = '视频暂不能播放，可重试或下载'"
     />
     <PdfPreview
-      v-else-if="url && previewKind(mime) === 'pdf'"
+      v-else-if="url && (previewKind(mime) === 'pdf' || office())"
       :key="url"
       :url="url"
       :compact="!expanded"
@@ -88,7 +100,9 @@ onBeforeUnmount(() => {
       ><b>{{ name.split('.').pop()?.toUpperCase().slice(0, 8) || 'FILE' }}</b
       ><span>{{
         previewKind(mime) === 'file'
-          ? '下载查看原文件'
+          ? office()
+            ? '点击预览Office文档'
+            : '下载查看原文件'
           : ['pdf', 'text'].includes(previewKind(mime)) && !expanded
             ? '点击预览文档'
             : '正在准备预览…'

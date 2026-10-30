@@ -53,6 +53,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('action', choices=['start', 'stop', 'status'])
     parser.add_argument('--fixtures', action='store_true', help='显式开启本机HTTPS短信/模型协议夹具，禁止用于生产')
+    parser.add_argument('--office', action='store_true', help='启动独立kkFileView Office转换容器并接入私有预览')
     parser.add_argument('--video', action='store_true', help='显式启用宿主FFmpeg视频处理，须已安装ffmpeg和ffprobe')
     parser.add_argument('--build', action='store_true', help='启动前重新构建三个前端镜像')
     args = parser.parse_args()
@@ -75,6 +76,8 @@ def main():
                 stop_process(name, state)
             # 仅停止固定项目，不删除容器、网络或持久化卷。
             subprocess.run(DOCKER + ['stop'], check=True)
+            if state.get('office'):
+                subprocess.run(['docker', '--context', 'colima-zhixiang', 'compose', '-p', 'zhixiang-office', '-f', str(BACKEND / 'deploy/kkfileview/compose.yaml'), 'stop'], check=True)
             state_file.unlink(missing_ok=True)
             print('已停止本脚本管理的进程和知项三端容器，数据保持不变。')
             return
@@ -106,7 +109,11 @@ def main():
         try:
             if args.fixtures:
                 launch('model', 'start-ui-model.py', [])
-            options = ['--resume', '--container-frontends'] + (['--test-sms', '--test-model'] if args.fixtures else [])
+            if args.office:
+                subprocess.run([sys.executable, str(BACKEND / 'scripts/start-office-preview.py')], check=True)
+                state['office'] = True
+                state_file.write_text(json.dumps(state, ensure_ascii=False, indent=2))
+            options = ['--resume', '--container-frontends'] + (['--office'] if args.office else []) + (['--test-sms', '--test-model'] if args.fixtures else [])
             api = launch('api', 'start-ui-verification.py', options)
             for _ in range(90):
                 if api.poll() is not None:
