@@ -83,6 +83,7 @@ const simple = computed(() =>
 .zx-icon--prism {
   filter: drop-shadow(0 2px 2px rgb(66 88 177 / 12%));
 }
+:global(.btn-primary) .zx-icon,
 :global(.btn.primary) .zx-icon,
 :global(.button.primary) .zx-icon {
   color: inherit;

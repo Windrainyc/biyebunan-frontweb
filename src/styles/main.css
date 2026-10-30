@@ -9,6 +9,9 @@
   background: #f4f5f8;
   font-synthesis: none;
   --primary: #2c4bdb;
+  --button-primary-bg: #e8edff;
+  --button-primary-border: #d5ddf7;
+  --button-primary-ink: #4255a2;
   --ink: #132143;
   --muted: #748096;
   --line: #e5e8ef;
@@ -84,9 +87,23 @@ textarea:focus {
 }
 .btn-primary,
 .button.primary {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: white;
+  background: var(--button-primary-bg);
+  border-color: var(--button-primary-border);
+  color: var(--button-primary-ink);
+  font-weight: 600;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+.btn-primary:not(:disabled):hover,
+.button.primary:not(:disabled):hover {
+  background: #dce4ff;
+  border-color: #bdcbf2;
+}
+.btn-primary:not(:disabled):active,
+.button.primary:not(:disabled):active {
+  background: #cfdafa;
+  border-color: #aebfe9;
 }
 .btn-danger {
   color: #b93345;
