@@ -234,6 +234,11 @@ async function open(row?: Row) {
       editing.value?.[field.key] ??
       field.default ??
       (field.type === 'boolean' ? false : field.type === 'array' ? [] : '');
+  // 仅初始化新增草稿，输入、校验失败和重试均保留用户修改后的代码。
+  if (!row && ['categories', 'tags'].includes(props.resource.key)) {
+    const prefix = props.resource.key === 'categories' ? 'CAT' : 'TAG';
+    form.value.code = `${prefix}_${crypto.randomUUID().replaceAll('-', '').toUpperCase()}`;
+  }
   attempt = writeAttempt();
   writeKey.value = crypto.randomUUID();
   formOpen.value = true;
@@ -868,6 +873,13 @@ const hasStatusTabs = computed(
                 :context="resource.key"
                 :filters="field.key === 'majorId' ? { schoolId: form.schoolId } : {}"
               />
+              <small
+                v-if="
+                  !editing && field.key === 'code' && ['categories', 'tags'].includes(resource.key)
+                "
+                class="muted"
+                >已自动生成，可按需修改；业务代码须保持唯一。</small
+              >
             </div>
           </div>
           <p v-if="error" class="error" role="alert">{{ error }}</p>
