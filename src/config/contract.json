@@ -1,5 +1,5 @@
 {
-  "version": "1.0.33",
+  "version": "1.0.34",
   "schemas": {
     "SchoolWrite": {
       "type": "object",
@@ -3753,20 +3753,16 @@
       "required": ["reason"]
     },
     "StateChange": {
+      "description": "记录行直接启用或停用，仅提交目标状态；沿用幂等键、If-Match与服务端审计。",
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "status": {
           "type": "string",
           "enum": ["ENABLED", "DISABLED"]
-        },
-        "reason": {
-          "type": "string",
-          "description": "",
-          "maxLength": 200
         }
       },
-      "required": ["status", "reason"]
+      "required": ["status"]
     },
     "StageChange": {
       "description": "订单须ACTIVE。阶段顺序推进，可暂停并恢复原阶段；DONE仅由学生验收产生。进入ACCEPTANCE须进度100并发布源码与论文模板。",
