@@ -15,6 +15,7 @@ const attrs = useAttrs();
 const native = ref<HTMLSelectElement>();
 const trigger = ref<HTMLButtonElement>();
 const popup = ref<HTMLElement>();
+const popupTarget = ref<string | HTMLElement>('body');
 const open = ref(false);
 const options = ref<{ value: string; label: string; disabled: boolean }[]>([]);
 const active = ref(0);
@@ -47,6 +48,7 @@ function close() {
 async function show() {
   if (props.disabled) return;
   sync();
+  popupTarget.value = trigger.value?.closest('dialog') || 'body';
   open.value = !open.value;
   if (!open.value) return;
   active.value = Math.max(
@@ -192,7 +194,7 @@ onBeforeUnmount(() => {
       }}</span
       ><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 7.5 5 5 5-5" /></svg>
     </button>
-    <Teleport to="body"
+    <Teleport :to="popupTarget"
       ><div
         v-if="open"
         :id="id"

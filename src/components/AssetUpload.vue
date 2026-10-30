@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref } from 'vue';
+import { onBeforeUnmount, ref, watch } from 'vue';
 import { createSHA256 } from 'hash-wasm';
 import { auth, request, errorText } from '../api/client';
 import type { Row } from '../types/api';
@@ -7,16 +7,41 @@ const props = defineProps<{
   ownerType: 'PROJECT' | 'KNOWLEDGE' | 'FORUM' | 'RECEIPT' | 'MATERIAL';
   ownerId: string;
 }>();
-const emit = defineEmits<{ ready: [Row] }>();
+const emit = defineEmits<{ ready: [Row]; busy: [boolean] }>();
+const selected = ref<File>();
+const filename = ref('');
+const dragging = ref(false);
+const localPreview = ref('');
+function choose(file?: File) {
+  if (!file || busy.value) return;
+  if (localPreview.value) URL.revokeObjectURL(localPreview.value);
+  selected.value = file;
+  filename.value = file.name;
+  error.value = '';
+  message.value = '';
+  asset.value = null;
+  scanChecks = 0;
+  localPreview.value = /^image\/(png|jpeg|gif|webp|avif)$/.test(file.type)
+    ? URL.createObjectURL(file)
+    : '';
+}
+function drop(event: DragEvent) {
+  dragging.value = false;
+  choose(event.dataTransfer?.files?.[0]);
+}
+
 const busy = ref(false),
   progress = ref(0),
   message = ref(''),
   error = ref(''),
   asset = ref<Row | null>(null);
+watch(busy, (value) => emit('busy', value));
 let activeUpload: XMLHttpRequest | undefined;
+let scanChecks = 0;
 let aborted = false,
   timer: ReturnType<typeof setTimeout> | undefined;
 onBeforeUnmount(() => {
+  if (localPreview.value) URL.revokeObjectURL(localPreview.value);
   aborted = true;
   clearTimeout(timer);
   activeUpload?.abort();
@@ -35,16 +60,30 @@ async function poll() {
       busy.value = false;
     } else {
       message.value = '文件已上传，等待校验与安全扫描';
-      timer = setTimeout(poll, 3000);
+      if (++scanChecks >= 20) {
+        message.value = '文件已保存，扫描仍在排队，可稍后检查状态';
+        busy.value = false;
+      } else timer = setTimeout(poll, 3000);
     }
   } catch (e) {
     error.value = errorText(e);
     busy.value = false;
   }
 }
-async function select(event: Event) {
-  const file = (event.target as HTMLInputElement).files?.[0];
-  if (!file) return;
+async function upload() {
+  const file = selected.value;
+  if (!file || busy.value || !filename.value.trim() || !props.ownerId) return;
+  if (asset.value && ['QUARANTINED', 'UPLOADING'].includes(String(asset.value.state))) {
+    busy.value = true;
+    scanChecks = 0;
+    error.value = '';
+    await poll();
+    return;
+  }
+  if (file.size === 0) {
+    error.value = '不能上传空文件';
+    return;
+  }
   if (file.size > 2147483648) {
     error.value = '文件不能超过2GB';
     return;
@@ -73,7 +112,7 @@ async function select(event: Event) {
       body: {
         ownerType: props.ownerType,
         ownerId: props.ownerId,
-        filename: file.name,
+        filename: filename.value.trim(),
         size: file.size,
         sha256: hash.digest(),
         mimeType: file.type || 'application/octet-stream',
@@ -112,26 +151,181 @@ async function select(event: Event) {
 </script>
 <template>
   <div class="upload">
-    <label>选择文件<input type="file" :disabled="busy" @change="select" /></label>
-    <p v-if="message" role="status">{{ message }}</p>
-    <progress v-if="busy" :value="progress" max="100" :aria-label="message" />
+    <label
+      class="drop-zone"
+      :class="{ dragging, chosen: selected }"
+      @dragover.prevent="dragging = true"
+      @dragleave.prevent="dragging = false"
+      @drop.prevent="drop"
+    >
+      <img v-if="localPreview" :src="localPreview" alt="所选文件预览" />
+      <svg v-else viewBox="0 0 48 48" aria-hidden="true">
+        <path
+          d="M10 31v9h28v-9M24 32V8m-9 9 9-9 9 9"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+      <strong>{{ selected ? selected.name : '拖拽文件到这里，或点击选择' }}</strong>
+      <span>{{ selected ? '点击可重新选择文件' : '图片、视频、文档及其他文件 · 最大2GB' }}</span>
+      <input
+        type="file"
+        :disabled="busy"
+        aria-label="选择上传文件"
+        @change="choose(($event.target as HTMLInputElement).files?.[0])"
+      />
+    </label>
+    <label v-if="selected" class="name-field"
+      >文件名称<input
+        v-model="filename"
+        maxlength="200"
+        :disabled="busy"
+        aria-label="上传文件名称"
+      /><small>可在上传前修改名称，请保留正确的文件扩展名。</small></label
+    >
+    <div v-if="message" class="upload-status" role="status">
+      <span :class="{ pulse: busy }"></span>{{ message }}
+    </div>
+    <progress
+      v-if="busy"
+      :value="message.includes('扫描') ? undefined : progress"
+      max="100"
+      :aria-label="message"
+    />
     <p v-if="error" class="error" role="alert">{{ error }}</p>
-    <p class="muted">上传后需通过校验与安全扫描，未通过前不能关联或下载。</p>
+    <div class="upload-footer">
+      <small>文件通过安全扫描后才可关联使用</small
+      ><button
+        type="button"
+        class="button primary"
+        :disabled="busy || !selected || !filename.trim() || !ownerId || asset?.state === 'READY'"
+        @click="upload"
+      >
+        {{
+          busy
+            ? '正在处理…'
+            : asset?.state === 'READY'
+              ? '已上传'
+              : asset && ['QUARANTINED', 'UPLOADING'].includes(String(asset.state))
+                ? '检查扫描状态'
+                : '确认上传'
+        }}
+      </button>
+    </div>
   </div>
 </template>
 <style scoped>
 .upload {
-  background: #f8f9fc;
-  border: 1px dashed #b9c4db;
-  border-radius: 10px;
-  padding: 18px;
   font-size: 13px;
 }
-.upload label {
+.drop-zone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: 1.5px dashed #aac5ee;
+  border-radius: 14px;
+  min-height: 190px;
+  padding: 24px;
+  background: #f7faff;
+  text-align: center;
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    transform 0.2s;
+  overflow: hidden;
+}
+.drop-zone.dragging {
+  background: #e9f2ff;
+  border-color: #5793e8;
+  transform: scale(1.01);
+}
+.drop-zone svg {
+  width: 45px;
+  height: 45px;
+  color: #719ede;
+}
+.drop-zone img {
+  height: 100px;
+  max-width: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+}
+.drop-zone strong {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  color: #405679;
+}
+.drop-zone span,
+.name-field small,
+.upload-footer small {
+  color: #8290a6;
+  font-size: 12px;
+}
+.drop-zone input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+.drop-zone:focus-within {
+  outline: 2px solid #83adeb;
+  outline-offset: 3px;
+}
+.name-field {
   display: grid;
-  gap: 10px;
+  gap: 8px;
+  margin-top: 20px;
+}
+.upload-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  margin-top: 24px;
 }
 .upload progress {
   width: 100%;
+  height: 7px;
+  accent-color: #75a5eb;
+}
+.upload-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0;
+  color: #5674a0;
+}
+.pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #76a6ef;
+  animation: pulse 1s ease-in-out infinite alternate;
+}
+@keyframes pulse {
+  to {
+    opacity: 0.3;
+    transform: scale(0.7);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+@media (max-width: 500px) {
+  .upload-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
 }
 </style>

@@ -1,25 +1,41 @@
 <script setup lang="ts">
 import { ref, watch, onBeforeUnmount } from 'vue';
+import { previewBlob, previewKind } from './material-preview';
 import { auth, request } from '../api/client';
 const props = defineProps<{ assetId: unknown; alt?: string }>();
 const url = ref(''),
   failed = ref(false);
 let generation = 0;
+let controller: AbortController | undefined;
+function clear() {
+  controller?.abort();
+  if (url.value.startsWith('blob:')) URL.revokeObjectURL(url.value);
+  url.value = '';
+}
 watch(
   () => [props.assetId, auth.platform],
   async () => {
     const current = ++generation;
-    url.value = '';
+    clear();
+    controller = new AbortController();
+    const signal = controller.signal;
     failed.value = false;
     if (!props.assetId) return;
     try {
+      const asset = await request<{ mimeType: string }>(
+        `/${auth.platform}/assets/${props.assetId}`,
+      );
+      if (previewKind(asset.mimeType) !== 'image') throw new Error('不支持的封面');
       const grant = await request<{ url: string }>(
         `/${auth.platform}/assets/${props.assetId}/download`,
         { method: 'POST' },
       );
       if (current !== generation) return;
       const parsed = new URL(grant.url);
-      if (['http:', 'https:'].includes(parsed.protocol)) url.value = grant.url;
+      if (['http:', 'https:'].includes(parsed.protocol)) {
+        const blob = await previewBlob(grant.url, asset.mimeType, signal);
+        if (current === generation) url.value = URL.createObjectURL(blob);
+      }
     } catch {
       if (current === generation) failed.value = true;
     }
@@ -28,7 +44,7 @@ watch(
 );
 onBeforeUnmount(() => {
   generation++;
-  url.value = '';
+  clear();
 });
 </script>
 <template>

@@ -2,13 +2,36 @@
 import { ref, watch, onBeforeUnmount, computed } from 'vue';
 import { auth, request, errorText } from '../api/client';
 import type { Row, Page } from '../types/api';
-import AssetCover from './AssetCover.vue';
+import MaterialMedia from './MaterialMedia.vue';
+import MaterialDialog from './MaterialDialog.vue';
+import { fileSize } from './material-preview';
 import AssetUpload from './AssetUpload.vue';
-import ReferenceField from './ReferenceField.vue';
+
 import AppSelect from './AppSelect.vue';
 import { display } from '../config/labels';
 const props = defineProps<{ picker?: boolean; kind?: string }>();
 const emit = defineEmits<{ selected: [Row] }>();
+const categories = ref<Row[]>([]);
+const uploadBusy = ref(false);
+const preview = ref<Row | null>(null);
+const actionError = ref('');
+async function loadCategories() {
+  try {
+    const all: Row[] = [];
+    let p = 1;
+    while (true) {
+      const result = await request<Page<Row>>('/admin/material-categories', {
+        query: { page: p++, size: 100 },
+      });
+      all.push(...result.items);
+      if (all.length >= result.total || !result.items.length) break;
+    }
+    categories.value = all;
+  } catch (e) {
+    error.value = errorText(e);
+  }
+}
+void loadCategories();
 const rows = ref<Row[]>([]),
   total = ref(0),
   page = ref(1),
@@ -74,6 +97,7 @@ async function createCategory() {
         status: 'ENABLED',
       },
     });
+    categories.value.push(c);
     uploadCategory.value = c.id;
     categoryName.value = '';
   } catch (e) {
@@ -83,6 +107,7 @@ async function createCategory() {
   }
 }
 async function uploaded(row: Row) {
+  uploadBusy.value = false;
   if (props.kind === 'VIDEO' && !String(row.mimeType).startsWith('video/')) {
     error.value = '文件已保存到素材库，但视频内容请选择视频文件';
     return;
@@ -91,18 +116,22 @@ async function uploaded(row: Row) {
     error.value = '文件已保存到素材库，封面请选择PNG、JPEG、GIF、WebP或AVIF图片';
     return;
   }
+  uploadOpen.value = false;
   await load();
   if (props.picker) emit('selected', row);
 }
 async function remove(row: Row) {
   if (deleting.value || !confirm(`删除素材“${row.filename}”？已关联的素材不能删除。`)) return;
   deleting.value = String(row.id);
-  error.value = '';
+  actionError.value = '';
   try {
     await request(`/admin/assets/${row.id}`, { method: 'DELETE', version: row.version });
     await load();
   } catch (e) {
-    error.value = errorText(e);
+    const message = errorText(e);
+    actionError.value = /引用/.test(message)
+      ? '此素材已被内容或历史版本引用，暂不能删除。替换当前关联也不会移除历史版本的引用，请保留原文件。'
+      : message;
   } finally {
     deleting.value = '';
   }
@@ -164,6 +193,12 @@ watch(
         <option value="DOCUMENT">文档</option>
         <option value="OTHER">其他文件</option></AppSelect
       >
+      <AppSelect v-model="category" aria-label="筛选素材分类"
+        ><option value="">全部分类</option>
+        <option v-for="item in categories" :key="String(item.id)" :value="String(item.id)">
+          {{ item.name }}
+        </option></AppSelect
+      >
       <button type="button" class="button primary" :disabled="loading" @click="search">查询</button>
       <button
         type="button"
@@ -181,66 +216,114 @@ watch(
         v-if="writable"
         type="button"
         class="button primary"
-        @click="uploadOpen = !uploadOpen"
+        @click="
+          uploadBusy = false;
+          uploadOpen = true;
+        "
       >
-        {{ uploadOpen ? '收起上传' : '本地上传' }}
+        上传素材
       </button>
     </div>
-    <details class="material-filter">
-      <summary>按素材分类筛选</summary>
-      <ReferenceField v-model="category" field="materialCategoryId" /><button
-        type="button"
-        class="button"
-        @click="search"
-      >
-        应用分类
-      </button>
-    </details>
-    <div v-if="uploadOpen" class="material-upload">
-      <h3>上传到素材库</h3>
-      <p class="muted">选择分类后上传，单文件不超过2GB；文件不会自动公开。</p>
-      <ReferenceField
-        v-model="uploadCategory"
-        field="materialCategoryId"
-        :filters="{ status: 'ENABLED' }"
-      />
-      <div class="material-toolbar">
-        <input
-          v-model="categoryName"
-          maxlength="100"
-          aria-label="新素材分类名称"
-          placeholder="也可在此新建素材分类"
-        /><button
-          type="button"
-          class="button"
-          :disabled="creating || !categoryName.trim()"
-          @click="createCategory"
+    <MaterialDialog
+      v-if="uploadOpen"
+      title="上传素材"
+      :busy="uploadBusy"
+      @close="uploadOpen = false"
+    >
+      <p class="muted">把素材收纳到分类，上传后可在知识库中重复使用。</p>
+      <label class="category-label"
+        >素材分类
+        <AppSelect v-model="uploadCategory" :disabled="uploadBusy" aria-label="上传素材分类"
+          ><option value="">请选择分类</option>
+          <option
+            v-for="item in categories.filter((c) => c.status === 'ENABLED')"
+            :key="String(item.id)"
+            :value="String(item.id)"
+          >
+            {{ item.name }}
+          </option></AppSelect
         >
-          新建分类并选用
-        </button>
-      </div>
+      </label>
+      <details v-if="!uploadBusy" class="new-category">
+        <summary>新建分类</summary>
+        <div class="material-toolbar">
+          <input
+            v-model="categoryName"
+            maxlength="100"
+            aria-label="新素材分类名称"
+            placeholder="输入分类名称"
+          /><button
+            type="button"
+            class="button"
+            :disabled="creating || !categoryName.trim()"
+            @click="createCategory"
+          >
+            创建并选用
+          </button>
+        </div>
+      </details>
+      <p v-if="error" class="error" role="alert">{{ error }}</p>
       <AssetUpload
-        v-if="uploadCategory"
-        :key="String(uploadCategory)"
         owner-type="MATERIAL"
-        :owner-id="String(uploadCategory)"
+        :owner-id="String(uploadCategory || '')"
         @ready="uploaded"
+        @busy="uploadBusy = $event"
       />
-    </div>
+    </MaterialDialog>
+    <MaterialDialog
+      v-if="preview"
+      :title="String(preview.filename)"
+      wide
+      @close="
+        preview = null;
+        download = null;
+      "
+    >
+      <MaterialMedia
+        :id="preview.id"
+        :mime="String(preview.mimeType)"
+        :name="String(preview.filename)"
+        expanded
+      />
+      <div class="material-toolbar preview-footer">
+        <span class="muted"
+          >{{ fileSize(Number(preview.size)) }} · {{ display(preview.state) }}</span
+        ><button type="button" class="button" @click="prepareDownload(preview)">获取原文件</button
+        ><a
+          v-if="download?.id === String(preview.id)"
+          class="button primary"
+          :href="download.url"
+          target="_blank"
+          rel="noopener noreferrer"
+          >下载文件</a
+        >
+      </div>
+    </MaterialDialog>
     <p v-if="error" class="error" role="alert">
       {{ error }} <button type="button" class="button" @click="load">重试查询</button>
+    </p>
+    <p v-if="actionError" class="error" role="alert">
+      {{ actionError }}
+      <button type="button" class="button" @click="actionError = ''">知道了</button>
     </p>
     <p v-if="loading" role="status">正在加载素材…</p>
     <div v-else class="material-grid">
       <article v-for="row in rows" :key="String(row.id)" class="material-card">
-        <div
-          v-if="
-            row.state === 'READY' && /^image\/(png|jpeg|gif|webp|avif)$/.test(String(row.mimeType))
-          "
+        <button
+          type="button"
           class="material-preview"
+          :disabled="row.state !== 'READY'"
+          :aria-label="'预览 ' + row.filename"
+          @click="preview = row"
         >
-          <AssetCover :asset-id="row.id" :alt="String(row.filename)" />
-        </div>
+          <MaterialMedia
+            v-if="row.state === 'READY'"
+            :id="row.id"
+            :mime="String(row.mimeType)"
+            :name="String(row.filename)"
+          /><span v-else>{{ display(row.state) }}</span
+          ><span class="preview-hint">点击预览</span>
+        </button>
         <div class="material-type">
           {{
             String(row.mimeType).startsWith('image/')
@@ -251,7 +334,7 @@ watch(
           }}
         </div>
         <strong :title="String(row.filename)">{{ row.filename }}</strong
-        ><small>{{ (Number(row.size) / 1024).toFixed(1) }} KB · {{ display(row.state) }}</small>
+        ><small>{{ fileSize(Number(row.size)) }} · {{ display(row.state) }}</small>
         <div class="material-actions">
           <button
             v-if="picker"
@@ -261,13 +344,8 @@ watch(
             @click="emit('selected', row)"
           >
             选择素材</button
-          ><button
-            v-if="row.state === 'READY'"
-            type="button"
-            class="button"
-            @click="prepareDownload(row)"
-          >
-            预览 / 下载</button
+          ><button v-if="row.state === 'READY'" type="button" class="button" @click="preview = row">
+            预览</button
           ><button
             v-if="!picker && writable && auth.permissions.includes('delete_admin_assets_id')"
             type="button"
@@ -317,7 +395,12 @@ watch(
 </template>
 <style scoped>
 .material-preview {
-  height: 130px;
+  height: 166px;
+  position: relative;
+  border: 0;
+  padding: 0;
+  width: 100%;
+  cursor: pointer;
   overflow: hidden;
   border-radius: 8px;
   background: #f2f5fb;
@@ -354,7 +437,7 @@ watch(
   margin-bottom: 12px;
 }
 .material-upload {
-  padding: 18px;
+  padding: 14px;
   border: 1px solid #dbe3f2;
   border-radius: 12px;
   background: #f8faff;
@@ -362,11 +445,11 @@ watch(
 }
 .material-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(235px, 100%), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(245px, 100%), 1fr));
   gap: 14px;
 }
 .material-card {
-  padding: 18px;
+  padding: 14px;
   border: 1px solid #e2e7f1;
   border-radius: 12px;
   background: white;
@@ -375,7 +458,9 @@ watch(
   min-width: 0;
 }
 .material-card strong {
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .material-card small {
   color: #77829a;
@@ -391,5 +476,72 @@ watch(
 }
 footer {
   justify-content: flex-end;
+}
+.preview-hint {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  padding: 5px 9px;
+  border-radius: 6px;
+  color: #46638e;
+  background: #ffffffde;
+  font-size: 11px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.material-preview:hover .preview-hint,
+.material-preview:focus-visible .preview-hint {
+  opacity: 1;
+}
+.material-card {
+  transition:
+    box-shadow 0.2s,
+    border-color 0.2s;
+}
+.material-card:hover {
+  border-color: #bdd1ed;
+  box-shadow: 0 6px 20px #3a59900b;
+}
+.category-label {
+  display: grid;
+  gap: 9px;
+  margin: 20px 0 12px;
+  font-size: 13px;
+}
+.new-category {
+  margin-bottom: 20px;
+  color: #6889b8;
+  font-size: 12px;
+}
+.new-category summary {
+  cursor: pointer;
+}
+.preview-footer {
+  justify-content: flex-end;
+}
+.preview-footer span {
+  margin-right: auto;
+}
+.material-type {
+  margin-top: 3px;
+}
+.material-actions {
+  border-top: 1px solid #f0f3f8;
+  padding-top: 12px;
+}
+.material-toolbar > input {
+  max-width: 320px;
+}
+.material-toolbar > :deep(.app-select) {
+  max-width: 200px;
+}
+.material-dialog h2 {
+  overflow-wrap: anywhere;
+}
+@media (prefers-reduced-motion: reduce) {
+  .material-card,
+  .preview-hint {
+    transition: none;
+  }
 }
 </style>

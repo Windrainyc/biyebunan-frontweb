@@ -27,6 +27,12 @@ server {
         proxy_read_timeout 3600s;
         client_max_body_size 2m;
     }
+    # PDF渲染worker为ES模块；nosniff要求明确JavaScript类型。
+    location ~ ^/assets/.*\.mjs$ {
+        types { application/javascript mjs; }
+        try_files $uri =404;
+        add_header Cache-Control 'public, max-age=31536000, immutable';
+    }
     location /assets/ {
         try_files $uri =404;
         add_header Cache-Control 'public, max-age=31536000, immutable';
