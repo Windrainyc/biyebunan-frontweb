@@ -4,6 +4,7 @@ import { auth, request, errorText } from '../api/client';
 import { writeAttempt } from '../api/attempt';
 import type { Row, Page } from '../types/api';
 import { display } from '../config/labels';
+import AssetCover from './AssetCover.vue';
 import AssetUpload from './AssetUpload.vue';
 import MarkdownContent from './MarkdownContent.vue';
 const props = defineProps<{ content: Row }>(),
@@ -55,6 +56,7 @@ async function attach(asset: Row) {
       tagIds: c.tagIds,
       type: c.type,
       assetId: asset.id,
+      coverAssetId: c.coverAssetId || null,
       markdown: c.markdown || '',
       audience: c.audience,
       projectId: c.projectId || null,
@@ -118,6 +120,12 @@ watch(
 );
 </script>
 <template>
+  <div
+    v-if="content.coverAssetId"
+    style="height: 220px; border-radius: 12px; overflow: hidden; margin-bottom: 16px"
+  >
+    <AssetCover :asset-id="content.coverAssetId" :alt="String(content.title)" />
+  </div>
   <section>
     <p v-if="error" class="error" role="alert">
       {{ error }} <button class="button" @click="load">重新加载版本</button>

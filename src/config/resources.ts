@@ -146,6 +146,22 @@ export function resources(platform: Platform): Resource[] {
         ['name', 'code', 'parentId', 'status'],
         '内容管理',
       ),
+      resource(
+        'materials',
+        '素材管理',
+        p + '/materials',
+        'folder',
+        ['filename', 'mimeType', 'state'],
+        '基础数据',
+      ),
+      resource(
+        'material-categories',
+        '素材分类',
+        p + '/material-categories',
+        'folder',
+        ['name', 'code', 'status'],
+        '基础数据',
+      ),
       resource('tags', '内容标签', p + '/tags', 'tag', ['name', 'code', 'status'], '内容管理'),
       resource(
         'boards',

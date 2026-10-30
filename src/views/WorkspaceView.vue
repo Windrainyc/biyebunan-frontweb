@@ -24,6 +24,7 @@ const OrderBindingView = page(() => import('./OrderBindingView.vue'));
 const NotificationsView = page(() => import('./NotificationsView.vue'));
 const StatisticsView = page(() => import('./StatisticsView.vue'));
 const ChatView = page(() => import('./ChatView.vue'));
+const MaterialBrowser = page(() => import('../components/MaterialBrowser.vue'));
 const ResourceView = page(() => import('./ResourceView.vue'));
 import Icon from '../components/Icon.vue';
 import type { Platform } from '../types/api';
@@ -219,6 +220,8 @@ async function exit() {
         <NotificationsView v-else-if="route.params.resource === 'notifications'" />
         <ChatView
           v-else-if="platform === 'student' && route.params.resource === 'chat'"
+        /><MaterialBrowser
+          v-else-if="platform === 'admin' && selected?.key === 'materials'"
         /><ResourceView
           v-else-if="selected"
           :key="selected.path"

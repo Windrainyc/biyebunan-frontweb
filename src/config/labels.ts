@@ -95,6 +95,7 @@ export const labels: Record<string, string> = {
   markdown: '正文',
   text: '内容',
   assetIds: '附件',
+  coverAssetId: '内容封面',
   assetId: '文件',
   contentId: '知识内容',
   visibility: '可见范围',

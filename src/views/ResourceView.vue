@@ -31,6 +31,8 @@ import Icon from '../components/Icon.vue';
 import KnowledgeCategoryNav from '../components/KnowledgeCategoryNav.vue';
 import ForumSidebar from '../components/ForumSidebar.vue';
 import { formBody, requiresSelection } from '../config/form';
+import AssetCover from '../components/AssetCover.vue';
+import { knowledgeFieldVisible } from '../config/knowledge-form';
 import SchemaField from '../components/SchemaField.vue';
 let attempt = writeAttempt();
 const editRead = latestRequest(),
@@ -71,6 +73,15 @@ const editing = ref<Row | null>(null),
   writeKey = ref(''),
   detail = ref<Row | null>(null),
   remove = ref<Row | null>(null);
+function updateField(key: string, value: unknown) {
+  if (props.resource.key === 'contents' && key === 'type' && form.value.type !== value) {
+    form.value.assetId = null;
+    if (value !== 'MARKDOWN') form.value.markdown = '';
+  }
+  if (props.resource.key === 'contents' && key === 'audience' && value !== 'PROJECT')
+    form.value.projectId = null;
+  form.value[key] = value;
+}
 const detailFields = computed(() => {
   const excluded = ['id', 'version'];
   if (['knowledge', 'contents'].includes(props.resource.key)) excluded.push('markdown');
@@ -269,8 +280,13 @@ async function open(row?: Row) {
       (field.type === 'boolean' ? false : field.type === 'array' ? [] : '');
   if (props.resource.key === 'majors') form.value.schoolId = editing.value?.schoolId ?? null;
   // 仅初始化新增草稿，输入、校验失败和重试均保留用户修改后的代码。
-  if (!row && ['categories', 'tags'].includes(props.resource.key)) {
-    const prefix = props.resource.key === 'categories' ? 'CAT' : 'TAG';
+  if (!row && ['categories', 'tags', 'material-categories'].includes(props.resource.key)) {
+    const prefix =
+      props.resource.key === 'categories'
+        ? 'CAT'
+        : props.resource.key === 'material-categories'
+          ? 'MAT'
+          : 'TAG';
     form.value.code = `${prefix}_${crypto.randomUUID().replaceAll('-', '').toUpperCase()}`;
   }
   if (hasStatusAction.value && fields.value.properties?.status)
@@ -643,11 +659,17 @@ const hasStatusTabs = computed(
               class="student-knowledge-cover"
               :class="`cover-${index % 3}`"
             >
-              <span
+              <AssetCover
+                v-if="row.coverAssetId"
+                :asset-id="row.coverAssetId"
+                :alt="String(row.title)"
+              /><span v-else
                 ><Icon :name="row.type === 'VIDEO' ? 'right' : 'book'" />{{
                   display(row.type)
                 }}</span
-              ><b>{{ String((page - 1) * size + index + 1).padStart(2, '0') }}</b>
+              ><b v-if="!row.coverAssetId">{{
+                String((page - 1) * size + index + 1).padStart(2, '0')
+              }}</b>
             </div>
             <div class="student-resource-card-body">
               <div class="student-resource-meta">
@@ -888,11 +910,12 @@ const hasStatusTabs = computed(
           <div class="form-grid">
             <div
               v-for="field in properties"
+              v-show="resource.key !== 'contents' || knowledgeFieldVisible(field.key, form)"
               :key="field.key"
               class="form-field"
               :class="{
                 wide:
-                  field.key === 'assetIds' ||
+                  ['assetIds', 'assetId', 'coverAssetId'].includes(field.key) ||
                   (resource.key === 'posts' && field.key === 'title') ||
                   (!!field.maxLength &&
                     field.maxLength > 500 &&
@@ -911,15 +934,20 @@ const hasStatusTabs = computed(
                 ></span
               >
               <SchemaField
-                v-model="form[field.key]"
+                :model-value="form[field.key]"
+                @update:model-value="updateField(field.key, $event)"
                 :field="field"
                 :required="fields.required?.includes(field.key)"
                 :context="resource.key"
-                :filters="field.key === 'majorId' ? { schoolId: form.schoolId } : {}"
+                :filters="
+                  field.key === 'majorId' ? { schoolId: form.schoolId } : { contentType: form.type }
+                "
               />
               <small
                 v-if="
-                  !editing && field.key === 'code' && ['categories', 'tags'].includes(resource.key)
+                  !editing &&
+                  field.key === 'code' &&
+                  ['categories', 'tags', 'material-categories'].includes(resource.key)
                 "
                 class="muted"
                 >已自动生成，可按需修改；业务代码须保持唯一。</small

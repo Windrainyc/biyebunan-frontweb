@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import MaterialField from './MaterialField.vue';
 import AppSelect from './AppSelect.vue';
 import type { Schema } from '../types/api';
 import { localDateTime, requiresSelection } from '../config/form';
@@ -20,7 +21,19 @@ function required() {
 }
 </script>
 <template>
-  <p v-if="field.key === 'assetIds'" class="muted">
+  <MaterialField
+    v-if="context === 'contents' && ['assetId', 'coverAssetId'].includes(field.key)"
+    :model-value="modelValue"
+    :kind="
+      field.key === 'coverAssetId'
+        ? 'IMAGE'
+        : filters?.contentType === 'VIDEO'
+          ? 'VIDEO'
+          : undefined
+    "
+    @update:model-value="emit('update:modelValue', $event)"
+  />
+  <p v-else-if="field.key === 'assetIds'" class="muted">
     保存后可在详情中上传并关联附件，已有附件将保留。
   </p>
   <ReferenceField

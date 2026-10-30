@@ -19,6 +19,7 @@ const query = ref(''),
   error = ref(''),
   busy = ref(false);
 const resource: Record<string, string> = {
+  materialCategoryId: 'material-categories',
   schoolId: 'schools',
   majorId: 'majors',
   roleIds: 'roles',

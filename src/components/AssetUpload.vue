@@ -4,7 +4,7 @@ import { createSHA256 } from 'hash-wasm';
 import { auth, request, errorText } from '../api/client';
 import type { Row } from '../types/api';
 const props = defineProps<{
-  ownerType: 'PROJECT' | 'KNOWLEDGE' | 'FORUM' | 'RECEIPT';
+  ownerType: 'PROJECT' | 'KNOWLEDGE' | 'FORUM' | 'RECEIPT' | 'MATERIAL';
   ownerId: string;
 }>();
 const emit = defineEmits<{ ready: [Row] }>();

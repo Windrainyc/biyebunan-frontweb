@@ -2061,7 +2061,7 @@
       ]
     },
     "ContentWrite": {
-      "description": "先建草稿再上传本内容附件；发布须内容完整、分类标签启用、附件READY。已发布须先撤回，编辑会使审核失效。PUBLIC仅指已登录学生可见。",
+      "description": "可以选择扫描通过的共享素材，或保存草稿后上传本内容附件；发布前须完整且READY。封面仅PNG/JPEG/GIF/WebP/AVIF。",
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -2103,6 +2103,11 @@
         "projectId": {
           "type": ["string", "null"],
           "format": "uuid"
+        },
+        "coverAssetId": {
+          "type": ["string", "null"],
+          "format": "uuid",
+          "description": "扫描通过的图片素材封面"
         }
       },
       "required": ["title", "categoryId", "tagIds", "type", "audience"]
@@ -2180,6 +2185,11 @@
         "indexState": {
           "type": "string",
           "enum": ["PENDING", "INDEXING", "READY", "FAILED"]
+        },
+        "coverAssetId": {
+          "type": ["string", "null"],
+          "format": "uuid",
+          "description": "扫描通过的图片素材封面"
         }
       },
       "required": [
@@ -3048,6 +3058,11 @@
           "type": "string",
           "description": "资源标识",
           "format": "uuid"
+        },
+        "categoryId": {
+          "type": ["string", "null"],
+          "format": "uuid",
+          "description": "素材库分类；业务专属附件为空"
         }
       },
       "required": [
@@ -3064,13 +3079,13 @@
       ]
     },
     "UploadRequest": {
-      "description": "学生只允许向本人可编辑帖子申请FORUM上传；管理员其他归属类型须具备对应业务权限。先建帖再上传，隔离校验扫描READY后关联正文。",
+      "description": "学生只允许向本人可编辑帖子申请FORUM上传；管理员其他归属类型须具备对应业务权限。先建帖再上传，隔离校验扫描READY后关联正文。 MATERIAL仅管理员可用，ownerId为启用的素材分类。",
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "ownerType": {
           "type": "string",
-          "enum": ["PROJECT", "KNOWLEDGE", "FORUM", "RECEIPT"]
+          "enum": ["PROJECT", "KNOWLEDGE", "FORUM", "RECEIPT", "MATERIAL"]
         },
         "ownerId": {
           "type": "string",
@@ -5822,6 +5837,123 @@
           "$ref": "#/components/schemas/MenuPage"
         }
       }
+    },
+    "MaterialCategory": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "资源标识",
+          "format": "uuid"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "UTC 时间",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "UTC 时间",
+          "format": "date-time"
+        },
+        "name": {
+          "type": "string",
+          "description": "",
+          "maxLength": 100
+        },
+        "code": {
+          "type": "string",
+          "description": "",
+          "maxLength": 64
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ENABLED", "DISABLED"]
+        }
+      },
+      "required": ["id", "version", "createdAt", "updatedAt", "name", "code", "status"]
+    },
+    "MaterialCategoryWrite": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "",
+          "maxLength": 100
+        },
+        "code": {
+          "type": "string",
+          "description": "",
+          "maxLength": 64
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ENABLED", "DISABLED"]
+        }
+      },
+      "required": ["name", "code", "status"]
+    },
+    "MaterialCategoryPage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/MaterialCategory"
+          }
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        }
+      },
+      "required": ["items", "page", "size", "total"]
+    },
+    "AssetPage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/Asset"
+          }
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        }
+      },
+      "required": ["items", "page", "size", "total"]
     }
   },
   "operations": {
@@ -19096,6 +19228,415 @@
       ],
       "response": {
         "$ref": "#/components/schemas/Navigation"
+      }
+    },
+    "GET /admin/material-categories": {
+      "operationId": "get_admin_material_categories",
+      "summary": "分页查询素材分类",
+      "permission": "materials:read",
+      "body": null,
+      "parameters": [
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1
+          }
+        },
+        {
+          "name": "size",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20
+          }
+        },
+        {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "description": "",
+            "maxLength": 100
+          }
+        },
+        {
+          "name": "status",
+          "in": "query",
+          "required": false,
+          "description": "状态取值遵循返回资源定义；未知状态 400",
+          "schema": {
+            "type": "string",
+            "description": "",
+            "maxLength": 200
+          }
+        },
+        {
+          "name": "sort",
+          "in": "query",
+          "required": false,
+          "description": "稳定排序附加 id 同序",
+          "schema": {
+            "type": "string",
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
+          }
+        },
+        {
+          "name": "X-Request-ID",
+          "in": "header",
+          "required": false,
+          "description": "可选关联 ID；服务端生成可信 traceId",
+          "schema": {
+            "type": "string",
+            "description": "",
+            "maxLength": 128
+          }
+        }
+      ],
+      "response": {
+        "$ref": "#/components/schemas/MaterialCategoryPage"
+      }
+    },
+    "POST /admin/material-categories": {
+      "operationId": "post_admin_material_categories",
+      "summary": "新增素材分类",
+      "permission": "materials:write",
+      "body": {
+        "$ref": "#/components/schemas/MaterialCategoryWrite"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "description": "",
+            "minLength": 16,
+            "maxLength": 128
+          }
+        },
+        {
+          "name": "X-Request-ID",
+          "in": "header",
+          "required": false,
+          "description": "可选关联 ID；服务端生成可信 traceId",
+          "schema": {
+            "type": "string",
+            "description": "",
+            "maxLength": 128
+          }
+        }
+      ],
+      "response": {
+        "$ref": "#/components/schemas/MaterialCategory"
+      }
+    },
+    "GET /admin/material-categories/{id}": {
+      "operationId": "get_admin_material_categories_id",
+      "summary": "读取素材分类",
+      "permission": "materials:read",
+      "body": null,
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "description": "资源标识",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "X-Request-ID",
+          "in": "header",
+          "required": false,
+          "description": "可选关联 ID；服务端生成可信 traceId",
+          "schema": {
+            "type": "string",
+            "description": "",
+            "maxLength": 128
+          }
+        }
+      ],
+      "response": {
+        "$ref": "#/components/schemas/MaterialCategory"
+      }
+    },
+    "PUT /admin/material-categories/{id}": {
+      "operationId": "put_admin_material_categories_id",
+      "summary": "编辑素材分类",
+      "permission": "materials:write",
+      "body": {
+        "$ref": "#/components/schemas/MaterialCategoryWrite"
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "description": "资源标识",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "description": "",
+            "minLength": 16,
+            "maxLength": 128
+          }
+        },
+        {
+          "name": "If-Match",
+          "in": "header",
+          "required": true,
+          "description": "GET 返回的强 ETag，如 \"3\"",
+          "schema": {
+            "type": "string",
+            "description": "",
+            "pattern": "^\"[0-9]+\"$"
+          }
+        },
+        {
+          "name": "X-Request-ID",
+          "in": "header",
+          "required": false,
+          "description": "可选关联 ID；服务端生成可信 traceId",
+          "schema": {
+            "type": "string",
+            "description": "",
+            "maxLength": 128
+          }
+        }
+      ],
+      "response": {
+        "$ref": "#/components/schemas/MaterialCategory"
+      }
+    },
+    "DELETE /admin/material-categories/{id}": {
+      "operationId": "delete_admin_material_categories_id",
+      "summary": "删除素材分类",
+      "permission": "materials:write",
+      "body": null,
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "description": "资源标识",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "description": "",
+            "minLength": 16,
+            "maxLength": 128
+          }
+        },
+        {
+          "name": "If-Match",
+          "in": "header",
+          "required": true,
+          "description": "GET 返回的强 ETag，如 \"3\"",
+          "schema": {
+            "type": "string",
+            "description": "",
+            "pattern": "^\"[0-9]+\"$"
+          }
+        },
+        {
+          "name": "X-Request-ID",
+          "in": "header",
+          "required": false,
+          "description": "可选关联 ID；服务端生成可信 traceId",
+          "schema": {
+            "type": "string",
+            "description": "",
+            "maxLength": 128
+          }
+        }
+      ],
+      "response": null
+    },
+    "POST /admin/material-categories/{id}/status": {
+      "operationId": "post_admin_material_categories_id_status",
+      "summary": "启停素材分类",
+      "permission": "materials:write",
+      "body": {
+        "$ref": "#/components/schemas/StateChange"
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "description": "资源标识",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "description": "",
+            "minLength": 16,
+            "maxLength": 128
+          }
+        },
+        {
+          "name": "If-Match",
+          "in": "header",
+          "required": true,
+          "description": "GET 返回的强 ETag，如 \"3\"",
+          "schema": {
+            "type": "string",
+            "description": "",
+            "pattern": "^\"[0-9]+\"$"
+          }
+        },
+        {
+          "name": "X-Request-ID",
+          "in": "header",
+          "required": false,
+          "description": "可选关联 ID；服务端生成可信 traceId",
+          "schema": {
+            "type": "string",
+            "description": "",
+            "maxLength": 128
+          }
+        }
+      ],
+      "response": {
+        "$ref": "#/components/schemas/MaterialCategory"
+      }
+    },
+    "GET /admin/materials": {
+      "operationId": "get_admin_materials",
+      "summary": "分页查询共享素材",
+      "permission": "materials:read",
+      "body": null,
+      "parameters": [
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1
+          }
+        },
+        {
+          "name": "size",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20
+          }
+        },
+        {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "description": "",
+            "maxLength": 100
+          }
+        },
+        {
+          "name": "sort",
+          "in": "query",
+          "required": false,
+          "description": "稳定排序附加 id 同序",
+          "schema": {
+            "type": "string",
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"]
+          }
+        },
+        {
+          "name": "X-Request-ID",
+          "in": "header",
+          "required": false,
+          "description": "可选关联 ID；服务端生成可信 traceId",
+          "schema": {
+            "type": "string",
+            "description": "",
+            "maxLength": 128
+          }
+        },
+        {
+          "name": "categoryId",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "kind",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "enum": ["IMAGE", "VIDEO", "DOCUMENT", "OTHER"]
+          }
+        },
+        {
+          "name": "state",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "enum": ["UPLOADING", "QUARANTINED", "READY", "REJECTED"]
+          }
+        }
+      ],
+      "response": {
+        "$ref": "#/components/schemas/AssetPage"
       }
     }
   }

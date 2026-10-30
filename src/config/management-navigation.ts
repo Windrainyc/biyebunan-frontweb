@@ -49,6 +49,8 @@ const sections = [
     icon: 'settings',
     group: '系统',
     keys: [
+      'materials',
+      'material-categories',
       'schools',
       'majors',
       'menus',
