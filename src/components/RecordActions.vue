@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AppSelect from './AppSelect.vue';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { auth, request, errorText } from '../api/client';
 import { writeAttempt } from '../api/attempt';
 import { operation, schema } from '../config/contract';
@@ -8,8 +8,13 @@ import { jobRecovery } from '../config/job-recovery';
 import { formBody } from '../config/form';
 import { label, display } from '../config/labels';
 import type { Row } from '../types/api';
-const props = defineProps<{ resourceKey: string; record: Row; compact?: boolean }>(),
-  emit = defineEmits<{ changed: [result: Row] }>();
+const props = defineProps<{
+    resourceKey: string;
+    record: Row;
+    compact?: boolean;
+    actionPath?: string;
+  }>(),
+  emit = defineEmits<{ changed: [result: Row]; cancel: [] }>();
 const selected = ref(''),
   values = ref<Record<string, string>>({}),
   error = ref(''),
@@ -111,6 +116,13 @@ function open(path: string) {
   error.value = '';
   attempt = writeAttempt();
 }
+watch(
+  () => props.actionPath,
+  (path) => {
+    if (path && actions.value.some((action) => action.path === path)) open(path);
+  },
+  { immediate: true },
+);
 async function submit() {
   busy.value = true;
   error.value = '';
@@ -143,9 +155,9 @@ async function submit() {
     class="record-actions"
     :class="{ compact }"
   >
-    <h3 v-if="!compact">业务操作</h3>
+    <h3 v-if="!compact && !actionPath">业务操作</h3>
     <p v-if="resourceKey === 'jobs'" class="muted">{{ recovery.message }}</p>
-    <div class="action-buttons">
+    <div v-if="!actionPath" class="action-buttons">
       <button
         v-for="action in actions"
         :key="action.path"
@@ -181,7 +193,17 @@ async function submit() {
       <p class="muted">状态变更会由服务端校验业务前置条件，请填写具体原因。</p>
       <p v-if="error" class="error" role="alert">{{ error }}</p>
       <button class="button primary" :disabled="busy">{{ busy ? '提交中…' : '确认提交' }}</button
-      ><button type="button" class="button" :disabled="busy" @click="selected = ''">取消</button>
+      ><button
+        type="button"
+        class="button"
+        :disabled="busy"
+        @click="
+          selected = '';
+          emit('cancel');
+        "
+      >
+        取消
+      </button>
     </form>
   </section>
 </template>

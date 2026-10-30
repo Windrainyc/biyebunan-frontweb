@@ -91,12 +91,16 @@ async function load() {
   milestoneTotal.value = 0;
   try {
     const [d, m] = await Promise.all([
-      request<Page<Row>>(`/${auth.platform}/projects/${props.project.id}/deliveries`, {
-        query: { page: deliveryPage.value, size: pageSize },
-      }),
-      request<Page<Row>>(`/${auth.platform}/projects/${props.project.id}/milestones`, {
-        query: { page: milestonePage.value, size: pageSize },
-      }),
+      props.section === 'milestones'
+        ? Promise.resolve({ items: [], total: 0 })
+        : request<Page<Row>>(`/${auth.platform}/projects/${props.project.id}/deliveries`, {
+            query: { page: deliveryPage.value, size: pageSize },
+          }),
+      props.section === 'deliveries'
+        ? Promise.resolve({ items: [], total: 0 })
+        : request<Page<Row>>(`/${auth.platform}/projects/${props.project.id}/milestones`, {
+            query: { page: milestonePage.value, size: pageSize },
+          }),
     ]);
     if (generation !== loadGeneration) return;
     deliveryTotal.value = d.total;

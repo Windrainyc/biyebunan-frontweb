@@ -258,6 +258,32 @@ async function save() {
     saving.value = false;
   }
 }
+type ProjectAction = 'milestones' | 'deliveries' | 'stage' | 'acceptance';
+const projectAction = ref<{ record: Row; kind: ProjectAction } | null>(null);
+const projectActionRead = latestRequest();
+const projectActionTitles = {
+  milestones: '里程碑管理',
+  deliveries: '交付版本管理',
+  stage: '推进项目阶段',
+  acceptance: '提交项目验收',
+};
+function closeProjectAction() {
+  projectActionRead.invalidate();
+  projectAction.value = null;
+}
+async function openProjectAction(row: Row, kind: ProjectAction) {
+  const current = projectActionRead.start();
+  try {
+    const record = await request<Row>(props.resource.path + '/' + row.id);
+    if (current()) projectAction.value = { record, kind };
+  } catch (e) {
+    if (current()) error.value = errorText(e);
+  }
+}
+async function projectActionChanged() {
+  closeProjectAction();
+  await load();
+}
 async function actionChanged(result: Row) {
   const current = detail.value;
   if (!current) return;
@@ -301,6 +327,7 @@ function askDelete(row: Row) {
 }
 onBeforeUnmount(() => {
   editRead.invalidate();
+  projectActionRead.invalidate();
   detailRead.invalidate();
   loadGeneration++;
 });
@@ -674,6 +701,40 @@ const hasStatusTabs = computed(
                   ><template v-else>{{ display(row[column]) }}</template>
                 </td>
                 <td class="actions">
+                  <template v-if="resource.key === 'projects' && auth.platform === 'admin'">
+                    <button
+                      v-if="allowed('GET', '/admin/projects/{id}/milestones')"
+                      class="text-button"
+                      @click="openProjectAction(row, 'milestones')"
+                    >
+                      里程碑
+                    </button>
+                    <button
+                      v-if="allowed('GET', '/admin/projects/{id}/deliveries')"
+                      class="text-button"
+                      @click="openProjectAction(row, 'deliveries')"
+                    >
+                      交付版本
+                    </button>
+                    <button
+                      v-if="allowed('POST', '/admin/projects/{id}/stage')"
+                      class="text-button"
+                      @click="openProjectAction(row, 'stage')"
+                    >
+                      推进阶段
+                    </button>
+                    <button
+                      v-if="
+                        row.stage === 'ACCEPTANCE' &&
+                        allowed('POST', '/admin/projects/{id}/acceptance')
+                      "
+                      class="text-button"
+                      @click="openProjectAction(row, 'acceptance')"
+                    >
+                      验收
+                    </button>
+                  </template>
+
                   <button class="text-button" @click="inspect(row)">查看</button
                   ><button
                     v-if="canEdit && rowActions(row).edit"
@@ -936,20 +997,52 @@ const hasStatusTabs = computed(
               load();
             "
           /><RecordActions
+            v-if="resource.key !== 'projects'"
             :resource-key="resource.key"
             :record="detail"
             @changed="actionChanged"
-          /><ProjectDetail
-            v-if="resource.key === 'projects' && auth.platform !== 'partner'"
-            :project="detail"
-            @changed="
-              inspect(detail);
-              load();
-            "
           />
         </div>
         <footer class="resource-detail-footer">
           <button class="button" @click="closeDetail">关闭</button>
+        </footer>
+      </section>
+    </div>
+    <div v-if="projectAction" class="modal-backdrop">
+      <section
+        class="modal resource-detail-modal"
+        v-dialog="closeProjectAction"
+        role="dialog"
+        aria-modal="true"
+        :aria-label="projectActionTitles[projectAction.kind]"
+      >
+        <div class="resource-modal-heading">
+          <h2>{{ projectActionTitles[projectAction.kind] }}</h2>
+          <button class="modal-close" aria-label="关闭项目操作" @click="closeProjectAction">
+            <Icon name="close" />
+          </button>
+        </div>
+        <div class="resource-detail-body">
+          <p>{{ projectAction.record.title }}</p>
+          <ProjectDetail
+            v-if="projectAction.kind === 'milestones' || projectAction.kind === 'deliveries'"
+            :key="String(projectAction.record.id) + projectAction.kind"
+            :project="projectAction.record"
+            :section="projectAction.kind"
+            @changed="load()"
+          />
+          <RecordActions
+            v-else
+            :key="String(projectAction.record.id) + projectAction.kind"
+            resource-key="projects"
+            :record="projectAction.record"
+            :action-path="'/admin/projects/{id}/' + projectAction.kind"
+            @changed="projectActionChanged"
+            @cancel="closeProjectAction"
+          />
+        </div>
+        <footer class="resource-detail-footer">
+          <button class="button" @click="closeProjectAction">关闭</button>
         </footer>
       </section>
     </div>
