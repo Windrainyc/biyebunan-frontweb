@@ -42,29 +42,6 @@ definitions.contents = [
   { path: 'knowledge/{id}/withdraw', title: '撤回发布' },
   { path: 'knowledge/{id}/reindex', title: '重新建立索引' },
 ];
-const statusPaths: Record<string, string> = {
-  'membership-plans': 'membership-plans',
-  'model-prices': 'model-prices',
-  'model-keys': 'model-keys',
-  schools: 'schools',
-  majors: 'majors',
-  roles: 'roles',
-  menus: 'menus',
-  models: 'models',
-  'storage-configs': 'storages',
-  domains: 'domains',
-  categories: 'categories',
-  tags: 'tags',
-  boards: 'forum-boards',
-  users: 'users',
-  'notification-templates': 'notification-templates',
-};
-for (const [key, path] of Object.entries(statusPaths)) {
-  definitions[key] = [
-    ...(definitions[key] || []),
-    { path: `${path}/{id}/status`, title: '启停记录' },
-  ];
-}
 for (const [key, path] of Object.entries({
   models: 'models',
   'storage-configs': 'storages',

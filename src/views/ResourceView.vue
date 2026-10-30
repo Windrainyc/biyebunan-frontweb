@@ -137,6 +137,34 @@ const canEdit = computed(
     !!editMethod.value &&
     allowed(editMethod.value, props.resource.path + '/{id}'),
 );
+const hasStatusAction = computed(() => !!operation('POST', props.resource.path + '/{id}/status'));
+const canChangeStatus = computed(
+  () => !props.resource.readonly && allowed('POST', props.resource.path + '/{id}/status'),
+);
+const statusBusy = ref(false);
+const statusAttempt = writeAttempt();
+async function toggleStatus(row: Row) {
+  if (statusBusy.value || !canChangeStatus.value) return;
+  const next = row.status === 'ENABLED' ? 'DISABLED' : 'ENABLED';
+  const path = props.resource.path + '/' + row.id + '/status';
+  const body = { status: next };
+  statusBusy.value = true;
+  error.value = '';
+  try {
+    await request(path, {
+      method: 'POST',
+      body,
+      version: row.version,
+      key: statusAttempt({ path, version: row.version, ...body }),
+    });
+    notice.value = next === 'ENABLED' ? '已启用' : '已停用';
+    await load();
+  } catch (e) {
+    error.value = errorText(e);
+  } finally {
+    statusBusy.value = false;
+  }
+}
 const canDelete = computed(
   () => !props.resource.readonly && allowed('DELETE', props.resource.path + '/{id}'),
 );
@@ -155,7 +183,7 @@ const fields = computed(() =>
 );
 const properties = computed(() =>
   Object.entries(fields.value.properties || {})
-    .filter(([, v]) => !v.readOnly)
+    .filter(([key, v]) => !v.readOnly && !(key === 'status' && hasStatusAction.value))
     .map(([key, value]) => ({ key, ...schema(value) }))
     .sort((a, b) => {
       if (props.resource.key !== 'posts') return 0;
@@ -239,6 +267,8 @@ async function open(row?: Row) {
     const prefix = props.resource.key === 'categories' ? 'CAT' : 'TAG';
     form.value.code = `${prefix}_${crypto.randomUUID().replaceAll('-', '').toUpperCase()}`;
   }
+  if (hasStatusAction.value && fields.value.properties?.status)
+    form.value.status = editing.value?.status ?? 'ENABLED';
   attempt = writeAttempt();
   writeKey.value = crypto.randomUUID();
   formOpen.value = true;
@@ -706,6 +736,14 @@ const hasStatusTabs = computed(
                   ><template v-else>{{ display(row[column]) }}</template>
                 </td>
                 <td class="actions">
+                  <button
+                    v-if="canChangeStatus && ['ENABLED', 'DISABLED'].includes(String(row.status))"
+                    class="text-button"
+                    :disabled="statusBusy"
+                    @click="toggleStatus(row)"
+                  >
+                    {{ statusBusy ? '处理中…' : row.status === 'ENABLED' ? '停用' : '启用' }}
+                  </button>
                   <template v-if="resource.key === 'projects' && auth.platform === 'admin'">
                     <button
                       v-if="allowed('GET', '/admin/projects/{id}/milestones')"
