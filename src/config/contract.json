@@ -87,9 +87,9 @@
           "maxLength": 200
         },
         "schoolId": {
-          "type": "string",
-          "description": "资源标识",
-          "format": "uuid"
+          "type": ["string", "null"],
+          "format": "uuid",
+          "description": "历史院校关联；全国独立专业为空"
         },
         "level": {
           "type": "string",
@@ -100,7 +100,7 @@
           "enum": ["ENABLED", "DISABLED"]
         }
       },
-      "required": ["name", "code", "schoolId", "level", "status"]
+      "required": ["name", "code", "level", "status"]
     },
     "Major": {
       "type": "object",
@@ -136,9 +136,9 @@
           "maxLength": 200
         },
         "schoolId": {
-          "type": "string",
-          "description": "资源标识",
-          "format": "uuid"
+          "type": ["string", "null"],
+          "format": "uuid",
+          "description": "历史院校关联；全国独立专业为空"
         },
         "level": {
           "type": "string",

@@ -78,7 +78,7 @@ export function resources(platform: Platform): Resource[] {
         '专业管理',
         p + '/majors',
         'book',
-        ['name', 'code', 'schoolId', 'level', 'status'],
+        ['name', 'code', 'level', 'status'],
         '基础数据',
       ),
       resource(

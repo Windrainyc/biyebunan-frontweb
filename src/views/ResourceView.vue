@@ -183,7 +183,12 @@ const fields = computed(() =>
 );
 const properties = computed(() =>
   Object.entries(fields.value.properties || {})
-    .filter(([key, v]) => !v.readOnly && !(key === 'status' && hasStatusAction.value))
+    .filter(
+      ([key, v]) =>
+        !v.readOnly &&
+        !(key === 'status' && hasStatusAction.value) &&
+        !(key === 'schoolId' && props.resource.key === 'majors'),
+    )
     .map(([key, value]) => ({ key, ...schema(value) }))
     .sort((a, b) => {
       if (props.resource.key !== 'posts') return 0;
@@ -262,6 +267,7 @@ async function open(row?: Row) {
       editing.value?.[field.key] ??
       field.default ??
       (field.type === 'boolean' ? false : field.type === 'array' ? [] : '');
+  if (props.resource.key === 'majors') form.value.schoolId = editing.value?.schoolId ?? null;
   // 仅初始化新增草稿，输入、校验失败和重试均保留用户修改后的代码。
   if (!row && ['categories', 'tags'].includes(props.resource.key)) {
     const prefix = props.resource.key === 'categories' ? 'CAT' : 'TAG';
