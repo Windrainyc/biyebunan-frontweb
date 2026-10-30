@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { defineAsyncComponent } from 'vue';
+const KnowledgeEditor = defineAsyncComponent(() => import('./KnowledgeEditor.vue'));
 import MaterialField from './MaterialField.vue';
 import AppSelect from './AppSelect.vue';
 import type { Schema } from '../types/api';
@@ -21,8 +23,15 @@ function required() {
 }
 </script>
 <template>
+  <KnowledgeEditor
+    v-if="context === 'contents' && field.key === 'markdown'"
+    :model-value="modelValue"
+    :max-length="field.maxLength"
+    :required="required()"
+    @update:model-value="emit('update:modelValue', $event)"
+  />
   <MaterialField
-    v-if="context === 'contents' && ['assetId', 'coverAssetId'].includes(field.key)"
+    v-else-if="context === 'contents' && ['assetId', 'coverAssetId'].includes(field.key)"
     :model-value="modelValue"
     :kind="
       field.key === 'coverAssetId'
