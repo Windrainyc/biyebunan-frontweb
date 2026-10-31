@@ -47,9 +47,9 @@ for (const [key, path] of Object.entries({
   'storage-configs': 'storages',
   domains: 'domains',
 })) {
-  definitions[key].push({ path: `${path}/{id}/test`, title: '验证连接配置' });
+  (definitions[key] ||= []).push({ path: `${path}/{id}/test`, title: '验证连接配置' });
 }
-definitions['model-keys'].push({ path: 'model-keys/{id}/rotate', title: '更换模型密钥' });
+(definitions['model-keys'] ||= []).push({ path: 'model-keys/{id}/rotate', title: '更换模型密钥' });
 const recovery = computed(() =>
   jobRecovery(String(props.record.kind || ''), String(props.record.state || '')),
 );

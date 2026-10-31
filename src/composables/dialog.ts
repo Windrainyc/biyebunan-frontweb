@@ -4,8 +4,9 @@ const contexts = new WeakMap<
   HTMLElement,
   { previous: HTMLElement | null; listener: (event: KeyboardEvent) => void }
 >();
-export const dialog: ObjectDirective<HTMLElement, () => void> = {
+export const dialog: ObjectDirective<HTMLElement, (() => void) | undefined> = {
   mounted(element, binding) {
+    if (!binding.value) return;
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const focusable = () =>
       Array.from(
@@ -16,7 +17,7 @@ export const dialog: ObjectDirective<HTMLElement, () => void> = {
     const listener = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault();
-        binding.value();
+        binding.value?.();
         return;
       }
       if (event.key !== 'Tab') return;

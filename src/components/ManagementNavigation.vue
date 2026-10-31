@@ -19,9 +19,13 @@ const opened = ref(false),
   query = ref('');
 const sections = computed(() => managementSections(props.links));
 const active = computed(() =>
-  sections.value.find((section) => section.links.some((link) => route.path === link.path)),
+  sections.value.find((section) =>
+    section.links.some((link) => route.path.replace(/\/new$/, '') === link.path),
+  ),
 );
-const current = computed(() => props.links.find((link) => link.path === route.path));
+const current = computed(() =>
+  props.links.find((link) => link.path === route.path.replace(/\/new$/, '')),
+);
 const searchResults = computed(() =>
   props.links.filter((link) => link.title.includes(query.value.trim())).slice(0, 10),
 );

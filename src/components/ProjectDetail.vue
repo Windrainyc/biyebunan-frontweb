@@ -1,6 +1,10 @@
 <script setup lang="ts">
+import CreatePage from './CreatePage.vue';
+import { useCreateRoute } from '../composables/useCreateRoute';
+const milestoneRoute = useCreateRoute('milestone');
+const deliveryRoute = useCreateRoute('delivery');
 import AppSelect from './AppSelect.vue';
-import { onMounted, onBeforeUnmount, ref } from 'vue';
+import { onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import { auth, request, errorText } from '../api/client';
 import { writeAttempt } from '../api/attempt';
 import { display } from '../config/labels';
@@ -45,6 +49,7 @@ async function saveMilestone() {
       key: attempt({ path, ...body }),
     });
     milestoneOpen.value = false;
+    if (milestoneRoute.active.value) await milestoneRoute.close();
     await load();
     emit('changed');
   } catch (e) {
@@ -124,6 +129,7 @@ async function add() {
     });
     uploaded.value = null;
     note.value = '';
+    await deliveryRoute.close();
     await load();
     emit('changed');
   } catch (e) {
@@ -181,6 +187,14 @@ async function download(row: Row) {
     if (generation === downloadGeneration) error.value = errorText(e);
   }
 }
+watch(
+  milestoneRoute.active,
+  (active) => {
+    if (active && auth.platform === 'admin') editMilestone();
+    else milestoneOpen.value = false;
+  },
+  { immediate: true },
+);
 onMounted(load);
 </script>
 <template>
@@ -191,7 +205,11 @@ onMounted(load);
     <p v-if="loading" class="muted" role="status">正在加载项目资料…</p>
     <template v-if="section !== 'deliveries'">
       <h3>项目里程碑</h3>
-      <button v-if="auth.platform === 'admin'" class="button" @click="editMilestone()">
+      <button
+        v-if="auth.platform === 'admin'"
+        class="button"
+        @click="milestoneRoute.open({ source: String(project.id) })"
+      >
         新增里程碑
       </button>
       <p v-if="!loading && !error && !milestones.length" class="muted">暂无里程碑</p>
@@ -205,25 +223,45 @@ onMounted(load);
           编辑
         </button>
       </div>
-      <form v-if="milestoneOpen" class="delivery-form" @submit.prevent="saveMilestone">
-        <label>里程碑名称<input v-model="milestoneName" maxlength="200" required /></label
-        ><label
-          >计划日期<input
-            v-model="milestoneDate"
-            type="date"
-            :max="String(project.deliveryDate)"
-            required /></label
-        ><label
-          >进度权重<input
-            v-model.number="milestoneWeight"
-            type="number"
-            min="1"
-            max="100"
-            required /></label
-        ><label><input v-model="milestoneCompleted" type="checkbox" />已完成</label
-        ><button class="button primary" :disabled="busy">保存里程碑</button
-        ><button type="button" class="button" @click="milestoneOpen = false">取消</button>
-      </form>
+      <component
+        :is="milestoneRoute.active.value ? CreatePage : 'div'"
+        v-if="milestoneOpen"
+        title="新增里程碑"
+        :description="String(project.title || '')"
+        :busy="busy"
+        @back="milestoneRoute.close"
+      >
+        <p v-if="error && milestoneRoute.active.value" class="error" role="alert">{{ error }}</p>
+        <form class="form-grid" @submit.prevent="saveMilestone">
+          <label>里程碑名称<input v-model="milestoneName" maxlength="200" required /></label
+          ><label
+            >计划日期<input
+              v-model="milestoneDate"
+              type="date"
+              :max="String(project.deliveryDate)"
+              required /></label
+          ><label
+            >进度权重<input
+              v-model.number="milestoneWeight"
+              type="number"
+              min="1"
+              max="100"
+              required /></label
+          ><label><input v-model="milestoneCompleted" type="checkbox" />已完成</label>
+          <footer class="wide">
+            <button
+              type="button"
+              class="button"
+              :disabled="busy"
+              @click="
+                milestoneRoute.active.value ? milestoneRoute.close() : (milestoneOpen = false)
+              "
+            >
+              取消</button
+            ><button class="button primary" :disabled="busy">保存里程碑</button>
+          </footer>
+        </form>
+      </component>
       <div class="detail-pagination" aria-label="里程碑分页">
         <span>共 {{ milestoneTotal }} 条 · 第 {{ milestonePage }} 页</span>
         <button
@@ -307,22 +345,37 @@ onMounted(load);
       </div>
       <template v-if="auth.platform === 'admin'"
         ><label>发布或撤回原因<input v-model="reason" maxlength="200" /></label>
-        <h3>新增不可覆盖的交付版本</h3>
-        <AssetUpload
-          owner-type="PROJECT"
-          :owner-id="String(project.id)"
-          @ready="uploaded = $event"
-        />
-        <form v-if="uploaded" class="delivery-form" @submit.prevent="add">
-          <label
-            >资料类型<AppSelect v-model="kind">
-              <option v-for="(title, value) in kinds" :key="value" :value="value">
-                {{ title }}
-              </option>
-            </AppSelect></label
-          ><label>版本说明<input v-model="note" maxlength="200" required /></label
-          ><button class="button primary" :disabled="busy">创建交付版本</button>
-        </form></template
+        <button class="button primary" @click="deliveryRoute.open({ source: String(project.id) })">
+          新增交付版本
+        </button>
+        <CreatePage
+          v-if="deliveryRoute.active.value"
+          title="新增交付版本"
+          :description="String(project.title || '') + ' · 历史版本将保留，不可覆盖。'"
+          :busy="busy"
+          @back="deliveryRoute.close"
+        >
+          <p v-if="error" class="error" role="alert">{{ error }}</p>
+          <AssetUpload
+            owner-type="PROJECT"
+            :owner-id="String(project.id)"
+            @ready="uploaded = $event"
+          />
+          <form v-if="uploaded" class="form-grid" @submit.prevent="add">
+            <label
+              >资料类型<AppSelect v-model="kind">
+                <option v-for="(title, value) in kinds" :key="value" :value="value">
+                  {{ title }}
+                </option>
+              </AppSelect></label
+            ><label>版本说明<input v-model="note" maxlength="200" required /></label>
+            <footer class="wide">
+              <button type="button" class="button" :disabled="busy" @click="deliveryRoute.close">
+                取消</button
+              ><button class="button primary" :disabled="busy">创建交付版本</button>
+            </footer>
+          </form></CreatePage
+        ></template
       >
     </template>
   </section>

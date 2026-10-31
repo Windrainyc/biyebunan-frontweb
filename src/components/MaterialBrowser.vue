@@ -3,6 +3,9 @@ import { ref, watch, onBeforeUnmount, computed } from 'vue';
 import { auth, request, errorText } from '../api/client';
 import type { Row, Page } from '../types/api';
 import MaterialMedia from './MaterialMedia.vue';
+import CreatePage from './CreatePage.vue';
+import { useCreateRoute } from '../composables/useCreateRoute';
+const createRoute = useCreateRoute('material');
 import MaterialDialog from './MaterialDialog.vue';
 import { fileSize } from './material-preview';
 import AssetUpload from './AssetUpload.vue';
@@ -106,6 +109,17 @@ async function createCategory() {
     creating.value = false;
   }
 }
+function closeUpload() {
+  uploadOpen.value = false;
+  if (!props.picker) void createRoute.close();
+}
+watch(
+  createRoute.active,
+  (active) => {
+    if (!props.picker) uploadOpen.value = active && writable.value;
+  },
+  { immediate: true },
+);
 async function uploaded(row: Row) {
   uploadBusy.value = false;
   if (props.kind === 'VIDEO' && !String(row.mimeType).startsWith('video/')) {
@@ -116,7 +130,7 @@ async function uploaded(row: Row) {
     error.value = '文件已保存到素材库，封面请选择PNG、JPEG、GIF、WebP或AVIF图片';
     return;
   }
-  uploadOpen.value = false;
+  closeUpload();
   await load();
   if (props.picker) emit('selected', row);
 }
@@ -218,17 +232,19 @@ watch(
         class="button primary"
         @click="
           uploadBusy = false;
-          uploadOpen = true;
+          picker ? (uploadOpen = true) : createRoute.open();
         "
       >
         上传素材
       </button>
     </div>
-    <MaterialDialog
+    <component
+      :is="picker ? MaterialDialog : CreatePage"
       v-if="uploadOpen"
       title="上传素材"
       :busy="uploadBusy"
-      @close="uploadOpen = false"
+      @close="closeUpload"
+      @back="closeUpload"
     >
       <p class="muted">把素材收纳到分类，上传后可在知识库中重复使用。</p>
       <label class="category-label"
@@ -269,7 +285,7 @@ watch(
         @ready="uploaded"
         @busy="uploadBusy = $event"
       />
-    </MaterialDialog>
+    </component>
     <MaterialDialog
       v-if="preview"
       :title="String(preview.filename)"

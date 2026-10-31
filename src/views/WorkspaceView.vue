@@ -81,7 +81,7 @@ const managementLinks = computed(() => {
 });
 const managementSection = computed(() =>
   managementSections(managementLinks.value).find((section) =>
-    section.links.some((link) => link.path === route.path),
+    section.links.some((link) => link.path === route.path.replace(/\/new$/, '')),
   ),
 );
 const studentMenuOpen = ref(false);
@@ -203,6 +203,7 @@ async function exit() {
     />
     <div class="workspace-body">
       <main class="page">
+        <div id="workspace-create-page"></div>
         <p v-if="platform === 'student' && navigationError" class="error" role="alert">
           导航加载失败 <button class="button" @click="refreshNavigation">重试</button>
         </p>

@@ -29,7 +29,7 @@ export const router = createRouter({
     { path: '/', redirect: `/${entry}/login` },
     { path: '/:platform(admin|student|partner)/login', component: LoginView },
     {
-      path: '/:platform(admin|student|partner)/:resource?',
+      path: '/:platform(admin|student|partner)/:resource?/:action(new)?',
       component: WorkspaceView,
     },
     { path: '/:pathMatch(.*)*', redirect: `/${entry}/login` },

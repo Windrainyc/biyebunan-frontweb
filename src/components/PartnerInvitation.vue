@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import CreatePage from './CreatePage.vue';
+import { useCreateRoute } from '../composables/useCreateRoute';
+const createRoute = useCreateRoute('invitation');
 import { auth, errorText, request } from '../api/client';
 import { writeAttempt } from '../api/attempt';
 import { operation } from '../config/contract';
@@ -24,6 +27,7 @@ const allowed = computed(() => {
 function close() {
   generation++;
   expanded.value = false;
+  void createRoute.close();
   invitation.value = null;
   error.value = '';
   busy.value = false;
@@ -49,18 +53,24 @@ async function submit() {
     if (current === generation) busy.value = false;
   }
 }
+watch(
+  createRoute.active,
+  (active) => {
+    expanded.value = active && allowed.value;
+  },
+  { immediate: true },
+);
 onBeforeUnmount(() => generation++);
 </script>
 <template>
   <section v-if="allowed" class="invite-partner">
-    <button v-if="!expanded" class="button" @click="expanded = true">邀请项目中介</button>
-    <div v-else class="invite-card">
-      <h2>邀请项目中介</h2>
+    <button v-if="!expanded" class="button" @click="createRoute.open()">邀请项目中介</button>
+    <CreatePage v-else title="邀请项目中介" :busy="busy" @back="close">
       <p class="muted">
         创建待激活中介账户并生成一次性邀请，不会自动发送短信或邮件。请仅把链接交给对应账户本人。
       </p>
       <p v-if="error" class="error" role="alert">{{ error }}</p>
-      <form @submit.prevent="submit">
+      <form class="form-grid" @submit.prevent="submit">
         <label>中介姓名<input v-model="name" required maxlength="200" /></label>
         <label
           >中介手机号<input v-model="phone" required pattern="1[0-9]{10}" inputmode="tel"
@@ -68,7 +78,10 @@ onBeforeUnmount(() => generation++);
         <label
           >邀请有效小时<input v-model.number="hours" required type="number" min="1" max="72"
         /></label>
-        <button class="button primary" :disabled="busy">生成中介邀请</button>
+        <footer class="wide">
+          <button type="button" class="button" :disabled="busy" @click="close">取消</button
+          ><button class="button primary" :disabled="busy">生成中介邀请</button>
+        </footer>
       </form>
       <div v-if="invitation" class="notice">
         <p role="status">邀请已生成，账户需完成验证后才能登录。</p>
@@ -76,7 +89,7 @@ onBeforeUnmount(() => generation++);
         <p>有效至 {{ new Date(invitation.expiresAt).toLocaleString('zh-CN') }}</p>
       </div>
       <button class="button" @click="close">关闭并隐藏邀请</button>
-    </div>
+    </CreatePage>
   </section>
 </template>
 <style scoped>

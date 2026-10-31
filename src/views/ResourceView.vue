@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppSelect from '../components/AppSelect.vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
+import CreatePage from '../components/CreatePage.vue';
 import { latestRequest } from '../api/latest';
 import { writeAttempt } from '../api/attempt';
 import { computed, onMounted, onBeforeUnmount, ref, watch, defineAsyncComponent } from 'vue';
@@ -40,6 +41,8 @@ const editRead = latestRequest(),
 function closeForm() {
   editRead.invalidate();
   formOpen.value = false;
+  if (creatingPage.value)
+    void router.push({ path: `/${auth.platform}/${props.resource.key}`, query: route.query });
 }
 function closeDetail() {
   detailRead.invalidate();
@@ -47,6 +50,11 @@ function closeDetail() {
 }
 const props = defineProps<{ resource: Resource }>();
 const route = useRoute();
+const router = useRouter();
+const creatingPage = computed(() => route.params.action === 'new' && !route.query.form);
+function beginCreate() {
+  void router.push({ path: `/${auth.platform}/${props.resource.key}/new`, query: route.query });
+}
 const studentCards = computed(
   () =>
     auth.platform === 'student' && ['projects', 'knowledge', 'posts'].includes(props.resource.key),
@@ -306,7 +314,7 @@ async function save() {
       version: editing.value?.version,
       key: attempt(body),
     });
-    formOpen.value = false;
+    closeForm();
     notice.value = '数据已保存';
     await load();
   } catch (e) {
@@ -403,6 +411,43 @@ function applyRouteFilters() {
   void load();
 }
 onMounted(applyRouteFilters);
+watch(
+  () => route.params.action,
+  (action, previous) => {
+    if (previous === 'new' && action !== 'new') {
+      closeProjectAction();
+      closeDetail();
+    }
+  },
+);
+// 关联新增页刷新后按原资源权限重新读取父记录，不依赖列表缓存。
+watch(
+  () => [route.params.action, route.query.form, route.query.source],
+  async () => {
+    if (route.params.action !== 'new' || typeof route.query.source !== 'string') return;
+    const kind = route.query.form;
+    if (props.resource.key === 'projects' && (kind === 'milestone' || kind === 'delivery'))
+      await openProjectAction(
+        { id: route.query.source },
+        kind === 'milestone' ? 'milestones' : 'deliveries',
+      );
+    else if (['users', 'membership-plans'].includes(props.resource.key) && kind === 'membership')
+      await inspect({ id: route.query.source });
+  },
+  { immediate: true },
+);
+
+watch(
+  creatingPage,
+  (active) => {
+    if (active && canCreate.value) void open();
+    else {
+      editRead.invalidate();
+      formOpen.value = false;
+    }
+  },
+  { immediate: true },
+);
 watch(() => route.query, applyRouteFilters);
 const hasStatusTabs = computed(
   () =>
@@ -462,7 +507,7 @@ const hasStatusTabs = computed(
         <h1 v-else>{{ resource.title }}</h1>
         <p class="muted">{{ resource.subtitle }}</p>
       </div>
-      <button v-if="canCreate" class="button primary" @click="open()">
+      <button v-if="canCreate" class="button primary" @click="beginCreate">
         <Icon name="plus" />{{
           resource.key === 'posts' ? '发布帖子' : '新增' + resource.title.replace('管理', '')
         }}
@@ -873,16 +918,26 @@ const hasStatusTabs = computed(
         "
       />
     </div>
-    <div v-if="formOpen" class="modal-backdrop">
+    <component
+      :is="creatingPage ? CreatePage : 'div'"
+      v-if="formOpen"
+      :class="creatingPage ? undefined : 'modal-backdrop'"
+      :title="resource.key === 'posts' ? '发布帖子' : '新增' + resource.title.replace('管理', '')"
+      :description="resource.subtitle"
+      :busy="saving"
+      @back="closeForm"
+    >
       <form
-        class="modal resource-form-modal"
+        :class="creatingPage ? 'create-resource-form' : 'modal resource-form-modal'"
         v-dialog="
-          () => {
-            if (!saving) closeForm();
-          }
+          creatingPage
+            ? undefined
+            : () => {
+                if (!saving) closeForm();
+              }
         "
-        role="dialog"
-        aria-modal="true"
+        :role="creatingPage ? undefined : 'dialog'"
+        :aria-modal="creatingPage ? undefined : true"
         aria-labelledby="form-title"
         @submit.prevent="save"
       >
@@ -907,6 +962,10 @@ const hasStatusTabs = computed(
           </button>
         </div>
         <div class="resource-form-body">
+          <div v-if="creatingPage" class="create-section-heading">
+            <h2>基本信息</h2>
+            <p class="muted">标有 * 的字段为必填项。</p>
+          </div>
           <div class="form-grid">
             <div
               v-for="field in properties"
@@ -963,7 +1022,7 @@ const hasStatusTabs = computed(
           </button>
         </footer>
       </form>
-    </div>
+    </component>
     <StudentProjectSpace
       v-if="detail && studentCards && resource.key === 'projects'"
       :key="String(detail.id)"

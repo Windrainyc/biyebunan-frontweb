@@ -1,6 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue';
 import { auth, request, errorText } from '../api/client';
+import CreatePage from './CreatePage.vue';
+import { useCreateRoute } from '../composables/useCreateRoute';
+const createRoute = useCreateRoute('announcement');
 import AppSelect from './AppSelect.vue';
 import { writeAttempt } from '../api/attempt';
 import type { Page } from '../types/api';
@@ -90,6 +93,9 @@ async function loadUsers() {
   }
 }
 function open() {
+  void createRoute.open();
+}
+function initialize() {
   title.value = '';
   body.value = '';
   kind.value = 'ANNOUNCEMENT';
@@ -130,6 +136,7 @@ async function publish() {
     });
     if (disposed) return;
     composing.value = false;
+    await createRoute.close();
     detail.value = result;
     page.value = 1;
     await load();
@@ -139,6 +146,14 @@ async function publish() {
     sending.value = false;
   }
 }
+watch(
+  createRoute.active,
+  (active) => {
+    if (active && auth.permissions.includes('announcements:write')) initialize();
+    else composing.value = false;
+  },
+  { immediate: true },
+);
 onMounted(load);
 onBeforeUnmount(() => {
   disposed = true;
@@ -226,174 +241,164 @@ onBeforeUnmount(() => {
         下一页
       </button>
     </div>
-    <div v-if="composing" class="ann-overlay" @keydown.esc="!sending && (composing = false)">
-      <section
-        v-dialog="
-          () => {
-            if (!sending) composing = false;
-          }
-        "
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="ann-title"
-        class="ann-dialog"
-      >
-        <header>
-          <h2 id="ann-title">发布公告 / 提醒</h2>
-          <button class="button" :disabled="sending" @click="composing = false">关闭</button>
-        </header>
-        <form @submit.prevent="publish">
-          <fieldset :disabled="sending">
-            <div class="ann-fields">
-              <label
-                >消息类型<AppSelect :disabled="sending" v-model="kind">
-                  <option value="ANNOUNCEMENT">公告通知</option>
-                  <option value="REMINDER">消息提醒</option>
-                </AppSelect></label
-              ><label
-                >接收范围<AppSelect :disabled="sending" v-model="audience">
-                  <option value="SELECTED">指定用户</option>
-                  <option value="ALL">全部启用用户</option>
-                </AppSelect></label
+    <CreatePage
+      v-if="composing"
+      title="发布公告 / 提醒"
+      description="填写消息内容并选择接收范围，发布后将发送站内通知。"
+      :busy="sending"
+      @back="createRoute.close"
+    >
+      <form @submit.prevent="publish">
+        <fieldset :disabled="sending">
+          <div class="ann-fields">
+            <label
+              >消息类型<AppSelect :disabled="sending" v-model="kind">
+                <option value="ANNOUNCEMENT">公告通知</option>
+                <option value="REMINDER">消息提醒</option>
+              </AppSelect></label
+            ><label
+              >接收范围<AppSelect :disabled="sending" v-model="audience">
+                <option value="SELECTED">指定用户</option>
+                <option value="ALL">全部启用用户</option>
+              </AppSelect></label
+            >
+          </div>
+          <label
+            >标题<input
+              v-model="title"
+              required
+              maxlength="200"
+              placeholder="请输入清晰的消息标题" /></label
+          ><label
+            >正文<textarea
+              v-model="body"
+              required
+              maxlength="10000"
+              rows="6"
+              placeholder="填写公告或提醒内容，支持换行"
+            />
+          </label>
+          <p class="muted">{{ body.length }} / 10000 字 · 发布后内容不可修改</p>
+          <div v-if="audience === 'ALL'" class="ann-notice">
+            将发送给发布时全部启用的学生、中介及管理员，之后注册的用户不包含在本次发送中。
+          </div>
+          <section v-else class="ann-recipients">
+            <h3>
+              接收用户 <small>已选 {{ Object.keys(selected).length }} / 200</small>
+            </h3>
+            <div class="ann-filter">
+              <input
+                v-model="search"
+                placeholder="姓名或脱敏手机号"
+                aria-label="搜索接收用户"
+                maxlength="100"
+                @keydown.enter.prevent="
+                  userPage = 1;
+                  loadUsers();
+                "
+              /><AppSelect
+                :disabled="sending"
+                v-model="platform"
+                aria-label="用户平台"
+                @change="
+                  userPage = 1;
+                  loadUsers();
+                "
+              >
+                <option value="">全部平台</option>
+                <option value="student">学生</option>
+                <option value="partner">中介</option>
+                <option value="admin">管理员</option></AppSelect
+              ><button
+                type="button"
+                class="button"
+                @click="
+                  userPage = 1;
+                  loadUsers();
+                "
+              >
+                查询用户
+              </button>
+            </div>
+            <div class="ann-chips">
+              <button v-for="u in selected" :key="u.id" type="button" @click="toggle(u)">
+                {{ u.displayName }} ×
+              </button>
+            </div>
+            <p v-if="userError" class="error" role="alert">
+              {{ userError }}
+              <button type="button" class="button" @click="loadUsers">重试</button>
+            </p>
+            <p v-if="loadingUsers">正在查询用户…</p>
+            <div class="ann-users">
+              <label v-for="u in users" :key="u.id"
+                ><input
+                  type="checkbox"
+                  :checked="!!selected[u.id]"
+                  :disabled="!selected[u.id] && Object.keys(selected).length >= 200"
+                  @change="toggle(u)"
+                /><span
+                  >{{ u.displayName
+                  }}<small
+                    >{{
+                      u.platform === 'student'
+                        ? '学生'
+                        : u.platform === 'partner'
+                          ? '中介'
+                          : '管理员'
+                    }}
+                    · {{ u.phoneMasked }}</small
+                  ></span
+                ></label
               >
             </div>
-            <label
-              >标题<input
-                v-model="title"
-                required
-                maxlength="200"
-                placeholder="请输入清晰的消息标题" /></label
-            ><label
-              >正文<textarea
-                v-model="body"
-                required
-                maxlength="10000"
-                rows="6"
-                placeholder="填写公告或提醒内容，支持换行"
-              />
-            </label>
-            <p class="muted">{{ body.length }} / 10000 字 · 发布后内容不可修改</p>
-            <div v-if="audience === 'ALL'" class="ann-notice">
-              将发送给发布时全部启用的学生、中介及管理员，之后注册的用户不包含在本次发送中。
+            <p v-if="!loadingUsers && !userError && !users.length" class="muted">
+              没有匹配的启用用户
+            </p>
+            <div class="pagination">
+              <button
+                type="button"
+                class="button"
+                :disabled="userPage === 1 || loadingUsers"
+                @click="
+                  userPage--;
+                  loadUsers();
+                "
+              >
+                上一页</button
+              ><span>第 {{ userPage }} 页 · 共 {{ userTotal }} 人</span
+              ><button
+                type="button"
+                class="button"
+                :disabled="userPage * 20 >= userTotal || loadingUsers"
+                @click="
+                  userPage++;
+                  loadUsers();
+                "
+              >
+                下一页
+              </button>
             </div>
-            <section v-else class="ann-recipients">
-              <h3>
-                接收用户 <small>已选 {{ Object.keys(selected).length }} / 200</small>
-              </h3>
-              <div class="ann-filter">
-                <input
-                  v-model="search"
-                  placeholder="姓名或脱敏手机号"
-                  aria-label="搜索接收用户"
-                  maxlength="100"
-                  @keydown.enter.prevent="
-                    userPage = 1;
-                    loadUsers();
-                  "
-                /><AppSelect
-                  :disabled="sending"
-                  v-model="platform"
-                  aria-label="用户平台"
-                  @change="
-                    userPage = 1;
-                    loadUsers();
-                  "
-                >
-                  <option value="">全部平台</option>
-                  <option value="student">学生</option>
-                  <option value="partner">中介</option>
-                  <option value="admin">管理员</option></AppSelect
-                ><button
-                  type="button"
-                  class="button"
-                  @click="
-                    userPage = 1;
-                    loadUsers();
-                  "
-                >
-                  查询用户
-                </button>
-              </div>
-              <div class="ann-chips">
-                <button v-for="u in selected" :key="u.id" type="button" @click="toggle(u)">
-                  {{ u.displayName }} ×
-                </button>
-              </div>
-              <p v-if="userError" class="error" role="alert">
-                {{ userError }}
-                <button type="button" class="button" @click="loadUsers">重试</button>
-              </p>
-              <p v-if="loadingUsers">正在查询用户…</p>
-              <div class="ann-users">
-                <label v-for="u in users" :key="u.id"
-                  ><input
-                    type="checkbox"
-                    :checked="!!selected[u.id]"
-                    :disabled="!selected[u.id] && Object.keys(selected).length >= 200"
-                    @change="toggle(u)"
-                  /><span
-                    >{{ u.displayName
-                    }}<small
-                      >{{
-                        u.platform === 'student'
-                          ? '学生'
-                          : u.platform === 'partner'
-                            ? '中介'
-                            : '管理员'
-                      }}
-                      · {{ u.phoneMasked }}</small
-                    ></span
-                  ></label
-                >
-              </div>
-              <p v-if="!loadingUsers && !userError && !users.length" class="muted">
-                没有匹配的启用用户
-              </p>
-              <div class="pagination">
-                <button
-                  type="button"
-                  class="button"
-                  :disabled="userPage === 1 || loadingUsers"
-                  @click="
-                    userPage--;
-                    loadUsers();
-                  "
-                >
-                  上一页</button
-                ><span>第 {{ userPage }} 页 · 共 {{ userTotal }} 人</span
-                ><button
-                  type="button"
-                  class="button"
-                  :disabled="userPage * 20 >= userTotal || loadingUsers"
-                  @click="
-                    userPage++;
-                    loadUsers();
-                  "
-                >
-                  下一页
-                </button>
-              </div>
-            </section>
-          </fieldset>
-          <p v-if="sendError" class="error" role="alert">{{ sendError }}</p>
-          <footer>
-            <button type="button" class="button" :disabled="sending" @click="composing = false">
-              取消</button
-            ><button
-              class="button primary"
-              :disabled="
-                sending ||
-                !title.trim() ||
-                !body.trim() ||
-                (audience === 'SELECTED' && !Object.keys(selected).length)
-              "
-            >
-              {{ sending ? '正在发布…' : '确认发布并发送' }}
-            </button>
-          </footer>
-        </form>
-      </section>
-    </div>
+          </section>
+        </fieldset>
+        <p v-if="sendError" class="error" role="alert">{{ sendError }}</p>
+        <footer>
+          <button type="button" class="button" :disabled="sending" @click="createRoute.close">
+            取消</button
+          ><button
+            class="button primary"
+            :disabled="
+              sending ||
+              !title.trim() ||
+              !body.trim() ||
+              (audience === 'SELECTED' && !Object.keys(selected).length)
+            "
+          >
+            {{ sending ? '正在发布…' : '确认发布并发送' }}
+          </button>
+        </footer>
+      </form>
+    </CreatePage>
     <div v-if="detail" class="ann-overlay" @keydown.esc="detail = null">
       <section
         v-dialog="() => (detail = null)"

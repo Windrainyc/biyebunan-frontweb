@@ -5,6 +5,9 @@ import { operation } from '../config/contract';
 import { writeAttempt } from '../api/attempt';
 import { display } from '../config/labels';
 import type { Page, Row } from '../types/api';
+import CreatePage from './CreatePage.vue';
+import { useCreateRoute } from '../composables/useCreateRoute';
+const createRoute = useCreateRoute('membership');
 import ReferenceField from './ReferenceField.vue';
 const props = defineProps<{ record: Row; mode: 'plan' | 'user' }>(),
   emit = defineEmits<{ changed: [] }>();
@@ -76,6 +79,7 @@ async function submit() {
         : { planId: plan.value, startsAt: time, reason: reason.value };
     const version = props.mode === 'plan' ? props.record.version : undefined;
     await request(path(), { method: 'POST', body, version, key: attempt({ body, version }) });
+    await createRoute.close();
     notice.value = props.mode === 'plan' ? '权益版本已新增，历史版本保持不变' : '会员已授予';
     await load();
     emit('changed');
@@ -165,36 +169,54 @@ onBeforeUnmount(() => generation++);
     <label v-if="canRevoke && !canWrite"
       >撤销原因<input v-model="reason" maxlength="200" required
     /></label>
-    <form v-if="canWrite" @submit.prevent="submit">
-      <h3>{{ mode === 'plan' ? '新增权益版本' : '授予会员' }}</h3>
-      <template v-if="mode === 'plan'"
-        ><label
-          >有效天数<input
-            v-model.number="duration"
-            type="number"
-            min="1"
-            max="36500"
-            required /></label
-        ><label
-          >每月词元额度<input
-            v-model.number="tokens"
-            type="number"
-            min="0"
-            max="9007199254740991"
-            required /></label
-        ><label
-          >每月金额上限（元）<input
-            v-model="amount"
-            pattern="[0-9]{1,14}(\.[0-9]{1,6})?"
-            required /></label></template
-      ><template v-else
-        ><ReferenceField v-model="plan" field="planId" required /><label
-          >授予或撤销原因<input v-model="reason" maxlength="200" required /></label></template
-      ><label>生效时间<input v-model="date" type="datetime-local" required /></label
-      ><button class="button primary" :disabled="busy">
-        确认{{ mode === 'plan' ? '新增' : '授予' }}
-      </button>
-    </form>
+    <button
+      v-if="canWrite"
+      class="button primary"
+      @click="createRoute.open({ source: String(record.id) })"
+    >
+      {{ mode === 'plan' ? '新增权益版本' : '授予会员' }}
+    </button>
+    <CreatePage
+      v-if="canWrite && createRoute.active.value"
+      :title="mode === 'plan' ? '新增权益版本' : '授予会员'"
+      :busy="busy"
+      @back="createRoute.close"
+    >
+      <p v-if="error" class="error" role="alert">{{ error }}</p>
+      <form class="form-grid" @submit.prevent="submit">
+        <template v-if="mode === 'plan'"
+          ><label
+            >有效天数<input
+              v-model.number="duration"
+              type="number"
+              min="1"
+              max="36500"
+              required /></label
+          ><label
+            >每月词元额度<input
+              v-model.number="tokens"
+              type="number"
+              min="0"
+              max="9007199254740991"
+              required /></label
+          ><label
+            >每月金额上限（元）<input
+              v-model="amount"
+              pattern="[0-9]{1,14}(\.[0-9]{1,6})?"
+              required /></label></template
+        ><template v-else
+          ><ReferenceField v-model="plan" field="planId" required /><label
+            >授予或撤销原因<input v-model="reason" maxlength="200" required /></label></template
+        ><label>生效时间<input v-model="date" type="datetime-local" required /></label>
+        <footer class="wide">
+          <button type="button" class="button" :disabled="busy" @click="createRoute.close">
+            取消</button
+          ><button class="button primary" :disabled="busy">
+            确认{{ mode === 'plan' ? '新增' : '授予' }}
+          </button>
+        </footer>
+      </form>
+    </CreatePage>
   </section>
 </template>
 <style scoped>
