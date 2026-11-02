@@ -701,11 +701,7 @@ const hasStatusTabs = computed(
           <details v-if="extraFields.length" class="advanced-filters">
             <summary>更多筛选条件</summary>
             <div class="form-grid">
-              <label
-                v-for="field in extraFields"
-                :key="field.key"
-                :class="{ wide: field.format === 'uuid' || field.type === 'array' }"
-              >
+              <label v-for="field in extraFields" :key="field.key">
                 {{ label(field.key) }}
                 <SchemaField
                   v-model="extraFilters[field.key]"

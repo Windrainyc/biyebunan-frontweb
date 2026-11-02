@@ -88,6 +88,10 @@ body .workspace .advanced-filters summary {
   font-size: var(--control-font);
   line-height: 24px;
 }
+body .workspace .advanced-filters .form-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  gap: 16px;
+}
 body .workspace .advanced-filters[open] .form-grid {
   margin-top: 16px;
   padding-top: 16px;

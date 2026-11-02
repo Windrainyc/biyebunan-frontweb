@@ -338,7 +338,7 @@ watch(
   left: 0;
   z-index: 30;
   width: 100%;
-  min-width: min(280px, 80vw);
+  min-width: 0;
   max-width: calc(100vw - 40px);
   padding: 12px;
   border: 1px solid #dce3ee;
