@@ -11,6 +11,7 @@ const props = defineProps<{
   modelValue: unknown;
   field: Schema & { key: string };
   required?: boolean;
+  filter?: boolean;
   context?: string;
   filters?: Record<string, unknown>;
 }>();
@@ -52,6 +53,7 @@ function required() {
     :context="context"
     :filters="filters"
     :multiple="field.type === 'array'"
+    :dropdown="filter"
     :required="required()"
     :aria-label="label(field.key)"
     @update:model-value="emit('update:modelValue', $event)"
@@ -66,6 +68,15 @@ function required() {
     <option v-for="value in field.enum" :key="String(value)" :value="value">
       {{ display(value) }}
     </option></AppSelect
+  ><AppSelect
+    v-else-if="filter && field.type === 'boolean'"
+    :model-value="modelValue === true ? 'true' : modelValue === false ? 'false' : ''"
+    :aria-label="label(field.key)"
+    @update:model-value="emit('update:modelValue', $event === '' ? '' : $event === 'true')"
+  >
+    <option value="">全部</option>
+    <option value="true">是</option>
+    <option value="false">否</option> </AppSelect
   ><input
     v-else-if="field.type === 'boolean'"
     type="checkbox"

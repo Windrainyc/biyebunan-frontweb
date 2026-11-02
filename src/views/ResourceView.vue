@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import AppSelect from '../components/AppSelect.vue';
 import { useRoute, useRouter } from 'vue-router';
+import WorkflowPage from '../components/WorkflowPage.vue';
+import { recordActions } from '../config/record-actions';
 import CreatePage from '../components/CreatePage.vue';
 import { latestRequest } from '../api/latest';
 import { writeAttempt } from '../api/attempt';
@@ -458,7 +460,32 @@ const hasStatusTabs = computed(
 );
 </script>
 <template>
+  <WorkflowPage
+    v-if="route.query.process && route.params.action !== 'new'"
+    :resource="resource"
+    @changed="load()"
+  />
   <section :class="{ 'student-resource': studentCards, ['student-' + resource.key]: studentCards }">
+    <nav v-if="resource.key === 'contents'" class="workflow-tabs" aria-label="知识内容状态">
+      <button
+        v-for="tab in [
+          { value: '', title: '全部内容' },
+          { value: 'DRAFT', title: '草稿' },
+          { value: 'REVIEW', title: '待审核' },
+          { value: 'PUBLISHED', title: '已发布' },
+          { value: 'WITHDRAWN', title: '已撤回' },
+        ]"
+        :key="tab.value"
+        class="button"
+        :class="{ primary: status === tab.value }"
+        @click="
+          status = tab.value;
+          search();
+        "
+      >
+        {{ tab.title }}
+      </button>
+    </nav>
     <section v-if="isStudentKnowledge" class="student-knowledge-hero">
       <div class="knowledge-hero-top">
         <div>
@@ -684,6 +711,7 @@ const hasStatusTabs = computed(
                   v-model="extraFilters[field.key]"
                   :field="field"
                   :context="resource.key"
+                  :filter="auth.platform === 'admin'"
                   :filters="field.key === 'majorId' ? { schoolId: extraFilters.schoolId } : {}"
                 />
               </label>
@@ -817,40 +845,24 @@ const hasStatusTabs = computed(
                   >
                     {{ statusBusy ? '处理中…' : row.status === 'ENABLED' ? '停用' : '启用' }}
                   </button>
-                  <template v-if="resource.key === 'projects' && auth.platform === 'admin'">
-                    <button
-                      v-if="allowed('GET', '/admin/projects/{id}/milestones')"
-                      class="text-button"
-                      @click="openProjectAction(row, 'milestones')"
-                    >
-                      里程碑
-                    </button>
-                    <button
-                      v-if="allowed('GET', '/admin/projects/{id}/deliveries')"
-                      class="text-button"
-                      @click="openProjectAction(row, 'deliveries')"
-                    >
-                      交付版本
-                    </button>
-                    <button
-                      v-if="allowed('POST', '/admin/projects/{id}/stage')"
-                      class="text-button"
-                      @click="openProjectAction(row, 'stage')"
-                    >
-                      推进阶段
-                    </button>
-                    <button
-                      v-if="
-                        row.stage === 'ACCEPTANCE' &&
-                        allowed('POST', '/admin/projects/{id}/acceptance')
-                      "
-                      class="text-button"
-                      @click="openProjectAction(row, 'acceptance')"
-                    >
-                      验收
-                    </button>
-                  </template>
 
+                  <button
+                    v-for="action in recordActions(resource.key, row)"
+                    :key="action.path"
+                    class="text-button"
+                    @click="
+                      router.push({
+                        path: route.path,
+                        query: {
+                          ...route.query,
+                          process: String(row.id),
+                          operation: action.path.split('/').pop(),
+                        },
+                      })
+                    "
+                  >
+                    {{ action.title }}
+                  </button>
                   <button class="text-button" @click="inspect(row)">查看</button
                   ><button
                     v-if="canEdit && rowActions(row).edit"
@@ -1108,6 +1120,7 @@ const hasStatusTabs = computed(
           /><OrderDetail
             v-if="resource.key === 'orders'"
             :order="detail"
+            mode="readonly"
             @changed="
               inspect(detail);
               load();
@@ -1139,11 +1152,6 @@ const hasStatusTabs = computed(
               inspect(detail);
               load();
             "
-          /><RecordActions
-            v-if="resource.key !== 'projects'"
-            :resource-key="resource.key"
-            :record="detail"
-            @changed="actionChanged"
           />
         </div>
         <footer class="resource-detail-footer">
@@ -1233,7 +1241,7 @@ const hasStatusTabs = computed(
   background: white;
   border: 1px solid #e2e6ef;
   border-radius: 14px;
-  overflow: hidden;
+  overflow: visible;
 }
 .filters {
   display: flex;
@@ -1403,5 +1411,14 @@ td {
   .form-grid {
     grid-template-columns: 1fr;
   }
+}
+</style>
+
+<style scoped>
+.workflow-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
 }
 </style>

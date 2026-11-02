@@ -6,7 +6,7 @@ import { writeAttempt } from '../api/attempt';
 import type { Row } from '../types/api';
 import AssetUpload from './AssetUpload.vue';
 import ReferenceField from './ReferenceField.vue';
-const props = defineProps<{ order: Row }>(),
+const props = defineProps<{ order: Row; mode?: string }>(),
   emit = defineEmits<{ changed: [] }>();
 const reference = ref(''),
   receivedAt = ref(''),
@@ -23,10 +23,18 @@ function allowed(path: string) {
   return op && (!op.permission || auth.permissions.includes(op.permission));
 }
 const canReceipt = computed(
-  () => auth.platform === 'admin' && allowed('/admin/orders/{id}/receipt'),
+  () =>
+    props.mode !== 'readonly' &&
+    props.mode !== 'assignment' &&
+    auth.platform === 'admin' &&
+    allowed('/admin/orders/{id}/receipt'),
 );
 const canAssign = computed(
-  () => auth.platform === 'admin' && allowed('/admin/orders/{id}/assignment'),
+  () =>
+    props.mode !== 'readonly' &&
+    props.mode !== 'receipt' &&
+    auth.platform === 'admin' &&
+    allowed('/admin/orders/{id}/assignment'),
 );
 async function receipt() {
   if (!proof.value) return;

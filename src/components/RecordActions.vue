@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { recordActions } from '../config/record-actions';
 import AppSelect from './AppSelect.vue';
 import { computed, ref, watch } from 'vue';
 import { auth, request, errorText } from '../api/client';
@@ -21,62 +22,11 @@ const selected = ref(''),
   busy = ref(false),
   notice = ref('');
 let attempt = writeAttempt();
-const definitions: Record<string, { path: string; title: string }[]> = {
-  orders: [{ path: 'orders/{id}/transition', title: '变更订单状态' }],
-  projects: [
-    { path: 'projects/{id}/stage', title: '推进项目阶段' },
-    { path: 'projects/{id}/acceptance', title: '提交项目验收' },
-  ],
-  posts: [
-    { path: 'posts/{id}/moderation', title: '审核或管理帖子' },
-    { path: 'posts/{id}/reports', title: '举报帖子' },
-  ],
-  jobs: [{ path: 'jobs/{id}/retry', title: '恢复失败任务' }],
-  reports: [{ path: 'reports/{id}/decision', title: '处理举报' }],
-  comments: [{ path: 'comments/{id}/moderation', title: '管理评论' }],
-  adjudications: [{ path: 'adjudications/{id}/decision', title: '复核用量裁决' }],
-};
-definitions.contents = [
-  { path: 'knowledge/{id}/submit-review', title: '提交审核' },
-  { path: 'knowledge/{id}/publish', title: '发布内容' },
-  { path: 'knowledge/{id}/withdraw', title: '撤回发布' },
-  { path: 'knowledge/{id}/reindex', title: '重新建立索引' },
-];
-for (const [key, path] of Object.entries({
-  models: 'models',
-  'storage-configs': 'storages',
-  domains: 'domains',
-})) {
-  (definitions[key] ||= []).push({ path: `${path}/{id}/test`, title: '验证连接配置' });
-}
-(definitions['model-keys'] ||= []).push({ path: 'model-keys/{id}/rotate', title: '更换模型密钥' });
 const recovery = computed(() =>
   jobRecovery(String(props.record.kind || ''), String(props.record.state || '')),
 );
 const actions = computed(() =>
-  (definitions[props.resourceKey] || [])
-    .map((d) => ({ ...d, path: `/${auth.platform}/${d.path}` }))
-    .filter((d) => {
-      // 举报结论只能从OPEN产生；终态不再提供重复处理入口，服务端仍执行CAS与状态校验。
-      if (props.resourceKey === 'jobs' && !recovery.value.retry) return false;
-      if (props.resourceKey === 'reports' && props.record.state !== 'OPEN') return false;
-      if (props.resourceKey === 'adjudications' && props.record.state !== 'PENDING') return false;
-      if (d.path.endsWith('/acceptance') && props.record.stage !== 'ACCEPTANCE') return false;
-      if (
-        d.path.endsWith('/knowledge/{id}/submit-review') &&
-        !['DRAFT', 'WITHDRAWN'].includes(String(props.record.state))
-      )
-        return false;
-      if (d.path.endsWith('/knowledge/{id}/publish') && props.record.state !== 'REVIEW')
-        return false;
-      if (
-        d.path.endsWith('/knowledge/{id}/withdraw') &&
-        !['REVIEW', 'PUBLISHED'].includes(String(props.record.state))
-      )
-        return false;
-      const o = operation('POST', d.path);
-      return o && (!o.permission || auth.permissions.includes(o.permission));
-    }),
+  recordActions(props.resourceKey, props.record).filter((a) => a.method !== 'GET'),
 );
 const bodySchema = computed(() => schema(operation('POST', selected.value)?.body));
 const fields = computed(() =>

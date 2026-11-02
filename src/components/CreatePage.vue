@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { nextTick, onMounted, ref } from 'vue';
 import Icon from './Icon.vue';
-defineProps<{ title: string; description?: string; busy?: boolean }>();
+defineProps<{ title: string; description?: string; busy?: boolean; breadcrumb?: string }>();
 const emit = defineEmits<{ back: [] }>();
 const heading = ref<HTMLElement>();
 onMounted(async () => {
@@ -18,7 +18,7 @@ onMounted(async () => {
           <Icon name="left" />返回列表
         </button>
         <div>
-          <p class="create-page-breadcrumb">新增记录</p>
+          <p class="create-page-breadcrumb">{{ breadcrumb || '新增记录' }}</p>
           <h1 ref="heading" tabindex="-1">{{ title }}</h1>
           <p v-if="description" class="muted">{{ description }}</p>
         </div>

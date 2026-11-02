@@ -10,8 +10,11 @@ const props = defineProps<{
   filters?: Record<string, unknown>;
   multiple?: boolean;
   required?: boolean;
+  dropdown?: boolean;
 }>();
 const emit = defineEmits<{ 'update:modelValue': [unknown] }>();
+const expanded = ref(false);
+const selectedTitles = ref<Record<string, string>>({});
 const query = ref(''),
   page = ref(1),
   total = ref(0),
@@ -23,12 +26,14 @@ const resource: Record<string, string> = {
   schoolId: 'schools',
   majorId: 'majors',
   roleIds: 'roles',
+  roleId: 'roles',
   permissionCodes: 'permissions',
   modelId: 'models',
   modelIds: 'models',
   parentId: 'categories',
   categoryId: 'categories',
   tagIds: 'tags',
+  tagId: 'tags',
   orderId: 'orders',
   projectId: 'projects',
   boardId: 'forum-boards',
@@ -45,7 +50,9 @@ const path = computed(() => {
       ? 'students'
       : props.field === 'parentId' && props.context === 'menus'
         ? 'menus'
-        : resource[props.field]) || '';
+        : props.field === 'categoryId' && props.context === 'materials'
+          ? 'material-categories'
+          : resource[props.field]) || '';
   const direct = `/${auth.platform}/${name}`;
   return operation('GET', direct) ? direct : `/${auth.platform}/dictionaries/${name}`;
 });
@@ -66,6 +73,9 @@ const selected = computed(() =>
       : [],
 );
 function choose(id: string) {
+  const row = rows.value.find((r) => value(r) === id);
+  if (row) selectedTitles.value[id] = title(row);
+  if (!props.multiple) expanded.value = false;
   emit(
     'update:modelValue',
     props.multiple
@@ -74,6 +84,10 @@ function choose(id: string) {
         : [...selected.value, id]
       : id,
   );
+}
+function closeOutside(event: FocusEvent) {
+  if (!(event.currentTarget as HTMLElement).contains(event.relatedTarget as Node))
+    expanded.value = false;
 }
 let generation = 0;
 async function load() {
@@ -121,79 +135,119 @@ watch(
 );
 </script>
 <template>
-  <div class="reference">
-    <template v-if="supported"
-      ><div class="search">
+  <div
+    class="reference"
+    :class="{ dropdown }"
+    @keydown.esc.stop.prevent="expanded = false"
+    @focusout="closeOutside($event)"
+  >
+    <button
+      v-if="dropdown && supported"
+      type="button"
+      class="dropdown-trigger"
+      :aria-expanded="expanded"
+      @click="expanded = !expanded"
+    >
+      <span>{{
+        selected.length
+          ? selected
+              .map(
+                (id) =>
+                  selectedTitles[id] ||
+                  title(rows.find((r) => value(r) === id) || { name: '已选记录' }),
+              )
+              .join('、')
+          : '全部（请选择）'
+      }}</span
+      ><span aria-hidden="true">⌄</span>
+    </button>
+    <div v-show="!dropdown || expanded || !supported" :class="{ 'dropdown-panel': dropdown }">
+      <template v-if="supported"
+        ><div class="search">
+          <input
+            v-model="query"
+            placeholder="搜索并选择"
+            @keydown.enter.prevent="
+              page = 1;
+              load();
+            "
+          /><button
+            type="button"
+            class="button"
+            @click="
+              page = 1;
+              load();
+            "
+          >
+            搜索
+          </button>
+        </div>
+        <div class="choices">
+          <button
+            v-if="dropdown"
+            v-for="row in rows"
+            :key="'option-' + value(row)"
+            type="button"
+            class="dropdown-option"
+            :aria-pressed="selected.includes(value(row))"
+            @click="choose(value(row))"
+          >
+            {{ title(row) }}<span v-if="selected.includes(value(row))"> ✓</span>
+          </button>
+          <template v-else
+            ><label v-for="row in rows" :key="value(row)"
+              ><input
+                :type="multiple ? 'checkbox' : 'radio'"
+                :name="field"
+                :checked="selected.includes(value(row))"
+                @change="choose(value(row))"
+              />{{ title(row) }}</label
+            ></template
+          ><span v-if="!rows.length">{{
+            busy ? '加载中…' : error ? '查询失败，请重新搜索' : '暂无可选数据'
+          }}</span>
+        </div>
+        <div class="reference-foot">
+          <span>已选 {{ selected.length }} 项</span>
+          <button
+            v-if="!required && selected.length"
+            type="button"
+            class="button"
+            @click="emit('update:modelValue', multiple ? [] : '')"
+          >
+            清空选择
+          </button>
+          <button
+            type="button"
+            :disabled="page === 1 || busy"
+            @click="
+              page--;
+              load();
+            "
+          >
+            上一页</button
+          ><button
+            type="button"
+            :disabled="page * 20 >= total || busy"
+            @click="
+              page++;
+              load();
+            "
+          >
+            下一页
+          </button>
+        </div>
+        <p v-if="error" role="alert" class="error">{{ error }}</p>
         <input
-          v-model="query"
-          placeholder="搜索并选择"
-          @keydown.enter.prevent="
-            page = 1;
-            load();
-          "
-        /><button
-          type="button"
-          class="button"
-          @click="
-            page = 1;
-            load();
-          "
-        >
-          搜索
-        </button>
-      </div>
-      <div class="choices">
-        <label v-for="row in rows" :key="value(row)"
-          ><input
-            :type="multiple ? 'checkbox' : 'radio'"
-            :name="field"
-            :checked="selected.includes(value(row))"
-            @change="choose(value(row))"
-          />{{ title(row) }}</label
-        ><span v-if="!rows.length">{{
-          busy ? '加载中…' : error ? '查询失败，请重新搜索' : '暂无可选数据'
-        }}</span>
-      </div>
-      <div class="reference-foot">
-        <span>已选 {{ selected.length }} 项</span>
-        <button
-          v-if="!required && selected.length"
-          type="button"
-          class="button"
-          @click="emit('update:modelValue', multiple ? [] : '')"
-        >
-          清空选择
-        </button>
-        <button
-          type="button"
-          :disabled="page === 1 || busy"
-          @click="
-            page--;
-            load();
-          "
-        >
-          上一页</button
-        ><button
-          type="button"
-          :disabled="page * 20 >= total || busy"
-          @click="
-            page++;
-            load();
-          "
-        >
-          下一页
-        </button>
-      </div>
-      <p v-if="error" role="alert" class="error">{{ error }}</p>
-      <input
-        v-if="required"
-        class="validation"
-        tabindex="-1"
-        :value="selected.join(',')"
-        required
-        aria-label="请选择关联数据"
-    /></template>
-    <p v-else class="muted">此字段需要在对应业务页面中选择。</p>
+          v-if="required"
+          class="validation"
+          tabindex="-1"
+          :value="selected.join(',')"
+          required
+          aria-label="请选择关联数据"
+      /></template>
+      <p v-else class="muted">此字段需要在对应业务页面中选择。</p>
+    </div>
   </div>
 </template>
 <style scoped>
@@ -248,5 +302,62 @@ watch(
   height: 1px;
   opacity: 0;
   position: absolute;
+}
+</style>
+
+<style scoped>
+.reference.dropdown {
+  position: relative;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.dropdown-trigger {
+  width: 100%;
+  min-height: 40px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 12px;
+  border: 1px solid #dce3ee;
+  border-radius: 8px;
+  background: white;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.dropdown-trigger span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dropdown-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 30;
+  width: 100%;
+  min-width: min(280px, 80vw);
+  max-width: calc(100vw - 40px);
+  padding: 12px;
+  border: 1px solid #dce3ee;
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 8px 24px #26375b24;
+}
+.dropdown-option {
+  border: 0;
+  background: transparent;
+  padding: 8px;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.dropdown-option:hover,
+.dropdown-option[aria-pressed='true'] {
+  background: #eaf4ff;
+  color: #2676bd;
 }
 </style>

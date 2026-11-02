@@ -7,7 +7,7 @@ import { display } from '../config/labels';
 import AssetCover from './AssetCover.vue';
 import AssetUpload from './AssetUpload.vue';
 import MarkdownContent from './MarkdownContent.vue';
-const props = defineProps<{ content: Row }>(),
+const props = defineProps<{ content: Row; readonly?: boolean }>(),
   emit = defineEmits<{ changed: [] }>();
 const items = ref<Row[]>([]),
   page = ref(1),
@@ -150,7 +150,7 @@ watch(
     <p v-if="downloadUrl">
       <a :href="downloadUrl" rel="noopener noreferrer" class="button">保存已授权资料</a>
     </p>
-    <details class="knowledge-version-history" :open="auth.platform === 'admin'">
+    <details class="knowledge-version-history" :open="!readonly && auth.platform === 'admin'">
       <summary>
         内容版本<span>{{ loading ? '读取中…' : '共' + total + '个版本' }}</span>
       </summary>
@@ -189,7 +189,10 @@ watch(
     </details>
     <template
       v-if="
-        auth.platform === 'admin' && content.state !== 'PUBLISHED' && content.type !== 'MARKDOWN'
+        !readonly &&
+        auth.platform === 'admin' &&
+        content.state !== 'PUBLISHED' &&
+        content.type !== 'MARKDOWN'
       "
       ><h3>上传内容文件</h3>
       <AssetUpload owner-type="KNOWLEDGE" :owner-id="String(content.id)" @ready="attach"
