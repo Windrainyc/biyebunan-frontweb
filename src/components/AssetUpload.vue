@@ -124,7 +124,10 @@ async function upload() {
       const xhr = new XMLHttpRequest();
       activeUpload = xhr;
       xhr.open(grant.method, grant.url);
-      for (const [key, value] of Object.entries(grant.headers)) xhr.setRequestHeader(key, value);
+      for (const [key, value] of Object.entries(grant.headers)) {
+        // 浏览器根据实际文件自动设置长度，禁止脚本手动设置该请求头。
+        if (key.toLowerCase() !== 'content-length') xhr.setRequestHeader(key, value);
+      }
       xhr.upload.onprogress = (e) => {
         if (e.lengthComputable) progress.value = Math.round((e.loaded / e.total) * 100);
       };
