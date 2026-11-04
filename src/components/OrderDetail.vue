@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { auth, request, errorText } from '../api/client';
 import { operation } from '../config/contract';
 import { writeAttempt } from '../api/attempt';
 import type { Row } from '../types/api';
+import AppSelect from './AppSelect.vue';
 import AssetUpload from './AssetUpload.vue';
 import ReferenceField from './ReferenceField.vue';
 const props = defineProps<{ order: Row; mode?: string }>(),
-  emit = defineEmits<{ changed: [] }>();
+  emit = defineEmits<{ changed: []; busy: [value: boolean] }>();
 const reference = ref(''),
   receivedAt = ref(''),
   reason = ref(''),
@@ -17,6 +18,8 @@ const reference = ref(''),
   error = ref(''),
   busy = ref(false),
   notice = ref('');
+const amount = ref(''),
+  channel = ref('');
 const attempt = writeAttempt();
 function allowed(path: string) {
   const op = operation('POST', path);
@@ -37,15 +40,15 @@ const canAssign = computed(
     allowed('/admin/orders/{id}/assignment'),
 );
 async function receipt() {
-  if (!proof.value) return;
   busy.value = true;
   try {
     const body = {
-      reference: reference.value,
-      receivedAt: new Date(receivedAt.value).toISOString(),
-      amount: String(props.order.amount),
-      proofAssetId: proof.value.id,
-      reason: reason.value,
+      reference: reference.value || undefined,
+      receivedAt: receivedAt.value ? new Date(receivedAt.value).toISOString() : undefined,
+      amount: amount.value || undefined,
+      channel: channel.value || undefined,
+      proofAssetId: proof.value?.id,
+      reason: reason.value || undefined,
     };
     await request(`/admin/orders/${props.order.id}/receipt`, {
       method: 'POST',
@@ -79,6 +82,7 @@ async function assign() {
     busy.value = false;
   }
 }
+watch(busy, (value) => emit('busy', value));
 </script>
 <template>
   <section>
@@ -87,25 +91,43 @@ async function assign() {
     </p>
     <p v-if="error" class="error" role="alert">{{ error }}</p>
     <p v-if="notice" class="success" role="status">{{ notice }}</p>
-    <label v-if="canReceipt || canAssign">操作原因<input v-model="reason" maxlength="200" /></label
+    <label v-if="canReceipt || canAssign"
+      >备注（选填）<input v-model="reason" maxlength="200" /></label
     ><template v-if="canReceipt && order.receiptStatus === 'UNCONFIRMED'"
       ><h3>核验收款凭证</h3>
-      <p class="muted">仅核验已确认订单的全额收款，历史核验记录不能覆盖。</p>
+      <p class="muted">请核对实际到账情况。以下收款信息均为选填，历史核验记录保留。</p>
       <AssetUpload owner-type="RECEIPT" :owner-id="String(order.id)" @ready="proof = $event" />
-      <form v-if="proof" @submit.prevent="receipt">
-        <label>收款流水号<input v-model="reference" maxlength="200" required /></label
-        ><label>收款时间<input v-model="receivedAt" type="datetime-local" required /></label>
-        <p>核验金额：{{ order.amount }}元</p>
-        <button class="button primary" :disabled="busy || !reason">确认核验</button>
+      <form @submit.prevent="receipt">
+        <label>支付订单号（选填）<input v-model="reference" maxlength="200" /></label
+        ><label>收款时间<input v-model="receivedAt" type="datetime-local" /></label>
+        <label
+          >支付渠道（选填）<AppSelect v-model="channel"
+            ><option value="">未填写</option>
+            <option value="WECHAT">微信</option>
+            <option value="ALIPAY">支付宝</option>
+            <option value="BANK_CARD">银行卡</option></AppSelect
+          ></label
+        >
+        <label
+          >支付金额（选填，元）<input
+            v-model="amount"
+            inputmode="decimal"
+            pattern="[0-9]{1,14}(\.[0-9]{1,6})?"
+            placeholder="填写实际到账金额"
+        /></label>
+        <button class="button primary" :disabled="busy">确认核验</button>
       </form></template
     >
     <form v-if="canAssign" @submit.prevent="assign">
       <h3>项目中介归属</h3>
       <label class="checkbox"><input v-model="unassigned" type="checkbox" />不分配项目中介</label
-      ><ReferenceField v-if="!unassigned" v-model="partner" field="partnerId" required /><button
-        class="button primary"
-        :disabled="busy || !reason || (!unassigned && !partner)"
-      >
+      ><ReferenceField
+        v-if="!unassigned"
+        v-model="partner"
+        field="partnerId"
+        dropdown
+        required
+      /><button class="button primary" :disabled="busy || (!unassigned && !partner)">
         更新归属
       </button>
     </form>

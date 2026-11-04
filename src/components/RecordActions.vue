@@ -15,7 +15,7 @@ const props = defineProps<{
     compact?: boolean;
     actionPath?: string;
   }>(),
-  emit = defineEmits<{ changed: [result: Row]; cancel: [] }>();
+  emit = defineEmits<{ changed: [result: Row]; cancel: []; busy: [value: boolean] }>();
 const selected = ref(''),
   values = ref<Record<string, string>>({}),
   error = ref(''),
@@ -75,6 +75,7 @@ async function submit() {
     busy.value = false;
   }
 }
+watch(busy, (value) => emit('busy', value));
 </script>
 <template>
   <section
@@ -117,20 +118,22 @@ async function submit() {
           :maxlength="field.maxLength"
         />
       </label>
-      <p class="muted">状态变更会由服务端校验业务前置条件，请填写具体原因。</p>
+      <p class="muted">状态变更会校验业务前置条件；备注可按需填写。</p>
       <p v-if="error" class="error" role="alert">{{ error }}</p>
-      <button class="button primary" :disabled="busy">{{ busy ? '提交中…' : '确认提交' }}</button
-      ><button
-        type="button"
-        class="button"
-        :disabled="busy"
-        @click="
-          selected = '';
-          emit('cancel');
-        "
-      >
-        取消
-      </button>
+      <div class="action-footer">
+        <button class="button primary" :disabled="busy">{{ busy ? '提交中…' : '确认提交' }}</button
+        ><button
+          type="button"
+          class="button"
+          :disabled="busy"
+          @click="
+            selected = '';
+            emit('cancel');
+          "
+        >
+          取消
+        </button>
+      </div>
     </form>
   </section>
 </template>
@@ -168,5 +171,17 @@ async function submit() {
   display: grid;
   gap: 8px;
   font-size: 13px;
+}
+</style>
+
+<style scoped>
+.action-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.action-footer .button {
+  width: auto;
+  min-width: 88px;
 }
 </style>

@@ -24,6 +24,15 @@ export function resources(platform: Platform): Resource[] {
   if (platform === 'admin')
     return [
       resource(
+        'service-packages',
+        '服务套餐',
+        p + '/service-packages',
+        'bag',
+        ['name', 'code', 'status'],
+        '基础数据',
+        '配置软件订单可选的服务套餐',
+      ),
+      resource(
         'orders',
         '软件订单',
         p + '/orders',
@@ -237,6 +246,15 @@ export function resources(platform: Platform): Resource[] {
     ];
   if (platform === 'partner')
     return [
+      resource(
+        'service-packages',
+        '服务套餐',
+        p + '/service-packages',
+        'bag',
+        ['name', 'code', 'status'],
+        '基础数据',
+        '配置软件订单可选的服务套餐',
+      ),
       resource(
         'orders',
         '我的订单',

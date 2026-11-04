@@ -221,8 +221,8 @@ onBeforeUnmount(() => generation++);
         >
       </div>
       <div class="progress-line">
-        <span>项目完成度</span
-        ><progress :value="progress" max="100" :aria-label="`项目完成度${progress}%`"></progress
+        <span>项目阶段进度</span
+        ><progress :value="progress" max="100" :aria-label="`项目阶段进度${progress}%`"></progress
         ><span>{{ progress }}%</span>
       </div>
     </article>

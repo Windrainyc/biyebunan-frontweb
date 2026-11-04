@@ -79,6 +79,7 @@ export const labels: Record<string, string> = {
   source: '来源',
   note: '备注',
   requirements: '项目需求',
+  requirementAssetIds: '需求附件',
   deliveryDate: '交付日期',
   stage: '当前阶段',
   progress: '完成进度',

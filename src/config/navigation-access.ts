@@ -4,6 +4,14 @@ import type { Platform } from '../types/api';
 export function utilityNavigation(platform: Platform, permissions: readonly string[]) {
   const definitions = [
     {
+      key: 'activity',
+      title: '埋点数据',
+      icon: 'activity',
+      method: 'GET',
+      endpoint: '/admin/activity',
+      platforms: ['admin'],
+    },
+    {
       key: 'search',
       title: '知识检索',
       icon: 'book',

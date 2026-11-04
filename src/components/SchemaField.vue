@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { defineAsyncComponent } from 'vue';
 const KnowledgeEditor = defineAsyncComponent(() => import('./KnowledgeEditor.vue'));
+import RequirementFiles from './RequirementFiles.vue';
 import MaterialField from './MaterialField.vue';
 import AppSelect from './AppSelect.vue';
 import type { Schema } from '../types/api';
@@ -24,8 +25,13 @@ function required() {
 }
 </script>
 <template>
+  <RequirementFiles
+    v-if="context === 'projects' && field.key === 'requirementAssetIds'"
+    :model-value="modelValue"
+    @update:model-value="emit('update:modelValue', $event)"
+  />
   <KnowledgeEditor
-    v-if="context === 'contents' && field.key === 'markdown'"
+    v-else-if="context === 'contents' && field.key === 'markdown'"
     :model-value="modelValue"
     :max-length="field.maxLength"
     :required="required()"
@@ -47,7 +53,7 @@ function required() {
     保存后可在详情中上传并关联附件，已有附件将保留。
   </p>
   <ReferenceField
-    v-else-if="field.format === 'uuid' || field.type === 'array'"
+    v-else-if="field.key === 'packageCode' || field.format === 'uuid' || field.type === 'array'"
     :model-value="modelValue"
     :field="field.key"
     :context="context"

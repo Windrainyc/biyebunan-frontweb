@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useActivity } from './composables/useActivity';
+useActivity();
 import { useRoute } from 'vue-router';
 const route = useRoute();
 </script>

@@ -30,6 +30,7 @@ const ChatAuditView = page(() => import('./ChatAuditView.vue'));
 const ProfileView = page(() => import('./ProfileView.vue'));
 const OrderBindingView = page(() => import('./OrderBindingView.vue'));
 const NotificationsView = page(() => import('./NotificationsView.vue'));
+const ActivityView = page(() => import('./ActivityView.vue'));
 const StatisticsView = page(() => import('./StatisticsView.vue'));
 const ChatView = page(() => import('./ChatView.vue'));
 const MaterialBrowser = page(() => import('../components/MaterialBrowser.vue'));
@@ -225,6 +226,8 @@ async function exit() {
           v-else-if="platform !== 'admin' && route.params.resource === 'profile'"
         /><OrderBindingView
           v-else-if="platform === 'student' && route.params.resource === 'bind-order'"
+        /><ActivityView
+          v-else-if="platform === 'admin' && route.params.resource === 'activity'"
         /><StatisticsView v-else-if="route.params.resource === 'statistics'" />
         <NotificationsView v-else-if="route.params.resource === 'notifications'" />
         <ChatView

@@ -31,6 +31,9 @@ onMounted(async () => {
 .page:has(#workspace-create-page > .create-page) > :not(#workspace-create-page) {
   display: none !important;
 }
+.create-page:has(~ .create-page) {
+  display: none;
+}
 .create-page {
   max-width: 1080px;
   margin: 0 auto;
@@ -186,5 +189,29 @@ body .workspace .create-page-card input[type='checkbox'] {
 }
 .create-page-card {
   overflow: visible;
+}
+</style>
+
+<style>
+.create-page-heading {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  margin: 0 0 20px;
+}
+.create-page-heading > .button {
+  align-self: flex-start;
+  margin: 0;
+  min-height: 32px;
+  height: 32px;
+  padding: 0 10px;
+  border: 0;
+  background: transparent;
+  color: #536783;
+  font-size: 13px;
+}
+.create-page-heading > .button:hover {
+  background: #eaf3ff;
+  color: #245b9b;
 }
 </style>

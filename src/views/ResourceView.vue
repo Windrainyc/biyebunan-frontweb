@@ -3,6 +3,7 @@ import { listLocation, positivePage } from '../config/list-location';
 import PartnerStudentOrders from '../components/PartnerStudentOrders.vue';
 import AppSelect from '../components/AppSelect.vue';
 import { useRoute, useRouter, onBeforeRouteLeave, onBeforeRouteUpdate } from 'vue-router';
+import RequirementAttachments from '../components/RequirementAttachments.vue';
 import WorkflowPage from '../components/WorkflowPage.vue';
 import { recordActions } from '../config/record-actions';
 import CreatePage from '../components/CreatePage.vue';
@@ -159,7 +160,7 @@ function updateField(key: string, value: unknown) {
   form.value[key] = value;
 }
 const detailFields = computed(() => {
-  const excluded = ['id', 'version'];
+  const excluded = ['id', 'version', 'requirementAssetIds'];
   if (['knowledge', 'contents'].includes(props.resource.key)) excluded.push('markdown');
   if (props.resource.key === 'projects' && auth.platform === 'partner') excluded.push('milestones');
   return Object.fromEntries(
@@ -294,6 +295,7 @@ const properties = computed(() =>
     .filter(
       ([key, v]) =>
         !v.readOnly &&
+        !(key === 'orderNo' && props.resource.key === 'orders' && !editing.value) &&
         !(key === 'status' && hasStatusAction.value) &&
         !(key === 'schoolId' && props.resource.key === 'majors'),
     )
@@ -375,15 +377,25 @@ async function open(row?: Row) {
       editing.value?.[field.key] ??
       field.default ??
       (field.type === 'boolean' ? false : field.type === 'array' ? [] : '');
+  if (!row && props.resource.key === 'projects') {
+    const date = new Date();
+    date.setDate(date.getDate() + 7);
+    form.value.deliveryDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  }
   if (props.resource.key === 'majors') form.value.schoolId = editing.value?.schoolId ?? null;
   // 仅初始化新增草稿，输入、校验失败和重试均保留用户修改后的代码。
-  if (!row && ['categories', 'tags', 'material-categories'].includes(props.resource.key)) {
+  if (
+    !row &&
+    ['categories', 'tags', 'material-categories', 'service-packages'].includes(props.resource.key)
+  ) {
     const prefix =
       props.resource.key === 'categories'
         ? 'CAT'
         : props.resource.key === 'material-categories'
           ? 'MAT'
-          : 'TAG';
+          : props.resource.key === 'service-packages'
+            ? 'PKG'
+            : 'TAG';
     form.value.code = `${prefix}_${crypto.randomUUID().replaceAll('-', '').toUpperCase()}`;
   }
   if (hasStatusAction.value && fields.value.properties?.status)
@@ -395,6 +407,21 @@ async function open(row?: Row) {
   if (row && route.query.edit !== String(row.id))
     void router.push({ path: route.path, query: { ...listQuery(), edit: String(row.id) } });
 }
+let orderTitleGeneration = 0;
+watch(
+  () => form.value.orderId,
+  async (id) => {
+    const generation = ++orderTitleGeneration;
+    if (!id || editing.value || props.resource.key !== 'projects') return;
+    try {
+      const order = await request<Row>(`/admin/orders/${id}`);
+      if (generation === orderTitleGeneration && form.value.orderId === id)
+        form.value.title = order.title;
+    } catch (e) {
+      if (generation === orderTitleGeneration) error.value = errorText(e);
+    }
+  },
+);
 async function save() {
   saving.value = true;
   error.value = '';
@@ -538,6 +565,7 @@ watch(
   async () => {
     if (route.params.action !== 'new' || typeof route.query.source !== 'string') return;
     const kind = route.query.form;
+    if (route.query.process && kind === 'delivery') return;
     if (props.resource.key === 'projects' && (kind === 'milestone' || kind === 'delivery'))
       await openProjectAction(
         { id: route.query.source },
@@ -622,7 +650,7 @@ const hasStatusTabs = computed(
     </div>
   </Teleport>
   <WorkflowPage
-    v-if="route.query.process && route.params.action !== 'new'"
+    v-if="route.query.process && (route.params.action !== 'new' || route.query.form === 'delivery')"
     :resource="resource"
     @changed="
       load();
@@ -945,7 +973,7 @@ const hasStatusTabs = computed(
               <p v-if="resource.key === 'posts'" class="forum-excerpt">{{ row.body }}</p>
               <p v-else-if="row.description || row.summary">{{ row.description || row.summary }}</p>
               <div v-if="resource.key === 'projects'" class="student-project-progress">
-                <span>项目完成度 {{ row.progress }}%</span
+                <span>项目阶段进度 {{ row.progress }}%</span
                 ><progress
                   :value="Number(row.progress) || 0"
                   max="100"
@@ -1211,7 +1239,9 @@ const hasStatusTabs = computed(
                 v-if="
                   !editing &&
                   field.key === 'code' &&
-                  ['categories', 'tags', 'material-categories'].includes(resource.key)
+                  ['categories', 'tags', 'material-categories', 'service-packages'].includes(
+                    resource.key,
+                  )
                 "
                 class="muted"
                 >已自动生成，可按需修改；业务代码须保持唯一。</small
@@ -1292,23 +1322,11 @@ const hasStatusTabs = computed(
               </dd>
             </div>
           </dl>
-          <section v-if="resource.key === 'projects' && auth.platform === 'partner'">
-            <h3>项目里程碑</h3>
-            <p v-if="!Array.isArray(detail.milestones) || !detail.milestones.length" class="muted">
-              暂无里程碑
-            </p>
-            <article
-              v-for="milestone in (detail.milestones as Row[]) || []"
-              :key="String(milestone.id)"
-              class="card"
-            >
-              <h4>{{ milestone.name }}</h4>
-              <p>
-                计划日期：{{ display(milestone.dueDate) }} · 权重：{{ milestone.weight }}% ·
-                {{ milestone.completed ? '已完成' : '未完成' }}
-              </p>
-            </article>
-          </section>
+
+          <RequirementAttachments
+            v-if="resource.key === 'projects'"
+            :ids="detail.requirementAssetIds"
+          />
           <PartnerStudentOrders
             v-if="auth.platform === 'partner' && resource.key === 'students'"
             :student-id="String(detail.id)"
@@ -1663,5 +1681,39 @@ td {
 .page-jump input {
   width: 72px;
   min-width: 0;
+}
+</style>
+
+<style scoped>
+.actions {
+  min-width: 250px;
+  max-width: 340px;
+}
+.actions .text-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 4px 9px;
+  margin: 3px 2px;
+  border: 1px solid #e3eaf3;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 12px;
+  line-height: 20px;
+  white-space: nowrap;
+  color: #496582;
+}
+.actions .text-button:hover {
+  background: #eef6ff;
+  border-color: #c5dcf4;
+}
+.actions .text-button.row-primary-action {
+  background: #eaf4ff;
+  color: #2766a5;
+  border-color: #d4e6f9;
+}
+.actions .text-button.danger {
+  color: #b94d4d;
 }
 </style>

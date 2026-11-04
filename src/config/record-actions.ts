@@ -9,7 +9,6 @@ const definitions: Record<string, { path: string; title: string; method?: string
     { path: 'orders/{id}/assignment', title: '分配中介' },
   ],
   projects: [
-    { path: 'projects/{id}/milestones', title: '里程碑管理', method: 'GET' },
     { path: 'projects/{id}/deliveries', title: '交付版本管理', method: 'GET' },
     { path: 'projects/{id}/stage', title: '推进项目阶段' },
     { path: 'projects/{id}/acceptance', title: '提交项目验收' },

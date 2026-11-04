@@ -6,13 +6,14 @@ import { display } from '../config/labels';
 import type { Row, Page } from '../types/api';
 import Icon from './Icon.vue';
 import StatusBadge from './StatusBadge.vue';
+import RequirementAttachments from './RequirementAttachments.vue';
 import ProjectDetail from './ProjectDetail.vue';
 import RecordActions from './RecordActions.vue';
 const props = defineProps<{ project: Row }>();
 const emit = defineEmits<{ back: []; changed: [result: Row]; refresh: [] }>();
 const route = useRoute();
 const tab = ref(
-  ['deliveries', 'qa', 'milestones'].includes(String(route.query.section))
+  ['deliveries', 'qa'].includes(String(route.query.section))
     ? String(route.query.section)
     : 'overview',
 );
@@ -20,7 +21,6 @@ const tabs = [
   { key: 'overview', label: '项目概览' },
   { key: 'deliveries', label: '交付物' },
   { key: 'qa', label: '答疑记录' },
-  { key: 'milestones', label: '进度里程碑' },
 ];
 const stages = [
   'PENDING',
@@ -84,7 +84,7 @@ function keyboardTab(event: KeyboardEvent, index: number) {
 <template>
   <section class="student-project-space">
     <button class="text-button project-back" @click="emit('back')">
-      <Icon name="left" />我的项目 / 返回项目列表
+      <Icon name="left" />返回项目列表
     </button>
     <header>
       <div>
@@ -104,7 +104,7 @@ function keyboardTab(event: KeyboardEvent, index: number) {
     <section class="project-progress-overview" aria-label="项目进度">
       <div>
         <div class="project-progress-caption">
-          <strong>{{ progress }}%</strong><span>项目完成度</span
+          <strong>{{ progress }}%</strong><span>项目阶段进度</span
           ><StatusBadge :value="project.stage" />
         </div>
         <ol class="project-stage-track">
@@ -168,12 +168,11 @@ function keyboardTab(event: KeyboardEvent, index: number) {
               <dd>{{ progress }}%</dd>
             </div>
           </dl>
-          <p v-if="project.description" class="project-description">{{ project.description }}</p>
+          <p v-if="project.requirements" class="project-description">{{ project.requirements }}</p>
+          <RequirementAttachments :ids="project.requirementAssetIds" />
           <div class="project-panel-actions">
             <button class="button" @click="tab = 'deliveries'">
-              <Icon name="file" />查看交付物</button
-            ><button class="button" @click="tab = 'milestones'">
-              <Icon name="clock" />查看里程碑
+              <Icon name="file" />查看交付物
             </button>
           </div>
           <RecordActions
@@ -221,12 +220,7 @@ function keyboardTab(event: KeyboardEvent, index: number) {
             </button>
           </div></template
         >
-        <ProjectDetail
-          v-else
-          :project="project"
-          :section="tab === 'milestones' ? 'milestones' : 'deliveries'"
-          @changed="emit('refresh')"
-        />
+        <ProjectDetail v-else :project="project" section="deliveries" @changed="emit('refresh')" />
       </section>
       <aside class="project-side-panels">
         <section class="project-side-card">
@@ -250,3 +244,22 @@ function keyboardTab(event: KeyboardEvent, index: number) {
     </div>
   </section>
 </template>
+
+<style scoped>
+.project-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  height: 32px;
+  padding: 0 10px;
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: #536783;
+  border: 0;
+  background: transparent;
+}
+.project-back:hover {
+  background: #eaf3ff;
+}
+</style>

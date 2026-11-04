@@ -43,6 +43,7 @@ const sections = [
     group: '内容与智能',
     keys: ['statistics', 'exports'],
   },
+  { key: 'activity', title: '用户活动', icon: 'activity', group: '内容与智能', keys: ['activity'] },
   {
     key: 'settings',
     title: '基础数据配置',
@@ -51,6 +52,7 @@ const sections = [
     keys: [
       'materials',
       'material-categories',
+      'service-packages',
       'schools',
       'majors',
       'menus',

@@ -45,6 +45,8 @@ const query = ref(''),
   error = ref(''),
   busy = ref(false);
 const resource: Record<string, string> = {
+  packageCode: 'service-packages',
+  userId: 'users',
   materialCategoryId: 'material-categories',
   schoolId: 'schools',
   majorId: 'majors',
@@ -81,7 +83,7 @@ const path = computed(() => {
 });
 const supported = computed(() => !!resource[props.field] && !!operation('GET', path.value));
 function value(row: Row) {
-  return String(props.field === 'permissionCodes' ? row.code : row.id);
+  return String(['permissionCodes', 'packageCode'].includes(props.field) ? row.code : row.id);
 }
 function title(row: Row) {
   return String(
@@ -129,6 +131,9 @@ async function load() {
         size: 20,
         q: query.value,
         ...props.filters,
+        ...(props.field === 'packageCode' && auth.platform === 'admin'
+          ? { status: 'ENABLED' }
+          : {}),
         ...(props.field === 'studentId' && auth.platform === 'admin'
           ? { platform: 'student' }
           : props.field === 'partnerId'
@@ -155,7 +160,7 @@ watch(
     if (!detail || (detail.permission && !auth.permissions.includes(detail.permission))) return;
     const ids = [...selected.value];
     for (const id of ids) {
-      if (selectedTitles.value[id]) continue;
+      if (selectedTitles.value[id] || props.field === 'packageCode') continue;
       try {
         const row = await request<Row>(base + '/' + encodeURIComponent(id));
         if (base === path.value && selected.value.includes(id))

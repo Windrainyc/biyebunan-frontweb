@@ -494,7 +494,7 @@ onBeforeUnmount(() => {
         <progress
           :value="Number(contextProject.progress) || 0"
           max="100"
-          aria-label="项目完成度"
+          aria-label="项目阶段进度"
         ></progress
         ><RouterLink to="/student/projects" class="text-button"
           >查看项目资料 <Icon name="right"
