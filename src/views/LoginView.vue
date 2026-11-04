@@ -32,7 +32,7 @@ async function submit() {
   >
     <section class="login-intro">
       <span class="brand-mark">知</span>
-      <h1 v-if="platform === 'student'">从第一个问题，<br />到最后一次交付。</h1>
+      <h1 v-if="platform === 'student'">每一点好奇，<br />都值得向前一步。</h1>
       <h1 v-else-if="platform === 'admin'">有序运营，<br />让每次交付值得信赖。</h1>
       <h1 v-else>每个项目，<br />都有清晰的下一步。</h1>
       <p>让项目有进度，让问题有答案。</p>
@@ -45,6 +45,13 @@ async function submit() {
               : '项目资料、知识检索与在线答疑，在这里汇集。'
         }}
       </p>
+      <div v-if="platform === 'student'" class="student-mascots">
+        <span
+          v-for="n in [5, 7, 0]"
+          :key="n"
+          :style="{ backgroundPosition: `${(n % 5) * 25}% ${n > 4 ? 100 : 0}%` }"
+        />
+      </div>
     </section>
     <form class="login-card" @submit.prevent="submit">
       <h2>
@@ -53,7 +60,7 @@ async function submit() {
             ? '登录管理后台'
             : platform === 'partner'
               ? '登录中介协作平台'
-              : '登录学生平台'
+              : '开启今天的进步'
         }}
       </h2>
       <p class="muted">请使用所属平台的账户登录</p>
@@ -177,5 +184,65 @@ async function submit() {
   justify-content: space-between;
   font-size: 13px;
   color: #2c4bdb;
+}
+.student-login {
+  background: white;
+}
+.student-login .login-intro {
+  background: #edf2ff;
+  color: #19243b;
+  padding: 8vh 10%;
+}
+.student-login .login-intro h1 {
+  font:
+    700 clamp(32px, 3.5vw, 56px) / 1.25 -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+  letter-spacing: -1px;
+}
+.student-login .login-intro p {
+  color: #697c9c;
+}
+.student-login .login-card {
+  border: 0;
+  border-radius: 0;
+  padding: 25px;
+  width: min(400px, 90%);
+}
+.student-login .login-card h2 {
+  font-family: inherit;
+  font-size: 28px;
+}
+.student-mascots {
+  display: flex;
+  gap: 12px;
+  margin-top: 40px;
+}
+.student-mascots span {
+  display: block;
+  width: 100px;
+  height: 100px;
+  border: 4px solid white;
+  border-radius: 50%;
+  background-image: url('/avatars/students.png');
+  background-size: 500% 200%;
+}
+.student-mascots span:nth-child(2) {
+  transform: translateY(20px);
+}
+@media (max-width: 720px) {
+  .student-login .login-intro {
+    padding: 28px;
+  }
+  .student-mascots {
+    margin-top: 18px;
+  }
+  .student-mascots span {
+    width: 65px;
+    height: 65px;
+  }
+  .student-mascots span:nth-child(2) {
+    transform: none;
+  }
 }
 </style>

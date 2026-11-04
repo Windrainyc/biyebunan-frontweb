@@ -1,12 +1,15 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref } from 'vue';
+import { computed, onMounted, onBeforeUnmount, ref } from 'vue';
 import { ApiError, auth, request, errorText } from '../api/client';
-import { display } from '../config/labels';
 import { writeAttempt } from '../api/attempt';
 import type { Row, User } from '../types/api';
 import ReferenceField from '../components/ReferenceField.vue';
 import StatusBadge from '../components/StatusBadge.vue';
-import Icon from '../components/Icon.vue';
+import CompactDialog from '../components/CompactDialog.vue';
+import UserAvatar from '../components/UserAvatar.vue';
+import AssetUpload from '../components/AssetUpload.vue';
+import ReferenceName from '../components/ReferenceName.vue';
+import QuotaChart from '../components/QuotaChart.vue';
 const profile = ref<Row | null>(null),
   name = ref(''),
   school = ref(''),
@@ -23,6 +26,34 @@ const quota = ref<Row | null>(null),
 const membership = ref<Row | null>(null),
   membershipLoading = ref(false),
   membershipError = ref('');
+const avatarIndex = ref(0),
+  avatarAssetId = ref<string | null>(null),
+  avatarUploading = ref(false);
+const editing = ref(false);
+const remainingDays = computed(() =>
+  membership.value
+    ? Math.max(
+        0,
+        Math.ceil((Date.parse(String(membership.value.expiresAt)) - Date.now()) / 86400000),
+      )
+    : 0,
+);
+function closeEditor() {
+  if (busy.value || avatarUploading.value) return;
+  if (
+    profile.value &&
+    (name.value !== String(profile.value.displayName || '') ||
+      school.value !== String(profile.value.schoolId || '') ||
+      major.value !== String(profile.value.majorId || '') ||
+      avatarIndex.value !== Number(profile.value.avatarIndex || 0) ||
+      avatarAssetId.value !==
+        (profile.value.avatarAssetId ? String(profile.value.avatarAssetId) : null)) &&
+    !window.confirm('还有未保存的资料，确定放弃修改？')
+  )
+    return;
+  editing.value = false;
+  void loadProfile();
+}
 const attempt = writeAttempt();
 let disposed = false;
 async function loadProfile() {
@@ -35,6 +66,8 @@ async function loadProfile() {
     if (disposed) return;
     profile.value = value;
     name.value = String(value.displayName || '');
+    avatarIndex.value = Number(value.avatarIndex || 0);
+    avatarAssetId.value = value.avatarAssetId ? String(value.avatarAssetId) : null;
     school.value = String(value.schoolId || '');
     major.value = String(value.majorId || '');
     conflict.value = false;
@@ -81,7 +114,13 @@ async function save() {
   notice.value = '';
   conflict.value = false;
   try {
-    const body = { displayName: name.value.trim(), schoolId: school.value, majorId: major.value };
+    const body = {
+      displayName: name.value.trim(),
+      schoolId: school.value,
+      majorId: major.value,
+      avatarIndex: avatarIndex.value,
+      avatarAssetId: avatarAssetId.value,
+    };
     const updated = await request<User>(`/${auth.platform}/me`, {
       method: 'PUT',
       body,
@@ -92,6 +131,7 @@ async function save() {
     profile.value = updated as unknown as Row;
     auth.user = updated;
     notice.value = '资料已更新';
+    editing.value = false;
   } catch (e) {
     if (!disposed) {
       error.value = errorText(e);
@@ -114,132 +154,190 @@ onBeforeUnmount(() => {
 </script>
 <template>
   <section class="account-page">
-    <header class="account-heading">
-      <p class="eyebrow">账户与身份</p>
-      <h1>我的账户</h1>
-      <p class="muted">
-        {{
-          auth.platform === 'student'
-            ? '管理个人资料，查看会员状态与可用额度。'
-            : '完善协作资料，保持院校与专业信息准确。'
-        }}
-      </p>
+    <header class="account-heading account-welcome">
+      <UserAvatar :index="auth.user?.avatarIndex" :asset-id="auth.user?.avatarAssetId" :size="88" />
+      <div>
+        <h1>你好，{{ auth.user?.displayName }}</h1>
+        <p class="muted">让成长，有迹可循。</p>
+      </div>
+      <button class="button" :disabled="!profile || profileLoading" @click="editing = true">
+        编辑个人资料
+      </button>
     </header>
-    <div class="account-layout">
-      <aside class="account-aside">
-        <article class="account-identity">
-          <span class="account-avatar">{{ (auth.user?.displayName || '知').slice(0, 1) }}</span>
-          <h2>{{ auth.user?.displayName }}</h2>
-          <p>{{ auth.platform === 'student' ? '学生账户' : '项目中介' }}</p>
+    <p v-if="notice" class="success" role="status">{{ notice }}</p>
+    <p v-if="profileError" class="error" role="alert">
+      {{ profileError }} <button class="button" @click="loadProfile">重试</button>
+    </p>
+    <div class="account-overview">
+      <section class="profile-card">
+        <div class="section-heading">
+          <h2>个人资料</h2>
           <StatusBadge :value="auth.user?.status" />
-          <dl>
-            <dt>绑定手机号</dt>
-            <dd>{{ auth.user?.phoneMasked || '—' }}</dd>
-          </dl>
-          <p class="account-hint"><Icon name="shield" />身份和访问范围由平台管理。</p>
-        </article>
-        <article v-if="auth.platform === 'student'" class="membership-card">
+        </div>
+        <dl class="profile-summary">
+          <div>
+            <dt>昵称</dt>
+            <dd>{{ auth.user?.displayName }}</dd>
+          </div>
+          <div>
+            <dt>手机号</dt>
+            <dd>{{ auth.user?.phoneMasked }}</dd>
+          </div>
+          <div>
+            <dt>账户类型</dt>
+            <dd>{{ auth.platform === 'student' ? '学生账户' : '中介账户' }}</dd>
+          </div>
+          <div>
+            <dt>院校 / 专业</dt>
+            <dd>
+              <ReferenceName field="schoolId" :value="profile?.schoolId" /> /
+              <ReferenceName field="majorId" :value="profile?.majorId" />
+            </dd>
+          </div>
+        </dl>
+      </section>
+      <section v-if="auth.platform === 'student'" class="membership-card">
+        <div class="section-heading">
           <h2>当前会员</h2>
-          <p v-if="membershipLoading" class="muted" role="status">正在读取会员状态…</p>
-          <p v-else-if="membershipError" class="error" role="alert">
-            {{ membershipError }}
-            <button class="button" @click="loadMembership">重试读取会员</button>
-          </p>
-          <template v-else-if="membership"
-            ><StatusBadge :value="membership.state" />
-            <p>
-              {{ display(membership.startsAt) }}<br />至 {{ display(membership.expiresAt) }}
-            </p></template
-          >
-          <p v-else class="muted">当前没有有效会员</p>
-          <p class="account-hint">会员有效期与额度分别管理，可用量以额度账户为准。</p>
-        </article>
-      </aside>
-      <div class="account-main">
-        <section v-if="auth.platform === 'student'" class="account-quota-section">
-          <div class="section-heading">
-            <h2>额度账户</h2>
-            <button class="text-button" :disabled="quotaLoading" @click="loadQuota">
-              <Icon name="refresh" />刷新额度
+          <StatusBadge v-if="membership" :value="membership.state" />
+        </div>
+        <p v-if="membershipLoading" role="status">正在读取会员…</p>
+        <p v-else-if="membershipError" class="error">
+          {{ membershipError }}<button class="text-button" @click="loadMembership">重试</button>
+        </p>
+        <template v-else-if="membership"
+          ><div class="membership-summary">
+            <div>
+              <strong>{{ remainingDays }} <small>天</small></strong
+              ><span>剩余有效期</span>
+            </div>
+            <div>
+              <strong class="membership-date">{{
+                new Date(String(membership.expiresAt)).toLocaleDateString()
+              }}</strong
+              ><span>到期日期</span>
+            </div>
+          </div>
+          <p class="account-hint">
+            {{ new Date(String(membership.startsAt)).toLocaleDateString() }} 开始 ·
+            会员期限与额度独立管理
+          </p></template
+        >
+        <p v-else class="muted">当前没有会员记录</p>
+      </section>
+      <section v-if="auth.platform === 'student'" class="account-quota-section">
+        <div class="section-heading">
+          <h2>我的额度</h2>
+          <button class="text-button" :disabled="quotaLoading" @click="loadQuota">刷新额度</button>
+        </div>
+        <p v-if="quotaLoading" role="status">正在读取额度…</p>
+        <p v-else-if="quotaError" class="error">
+          {{ quotaError }}<button class="text-button" @click="loadQuota">重试</button>
+        </p>
+        <QuotaChart v-else-if="quota" :quota="quota" />
+      </section>
+    </div>
+    <CompactDialog
+      v-if="editing"
+      title="编辑个人资料"
+      wide
+      :busy="busy || avatarUploading"
+      @back="closeEditor"
+    >
+      <form v-if="profile" @submit.prevent="save">
+        <div v-if="auth.platform === 'student'" class="avatar-editor">
+          <div class="avatar-edit-heading">
+            <UserAvatar :index="avatarIndex" :asset-id="avatarAssetId" :size="72" />
+            <div>
+              <h3>个人头像</h3>
+              <p class="account-hint">选择卡通头像，或上传不超过5MB的PNG、JPEG、WebP图片。</p>
+            </div>
+          </div>
+          <div class="default-avatars">
+            <button
+              v-for="i in 10"
+              :key="i"
+              type="button"
+              :aria-label="`选择头像${i}`"
+              :aria-pressed="!avatarAssetId && avatarIndex === i - 1"
+              :disabled="busy || avatarUploading"
+              @click="
+                avatarIndex = i - 1;
+                avatarAssetId = null;
+              "
+            >
+              <UserAvatar :index="i - 1" :size="46" />
             </button>
           </div>
-          <p v-if="quotaLoading" class="muted" role="status">正在读取额度…</p>
-          <p v-else-if="quotaError" class="error" role="alert">
-            {{ quotaError }} <button class="button" @click="loadQuota">重试读取额度</button>
-          </p>
-          <div v-else-if="quota" class="quota">
-            <article>
-              <span>可用词元</span><strong>{{ quota.availableTokens }}</strong>
-            </article>
-            <article>
-              <span>预占词元</span><strong>{{ quota.reservedTokens }}</strong>
-            </article>
-            <article>
-              <span>可用金额（元）</span><strong>{{ quota.availableAmount }}</strong>
-            </article>
-            <article>
-              <span>预占金额（元）</span><strong>{{ quota.reservedAmount }}</strong>
-            </article>
+          <button
+            type="button"
+            class="text-button"
+            :disabled="busy || avatarUploading"
+            @click="
+              avatarIndex = Math.floor(Math.random() * 10);
+              avatarAssetId = null;
+            "
+          >
+            随机选一个
+          </button>
+          <AssetUpload
+            owner-type="PROFILE"
+            :owner-id="String(profile.id)"
+            compact
+            @busy="avatarUploading = $event"
+            @ready="avatarAssetId = String($event.id)"
+          />
+        </div>
+        <fieldset :disabled="busy" class="profile-fields">
+          <label>姓名 <input v-model="name" maxlength="200" required /></label>
+          <label>手机号 <input :value="String(profile.phoneMasked)" readonly /></label>
+          <div>
+            <p>院校 <span aria-hidden="true" class="danger">*</span></p>
+            <ReferenceField
+              v-model="school"
+              dropdown
+              field="schoolId"
+              required
+              aria-label="院校"
+              @update:model-value="major = ''"
+            />
           </div>
-        </section>
-        <section class="profile-card">
-          <h2>个人资料</h2>
-          <p class="account-hint">手机号用于登录和身份核验，在此仅作脱敏展示。</p>
-          <p v-if="profileLoading" class="muted" role="status">正在读取个人资料…</p>
-          <p v-if="profileError" class="error" role="alert">
-            {{ profileError }} <button class="button" @click="loadProfile">重试读取资料</button>
-          </p>
-          <form v-if="profile" @submit.prevent="save">
-            <fieldset :disabled="busy" class="profile-fields">
-              <label>姓名 <input v-model="name" maxlength="200" required /></label>
-              <label>手机号 <input :value="String(profile.phoneMasked)" readonly /></label>
-              <div>
-                <p>院校 <span aria-hidden="true" class="danger">*</span></p>
-                <ReferenceField
-                  v-model="school"
-                  field="schoolId"
-                  required
-                  aria-label="院校"
-                  @update:model-value="major = ''"
-                />
-              </div>
-              <div>
-                <p>专业 <span aria-hidden="true" class="danger">*</span></p>
-                <ReferenceField
-                  v-if="school"
-                  v-model="major"
-                  field="majorId"
-                  :filters="{ schoolId: school }"
-                  required
-                  aria-label="专业"
-                />
-                <p v-else class="profile-select-prompt">请先选择院校，再选择对应专业。</p>
-              </div>
-            </fieldset>
-            <p v-if="error" class="error" role="alert">{{ error }}</p>
-            <p v-if="notice" class="success" role="status">{{ notice }}</p>
-            <p v-if="conflict" class="notice">
-              资料已被更新，请先重新读取后再编辑；重新读取会替换未保存的输入。<button
-                type="button"
-                class="button"
-                @click="loadProfile"
-              >
-                重新读取资料
-              </button>
-            </p>
-            <footer>
-              <span>资料变更将保存到当前账户</span
-              ><button
-                class="button primary"
-                :disabled="busy || conflict || !school || !major || !name.trim()"
-              >
-                {{ busy ? '保存中…' : '保存资料' }}
-              </button>
-            </footer>
-          </form>
-        </section>
-      </div>
-    </div>
+          <div>
+            <p>专业 <span aria-hidden="true" class="danger">*</span></p>
+            <ReferenceField
+              v-if="school"
+              v-model="major"
+              dropdown
+              field="majorId"
+              :filters="{ schoolId: school }"
+              required
+              aria-label="专业"
+            />
+            <p v-else class="profile-select-prompt">请先选择院校，再选择对应专业。</p>
+          </div>
+        </fieldset>
+        <p v-if="error" class="error" role="alert">{{ error }}</p>
+        <p v-if="notice" class="success" role="status">{{ notice }}</p>
+        <p v-if="conflict" class="notice">
+          资料已被更新，请先重新读取后再编辑；重新读取会替换未保存的输入。<button
+            type="button"
+            class="button"
+            @click="loadProfile"
+          >
+            重新读取资料
+          </button>
+        </p>
+        <footer>
+          <span>资料变更将保存到当前账户</span
+          ><button
+            class="button primary"
+            :disabled="busy || avatarUploading || conflict || !school || !major || !name.trim()"
+          >
+            {{ busy ? '保存中…' : '保存资料' }}
+          </button>
+        </footer>
+      </form>
+    </CompactDialog>
   </section>
 </template>
 <style scoped>
@@ -255,7 +353,7 @@ onBeforeUnmount(() => {
 }
 .account-layout {
   display: grid;
-  grid-template-columns: 270px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 24px;
   align-items: start;
 }
@@ -283,7 +381,7 @@ onBeforeUnmount(() => {
   width: 68px;
   height: 68px;
   margin: 2px auto 18px;
-  border-radius: 20px;
+  border-radius: 50%;
   background: #edeffd;
   color: #4051c3;
   font: 32px var(--serif);
@@ -326,8 +424,8 @@ onBeforeUnmount(() => {
   margin: 0 0 10px;
 }
 .membership-card {
-  background: linear-gradient(135deg, #fffdfa, #faf7f0);
-  border-color: #eae4d9;
+  background: #edf2ff;
+  border-color: #dbe5ff;
 }
 .membership-card > p {
   font-size: 12px;
@@ -443,6 +541,122 @@ onBeforeUnmount(() => {
   .account-identity,
   .membership-card {
     padding: 20px;
+  }
+}
+.membership-expiry {
+  display: block;
+  font-size: 27px;
+  font-weight: 650;
+  margin: 20px 0 6px;
+  color: #294783;
+}
+.avatar-edit-heading {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+.avatar-edit-heading h3 {
+  margin: 0;
+}
+.default-avatars {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin: 16px 0;
+}
+.default-avatars button {
+  padding: 3px;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 50%;
+  justify-self: start;
+}
+.default-avatars button[aria-pressed='true'] {
+  border-color: #315cde;
+  background: #edf2ff;
+}
+.avatar-editor {
+  padding-top: 15px;
+}
+.account-welcome {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+.account-welcome button {
+  margin-left: auto;
+}
+.account-welcome h1 {
+  font-family: inherit;
+  font-size: 28px;
+}
+.account-overview h2 {
+  font-family: inherit;
+  font-size: 17px;
+}
+.account-overview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+.profile-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 24px;
+}
+.profile-summary dt {
+  font-size: 12px;
+  color: #8390a5;
+}
+.profile-summary dd {
+  margin: 10px 0 0;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.membership-summary {
+  display: flex;
+  gap: 35px;
+  margin: 32px 0;
+}
+.membership-summary strong {
+  display: block;
+  font-size: 28px;
+  color: #294783;
+}
+.membership-summary span {
+  display: block;
+  font-size: 12px;
+  color: #7d8ba4;
+  margin-top: 10px;
+}
+.membership-summary .membership-date {
+  font-size: 22px;
+  padding-top: 5px;
+}
+.membership-summary small {
+  font-size: 14px;
+}
+@media (max-width: 650px) {
+  .account-overview h2 {
+    font-family: inherit;
+    font-size: 17px;
+  }
+  .account-overview {
+    grid-template-columns: 1fr;
+  }
+  .account-welcome {
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .account-welcome h1 {
+    font-size: 22px;
+  }
+  .account-welcome button {
+    margin-left: 0;
+  }
+  .membership-summary {
+    gap: 24px;
   }
 }
 </style>

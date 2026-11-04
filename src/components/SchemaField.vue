@@ -38,7 +38,10 @@ function required() {
     @update:model-value="emit('update:modelValue', $event)"
   />
   <MaterialField
-    v-else-if="context === 'contents' && ['assetId', 'coverAssetId'].includes(field.key)"
+    v-else-if="
+      (context === 'contents' && ['assetId', 'coverAssetId'].includes(field.key)) ||
+      (context === 'service-packages' && field.key === 'coverAssetId')
+    "
     :model-value="modelValue"
     :kind="
       field.key === 'coverAssetId'

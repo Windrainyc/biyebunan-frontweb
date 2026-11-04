@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import UserAvatar from '../components/UserAvatar.vue';
 import NotificationBell from '../components/NotificationBell.vue';
 import { computed, ref, defineAsyncComponent, watch, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -187,8 +188,11 @@ async function exit() {
             aria-label="账户菜单"
             @click="accountOpen = !accountOpen"
           >
-            <span class="student-avatar">{{ auth.user?.displayName?.slice(0, 1) }}</span
-            ><span class="student-profile-name"
+            <UserAvatar
+              :index="auth.user?.avatarIndex"
+              :asset-id="auth.user?.avatarAssetId"
+              :size="36"
+            /><span class="student-profile-name"
               >{{ auth.user?.displayName }}<small>学生账户</small></span
             ><Icon name="down" />
           </button>

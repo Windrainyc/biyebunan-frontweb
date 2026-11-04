@@ -4,6 +4,7 @@ import { auth, request, errorText } from '../api/client';
 import { writeAttempt } from '../api/attempt';
 import type { Row, Page } from '../types/api';
 import { display } from '../config/labels';
+import KnowledgeReader from './KnowledgeReader.vue';
 import KnowledgeHistory from './KnowledgeHistory.vue';
 import AssetCover from './AssetCover.vue';
 import AssetUpload from './AssetUpload.vue';
@@ -132,7 +133,10 @@ watch(
     <p v-if="error" class="error" role="alert">
       {{ error }} <button class="button" @click="load">重新加载版本</button>
     </p>
-    <MarkdownContent v-if="content.markdown" :text="String(content.markdown)" />
+    <KnowledgeReader
+      v-if="content.markdown && auth.platform === 'student'"
+      :text="String(content.markdown)"
+    /><MarkdownContent v-else-if="content.markdown" :text="String(content.markdown)" />
     <template v-if="content.assetId"
       ><button class="button" @click="download(content.assetId)">下载资料</button
       ><button

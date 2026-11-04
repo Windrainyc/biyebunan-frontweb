@@ -20,6 +20,11 @@ const deliveries = ref<Row[]>([]),
   note = ref(''),
   reason = ref(''),
   busy = ref(false);
+const fileMetadata = ref<Record<string, Row>>({});
+const releaseRows = ref<Row[]>([]),
+  selectedRelease = ref<Row | null>(null),
+  legacyFiles = ref(false),
+  versionLabel = ref('v1.0.0');
 const deliveryPage = ref(1),
   deliveryTotal = ref(0),
   loading = ref(false);
@@ -45,12 +50,47 @@ async function load() {
   deliveryTotal.value = 0;
   try {
     const d = await request<Page<Row>>(
-      `/${auth.platform}/projects/${props.project.id}/deliveries`,
+      `/${auth.platform}/projects/${props.project.id}/${auth.platform === 'admin' && !legacyFiles.value ? 'delivery-releases' : 'deliveries'}`,
       { query: { page: deliveryPage.value, size: pageSize } },
     );
     if (generation !== loadGeneration) return;
     deliveryTotal.value = d.total;
-    deliveries.value = d.items;
+    selectedRelease.value = null;
+    if (auth.platform === 'admin' && !legacyFiles.value) {
+      releaseRows.value = d.items;
+      if (deliveryPage.value === 1) {
+        const latest = String(d.items[0]?.label || '');
+        const match = latest.match(/^v(\d+)\.(\d+)\.(\d+)$/);
+        versionLabel.value = match ? `v${match[1]}.${match[2]}.${Number(match[3]) + 1}` : 'v1.0.0';
+      }
+    } else deliveries.value = d.items;
+  } catch (e) {
+    if (generation === loadGeneration) error.value = errorText(e);
+  } finally {
+    if (generation === loadGeneration) loading.value = false;
+  }
+}
+async function openRelease(row: Row) {
+  const generation = ++loadGeneration;
+  loading.value = true;
+  error.value = '';
+  deliveries.value = [];
+  selectedRelease.value = row;
+  try {
+    const files = await request<Row[]>(
+      `/admin/projects/${props.project.id}/delivery-releases/${row.id}`,
+    );
+    if (generation === loadGeneration) deliveries.value = files;
+    const metadata = await Promise.allSettled(
+      files.map((file) => request<Row>(`/admin/assets/${file.assetId}`)),
+    );
+    if (generation === loadGeneration) {
+      fileMetadata.value = Object.fromEntries(
+        metadata.flatMap((result, index) =>
+          result.status === 'fulfilled' ? [[String(files[index]?.assetId), result.value]] : [],
+        ),
+      );
+    }
   } catch (e) {
     if (generation === loadGeneration) error.value = errorText(e);
   } finally {
@@ -63,6 +103,7 @@ async function add() {
   try {
     const body = {
       note: note.value,
+      label: versionLabel.value,
       files: Object.entries(batchFiles.value).map(([kind, file]) => ({
         kind,
         assetId: file.id,
@@ -143,13 +184,76 @@ onMounted(load);
     </p>
     <p v-if="loading" class="muted" role="status">正在加载项目资料…</p>
     <div class="delivery-content">
-      <h3>交付版本</h3>
-      <p v-if="!loading && !error && !deliveries.length" class="muted">暂无可查看的交付版本</p>
+      <div class="release-toolbar">
+        <h3>{{ selectedRelease ? selectedRelease.label + ' · 版本文件' : '交付版本' }}</h3>
+        <button v-if="selectedRelease" class="text-button" @click="load">← 返回版本列表</button>
+        <button
+          v-else-if="auth.platform === 'admin'"
+          class="text-button"
+          @click="
+            legacyFiles = !legacyFiles;
+            deliveryPage = 1;
+            load();
+          "
+        >
+          {{ legacyFiles ? '返回版本列表' : '按文件查看历史记录' }}
+        </button>
+      </div>
+      <div
+        v-if="auth.platform === 'admin' && !legacyFiles && !selectedRelease"
+        class="release-table-wrap"
+      >
+        <table class="release-table">
+          <thead>
+            <tr>
+              <th>版本号</th>
+              <th>更新说明</th>
+              <th>发布时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="release in releaseRows" :key="String(release.id)">
+              <td>
+                <button class="text-button" @click="openRelease(release)">
+                  {{ release.label }}
+                </button>
+              </td>
+              <td>{{ release.note }}</td>
+              <td>{{ display(release.createdAt) }}</td>
+              <td><button class="text-button" @click="openRelease(release)">查看文件 →</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <p v-if="!loading && !error && !releaseRows.length" class="muted">暂无发布版本</p>
+      </div>
+      <p
+        v-if="
+          !loading &&
+          !error &&
+          !deliveries.length &&
+          (auth.platform !== 'admin' || legacyFiles || selectedRelease)
+        "
+        class="muted"
+      >
+        暂无可查看的交付版本
+      </p>
       <article v-for="d in deliveries" :key="String(d.id)" class="delivery">
         <div>
           <strong>{{ kinds[String(d.kind)] || '交付文件' }}</strong
           ><span>第{{ d.releaseNumber || d.versionNumber }}版 · {{ display(d.state) }}</span>
         </div>
+        <p v-if="selectedRelease">
+          {{ fileMetadata[String(d.assetId)]?.filename || '文件信息暂不可用' }}
+          <template v-if="fileMetadata[String(d.assetId)]">
+            ·
+            {{
+              (Number(fileMetadata[String(d.assetId)]?.size || 0) / 1024).toFixed(1)
+            }}
+            KB</template
+          >
+          · {{ d.releaseId === selectedRelease.id ? '本次更新' : '沿用先前版本' }}
+        </p>
         <p>{{ d.note }}</p>
         <button class="button" @click="download(d)">下载文件</button
         ><a
@@ -176,7 +280,7 @@ onMounted(load);
           </button></template
         >
       </article>
-      <div class="detail-pagination" aria-label="交付版本分页">
+      <div v-if="!selectedRelease" class="detail-pagination" aria-label="交付版本分页">
         <span>共 {{ deliveryTotal }} 条 · 第 {{ deliveryPage }} 页</span>
         <button
           class="button"
@@ -200,7 +304,9 @@ onMounted(load);
         </button>
       </div>
       <template v-if="auth.platform === 'admin'"
-        ><label>发布或撤回原因<input v-model="reason" maxlength="200" /></label>
+        ><label v-if="selectedRelease || legacyFiles"
+          >发布或撤回原因<input v-model="reason" maxlength="200"
+        /></label>
         <button class="button primary" @click="deliveryRoute.open({ source: String(project.id) })">
           新增交付版本
         </button>
@@ -213,6 +319,14 @@ onMounted(load);
         >
           <p v-if="error" class="error" role="alert">{{ error }}</p>
           <form class="release-form" @submit.prevent="add">
+            <label
+              >版本号<input
+                v-model="versionLabel"
+                pattern="v[0-9]{1,6}\.[0-9]{1,6}\.[0-9]{1,6}"
+                required
+                maxlength="24"
+              /><small>默认递增末位，可自行修改。首版为 v1.0.0。</small></label
+            >
             <div v-for="(title, value) in kinds" :key="value" class="release-file-row">
               <strong class="release-kind">{{ title }}</strong>
               <div>
@@ -296,6 +410,35 @@ label {
   gap: 8px;
   font-size: 13px;
 }
+.release-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.release-table-wrap {
+  overflow-x: auto;
+}
+.release-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.release-table th,
+.release-table td {
+  padding: 16px 12px;
+  border-bottom: 1px solid #e9edf4;
+  text-align: left;
+}
+.release-table th {
+  background: #f7f9fc;
+  color: #7c899d;
+  font-weight: 500;
+}
+.release-table td:nth-child(2) {
+  max-width: 380px;
+  overflow-wrap: anywhere;
+}
 </style>
 
 <style scoped>
@@ -321,6 +464,35 @@ label {
     gap: 8px;
   }
 }
+.release-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.release-table-wrap {
+  overflow-x: auto;
+}
+.release-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.release-table th,
+.release-table td {
+  padding: 16px 12px;
+  border-bottom: 1px solid #e9edf4;
+  text-align: left;
+}
+.release-table th {
+  background: #f7f9fc;
+  color: #7c899d;
+  font-weight: 500;
+}
+.release-table td:nth-child(2) {
+  max-width: 380px;
+  overflow-wrap: anywhere;
+}
 </style>
 
 <style scoped>
@@ -338,5 +510,34 @@ label {
 }
 .release-form .release-file-row :deep(.upload-compact) {
   max-width: 650px;
+}
+.release-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.release-table-wrap {
+  overflow-x: auto;
+}
+.release-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.release-table th,
+.release-table td {
+  padding: 16px 12px;
+  border-bottom: 1px solid #e9edf4;
+  text-align: left;
+}
+.release-table th {
+  background: #f7f9fc;
+  color: #7c899d;
+  font-weight: 500;
+}
+.release-table td:nth-child(2) {
+  max-width: 380px;
+  overflow-wrap: anywhere;
 }
 </style>

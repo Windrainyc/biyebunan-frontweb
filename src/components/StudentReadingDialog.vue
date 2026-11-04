@@ -41,7 +41,11 @@ const emit = defineEmits<{ close: []; changed: [] }>();
         </button>
       </header>
       <div class="knowledge-reader-scroll">
-        <div class="knowledge-reader-cover" :class="{ 'forum-reader-cover': kind === 'forum' }">
+        <div
+          v-if="kind === 'forum'"
+          class="knowledge-reader-cover"
+          :class="{ 'forum-reader-cover': kind === 'forum' }"
+        >
           <p class="eyebrow">
             {{ kind === 'forum' ? '交流讨论' : display(content.type) + '资料' }}
           </p>
@@ -49,6 +53,7 @@ const emit = defineEmits<{ close: []; changed: [] }>();
           <p>更新于 {{ display(content.updatedAt) }}</p>
         </div>
         <ContentOutline
+          v-if="kind === 'forum'"
           :text="String(kind === 'forum' ? content.body || '' : content.markdown || '')"
         />
         <template v-if="kind === 'forum'"

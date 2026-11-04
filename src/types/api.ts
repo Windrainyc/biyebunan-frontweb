@@ -1,6 +1,8 @@
 /** 平台值仅来自固定入口与服务端响应，不能充当授权依据。 */
 export type Platform = 'admin' | 'student' | 'partner';
 export interface User {
+  avatarIndex?: number;
+  avatarAssetId?: string | null;
   id: string;
   version: number;
   displayName: string;

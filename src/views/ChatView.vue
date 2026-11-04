@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import QuotaChart from '../components/QuotaChart.vue';
 import AppSelect from '../components/AppSelect.vue';
 import { useRoute } from 'vue-router';
 import Icon from '../components/Icon.vue';
 import { display } from '../config/labels';
-import { onMounted, onBeforeUnmount, ref, computed } from 'vue';
+import { onMounted, onBeforeUnmount, ref, computed, watch } from 'vue';
 import { auth, ApiError, request, errorText } from '../api/client';
 import { writeAttempt } from '../api/attempt';
 import { events } from '../api/stream';
@@ -38,6 +39,20 @@ const conversations = ref<Row[]>([]),
   error = ref(''),
   busy = ref(false),
   disconnected = ref(false);
+const quota = ref<Row | null>(null),
+  quotaError = ref('');
+let quotaDisposed = false;
+async function refreshQuota() {
+  try {
+    const value = await request<Row>('/student/quota');
+    if (!quotaDisposed) {
+      quota.value = value;
+      quotaError.value = '';
+    }
+  } catch (e) {
+    if (!quotaDisposed) quotaError.value = errorText(e);
+  }
+}
 const conversationSearch = ref('');
 let catalogGeneration = 0;
 async function searchConversations() {
@@ -279,8 +294,15 @@ async function cancel() {
     error.value = errorText(e);
   }
 }
-onMounted(initialize);
+onMounted(() => {
+  initialize();
+  void refreshQuota();
+});
+watch(busy, (value, previous) => {
+  if (previous && !value) void refreshQuota();
+});
 onBeforeUnmount(() => {
+  quotaDisposed = true;
   disposed = true;
   historyState.dispose();
   controller?.abort();
@@ -335,10 +357,17 @@ onBeforeUnmount(() => {
           }}
         </p>
       </div>
-      <RouterLink to="/student/profile" class="text-button">查看账户与可用额度</RouterLink>
+      <section class="chat-quota">
+        <h3>我的额度</h3>
+        <QuotaChart v-if="quota" :quota="quota" compact />
+        <p v-if="quotaError" class="error">
+          {{ quotaError }}<button class="text-button" @click="refreshQuota">重试</button>
+        </p>
+        <RouterLink to="/student/profile" class="text-button">查看额度账户 →</RouterLink>
+      </section>
     </aside>
     <div class="student-chat-main">
-      <h1>智能答疑</h1>
+      <h1>你的学习搭子</h1>
       <p class="muted">围绕项目提问，回答与用量均会保存。关闭页面不会自动取消正在执行的答疑。</p>
       <p v-if="error" class="error" role="alert">{{ error }}</p>
       <p v-if="source" class="notice">
@@ -577,5 +606,63 @@ onBeforeUnmount(() => {
 }
 .question-templates small {
   width: 100%;
+}
+</style>
+
+<style scoped>
+.student-chat-sidebar {
+  background: #f0f3f9;
+  border: 0;
+  border-radius: 14px;
+  padding: 20px 16px;
+}
+.student-chat-main {
+  background: white;
+  border: 1px solid #e6ebf3;
+  border-radius: 16px;
+  padding: 24px;
+  min-width: 0;
+}
+.student-chat-main h1 {
+  font-size: 24px;
+  font-family: inherit;
+  margin: 0 0 10px;
+}
+.student-chat-main > p.muted {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #8793a7;
+}
+.chat-quota {
+  background: white;
+  padding: 15px;
+  border-radius: 12px;
+  margin-top: auto;
+}
+.chat-quota h3 {
+  margin: 0;
+  font-size: 13px;
+}
+.chat-quota .text-button {
+  display: block;
+  margin-top: 14px;
+  font-size: 12px;
+}
+.student-chat-context {
+  background: #f8faff;
+  border-color: #e5eaf4;
+  border-radius: 14px;
+}
+.student-conversation-list button {
+  border-radius: 8px;
+}
+.student-conversation-list button.selected {
+  background: white;
+  color: #315cde;
+}
+@media (max-width: 650px) {
+  .student-chat-main {
+    padding: 16px;
+  }
 }
 </style>

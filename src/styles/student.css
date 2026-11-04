@@ -689,34 +689,6 @@ body .student-workspace .student-chat-main .composer {
   accent-color: #4c50c9;
   margin-bottom: 18px;
 }
-body .student-login.login-page {
-  grid-template-columns: 1.05fr 1fr;
-  background: #fbfcfe;
-}
-body .student-login .login-intro {
-  padding: 44px 64px;
-  min-height: 100vh;
-}
-body .student-login .login-intro h1 {
-  font:
-    500 clamp(32px, 3.2vw, 48px) / 1.6 'Songti SC',
-    'STSong',
-    serif;
-  margin-top: 70px;
-}
-body .student-login .login-card {
-  width: min(360px, 85%);
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-}
-body .student-login .login-card h2 {
-  font:
-    600 32px 'Songti SC',
-    'STSong',
-    serif;
-}
 @media (max-width: 1000px) {
   .student-chat-layout {
     grid-template-columns: 200px minmax(0, 1fr);
@@ -733,17 +705,6 @@ body .student-login .login-card h2 {
     max-height: 250px;
     overflow: auto;
     border-bottom: 1px solid #e5e8ef;
-  }
-  body .student-login.login-page {
-    grid-template-columns: 1fr;
-  }
-  body .student-login .login-intro {
-    min-height: 0;
-    padding: 28px;
-  }
-  body .student-login .login-intro h1 {
-    margin-top: 24px;
-    font-size: 30px;
   }
 }
 .student-project-space > header {

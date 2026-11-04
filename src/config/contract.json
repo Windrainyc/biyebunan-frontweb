@@ -132,6 +132,10 @@
           "type": "string",
           "minLength": 1,
           "maxLength": 1000
+        },
+        "label": {
+          "type": ["string", "null"],
+          "pattern": "^v[0-9]{1,6}\\.[0-9]{1,6}\\.[0-9]{1,6}$"
         }
       }
     },
@@ -180,6 +184,14 @@
         "status": {
           "type": "string",
           "enum": ["ENABLED", "DISABLED"]
+        },
+        "details": {
+          "type": ["string", "null"],
+          "maxLength": 20000
+        },
+        "coverAssetId": {
+          "type": ["string", "null"],
+          "format": "uuid"
         }
       },
       "required": ["name", "code", "status"]
@@ -220,6 +232,14 @@
         "status": {
           "type": "string",
           "enum": ["ENABLED", "DISABLED"]
+        },
+        "details": {
+          "type": ["string", "null"],
+          "maxLength": 20000
+        },
+        "coverAssetId": {
+          "type": ["string", "null"],
+          "format": "uuid"
         }
       },
       "required": ["id", "version", "createdAt", "updatedAt", "name", "code", "status"]
@@ -1588,6 +1608,15 @@
             "description": "资源标识",
             "format": "uuid"
           }
+        },
+        "avatarIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9
+        },
+        "avatarAssetId": {
+          "type": ["string", "null"],
+          "format": "uuid"
         }
       },
       "required": [
@@ -1652,6 +1681,15 @@
         "majorId": {
           "type": "string",
           "description": "资源标识",
+          "format": "uuid"
+        },
+        "avatarIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9
+        },
+        "avatarAssetId": {
+          "type": ["string", "null"],
           "format": "uuid"
         }
       },
@@ -3331,7 +3369,7 @@
       "properties": {
         "ownerType": {
           "type": "string",
-          "enum": ["PROJECT", "KNOWLEDGE", "FORUM", "RECEIPT", "MATERIAL"]
+          "enum": ["PROJECT", "KNOWLEDGE", "FORUM", "RECEIPT", "MATERIAL", "PROFILE"]
         },
         "ownerId": {
           "type": "string",
@@ -6362,6 +6400,60 @@
           "type": "array",
           "items": {
             "$ref": "#/components/schemas/AnnouncementRecipient"
+          }
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        }
+      },
+      "required": ["items", "page", "size", "total"]
+    },
+    "DeliveryRelease": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "projectId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "sequence": {
+          "type": "integer"
+        },
+        "label": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "DeliveryReleasePage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/DeliveryRelease"
           }
         },
         "page": {
@@ -20893,6 +20985,51 @@
         }
       }
     },
+    "GET /admin/projects/{id}/delivery-releases": {
+      "operationId": "get_admin_projects_id_delivery_releases",
+      "summary": "发布批次分页",
+      "permission": "get_admin_projects_id_deliveries",
+      "body": null,
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "description": "资源标识",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1
+          }
+        },
+        {
+          "name": "size",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20
+          }
+        }
+      ],
+      "response": {
+        "$ref": "#/components/schemas/DeliveryReleasePage"
+      }
+    },
     "GET /partner/service-packages": {
       "operationId": "get_partner_service_packages",
       "summary": "下单可选启用套餐",
@@ -21117,6 +21254,40 @@
       },
       "parameters": [],
       "response": null
+    },
+    "GET /admin/projects/{id}/delivery-releases/{releaseId}": {
+      "operationId": "get_admin_projects_id_delivery_releases_releaseId",
+      "summary": "版本文件快照",
+      "permission": "get_admin_projects_id_deliveries",
+      "body": null,
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "description": "资源标识",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "releaseId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "response": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/DeliveryVersion"
+        }
+      }
     }
   }
 }
