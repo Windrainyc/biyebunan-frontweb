@@ -101,6 +101,12 @@ function closeDetail() {
   }
 }
 const props = defineProps<{ resource: Resource }>();
+const tableColumns = computed(() =>
+  props.resource.key === 'orders' && auth.platform === 'admin'
+    ? props.resource.columns.filter((column) => column !== 'orderNo')
+    : props.resource.columns,
+);
+
 const route = useRoute();
 const router = useRouter();
 const creatingPage = computed(() => route.params.action === 'new' && !route.query.form);
@@ -1027,7 +1033,7 @@ const hasStatusTabs = computed(
           <table>
             <thead>
               <tr>
-                <th v-for="column in resource.columns" :key="column">
+                <th v-for="column in tableColumns" :key="column">
                   {{ label(column) }}
                 </th>
                 <th>操作</th>
@@ -1035,9 +1041,28 @@ const hasStatusTabs = computed(
             </thead>
             <tbody>
               <tr v-for="(row, index) in rows" :key="row.id || index">
-                <td v-for="column in resource.columns" :key="column">
+                <td v-for="column in tableColumns" :key="column">
+                  <div
+                    v-if="
+                      column === 'title' && resource.key === 'orders' && auth.platform === 'admin'
+                    "
+                    class="order-cell"
+                  >
+                    <strong>{{ row.title }}</strong
+                    ><small>{{ row.orderNo }}</small>
+                  </div>
+                  <span
+                    v-else-if="column === 'amount' && resource.key === 'orders'"
+                    class="money-cell"
+                    >{{
+                      Number(row.amount).toLocaleString('zh-CN', {
+                        style: 'currency',
+                        currency: String(row.currency || 'CNY'),
+                      })
+                    }}</span
+                  >
                   <StatusBadge
-                    v-if="['state', 'status', 'stage'].includes(column)"
+                    v-else-if="['state', 'status', 'stage'].includes(column)"
                     :value="String(row[column] || '')"
                   /><ReferenceName
                     v-else-if="column.endsWith('Id')"
@@ -1081,7 +1106,7 @@ const hasStatusTabs = computed(
                       })
                     "
                   >
-                    {{ action.title }}
+                    {{ action.title === '变更订单状态' ? '变更状态' : action.title }}
                   </button>
                   <button class="text-button" @click="inspect(row)">查看</button
                   ><button
@@ -1100,7 +1125,7 @@ const hasStatusTabs = computed(
                 </td>
               </tr>
               <tr v-if="!rows.length">
-                <td :colspan="resource.columns.length + 1" class="empty">
+                <td :colspan="tableColumns.length + 1" class="empty">
                   {{
                     loading
                       ? '正在读取数据…'
@@ -1449,6 +1474,27 @@ const hasStatusTabs = computed(
   </section>
 </template>
 <style scoped>
+.order-cell {
+  display: grid;
+  gap: 5px;
+  min-width: 180px;
+  max-width: 300px;
+}
+.order-cell strong {
+  font-size: 13px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.order-cell small {
+  font-size: 11px;
+  color: #98a0ad;
+  overflow-wrap: anywhere;
+}
+.money-cell {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
 .advanced-filters {
   flex-basis: 100%;
   width: 100%;

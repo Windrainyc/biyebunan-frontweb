@@ -83,8 +83,8 @@ onMounted(() => document.addEventListener('fullscreenchange', fullChanged));
 onBeforeUnmount(() => document.removeEventListener('fullscreenchange', fullChanged));
 const days = computed(() => {
   const out: string[] = [];
-  const start = new Date(from.value + 'T00:00:00Z'),
-    end = new Date(to.value + 'T00:00:00Z');
+  const start = new Date((data.value?.from || from.value) + 'T00:00:00Z'),
+    end = new Date((data.value?.to || to.value) + 'T00:00:00Z');
   for (let d = start; d <= end && out.length < 94; d = new Date(d.getTime() + 86400000))
     out.push(d.toISOString().slice(0, 10));
   return out;
@@ -103,25 +103,31 @@ const totals = computed(() => {
 });
 function chart(keys: string[], money = false) {
   return {
-    color: ['#69bbff', '#55d7ba', '#ffc879'],
+    color: ['#002fa7', '#42b3a0', '#e5ad55'],
     backgroundColor: 'transparent',
-    textStyle: { color: '#b7cbe0' },
+    textStyle: { color: '#7a8495' },
     tooltip: { trigger: 'axis' },
-    legend: { textStyle: { color: '#b7cbe0' }, data: keys.map((k) => names[k]) },
+    legend: {
+      top: 0,
+      bottom: 'auto',
+      type: 'scroll',
+      textStyle: { color: '#7a8495' },
+      data: keys.map((k) => names[k]),
+    },
     grid: { left: money ? 65 : 45, right: 22, bottom: 35, top: 45 },
     xAxis: {
       type: 'category',
-      axisLabel: { color: '#b7cbe0' },
+      axisLabel: { color: '#7a8495' },
       data: days.value,
-      axisLine: { lineStyle: { color: '#36516d' } },
+      axisLine: { lineStyle: { color: '#e8ebf0' } },
     },
     yAxis: {
       type: 'value',
-      axisLabel: { color: '#b7cbe0' },
-      nameTextStyle: { color: '#b7cbe0' },
+      axisLabel: { color: '#7a8495' },
+      nameTextStyle: { color: '#7a8495' },
       minInterval: money ? undefined : 1,
       name: money ? '元' : '数量',
-      splitLine: { lineStyle: { color: '#203a53' } },
+      splitLine: { lineStyle: { color: '#eef0f4' } },
     },
     series: keys.map((key) => ({
       name: names[key],
@@ -134,6 +140,20 @@ function chart(keys: string[], money = false) {
     })),
   };
 }
+const overview = computed(() =>
+  ['orders_created', 'receipts_confirmed_amount', 'projects_created', 'delivery_publications'].map(
+    (key) =>
+      totals.value.find((item) => item.metric === key) || {
+        metric: key,
+        value: '0',
+        unit: key.includes('amount') ? 'CNY' : 'COUNT',
+        bucket: '所选期间合计',
+      },
+  ),
+);
+const otherTotals = computed(() =>
+  totals.value.filter((item) => !overview.value.some((main) => main.metric === item.metric)),
+);
 const businessChart = computed(() =>
   chart(['orders_created', 'projects_created', 'delivery_publications']),
 );
@@ -165,31 +185,28 @@ onMounted(load);
   <section ref="screen" class="statistics-screen">
     <header class="screen-heading">
       <div>
-        <p class="screen-kicker">知项 · 运营数据</p>
         <h1>数据统计</h1>
+        <p class="muted">订单、收款与交付的业务概览 · 北京时间</p>
       </div>
-      <button class="button" @click="toggleFull">{{ full ? '退出全屏' : '全屏查看' }}</button>
+      <form class="statistics-range" @submit.prevent="load">
+        <input v-model="from" aria-label="开始日期" type="date" required :max="to" /><span>—</span
+        ><input v-model="to" aria-label="结束日期" type="date" required :min="from" />
+        <button class="button primary" :disabled="busy">查询</button
+        ><button type="button" class="button" @click="toggleFull">
+          {{ full ? '退出全屏' : '全屏查看' }}
+        </button>
+      </form>
     </header>
-    <p class="muted">
-      按北京时间自然日查询，只展示实际产生的数据。<template v-if="auth.platform !== 'partner'"
-        >未知模型费用单独统计。</template
-      >
-    </p>
-    <form class="filters" @submit.prevent="load">
-      <label>开始日期<input v-model="from" type="date" required :max="to" /></label
-      ><label>结束日期<input v-model="to" type="date" required :min="from" /></label
-      ><button class="button primary" :disabled="busy">查询统计</button>
-    </form>
     <p v-if="error" class="error" role="alert">{{ error }}</p>
     <p v-if="busy" class="muted">正在查询统计…</p>
     <p v-if="data" class="muted">
       生成时间：{{ display(data.generatedAt) }} · 数据延迟{{ data.lagSeconds }}秒
     </p>
-    <div class="metric-grid">
-      <article v-for="item in totals" :key="item.metric + item.bucket">
+    <div v-if="data" class="metric-grid">
+      <article v-for="item in overview" :key="item.metric + item.bucket">
         <span>{{ names[item.metric] || '业务指标' }}</span
         ><strong
-          >{{ item.value }}<small>{{ unit(item) }}</small></strong
+          >{{ Number(item.value).toLocaleString('zh-CN') }}<small>{{ unit(item) }}</small></strong
         >
         <p>{{ item.bucket }}</p>
       </article>
@@ -207,10 +224,23 @@ onMounted(load);
         />
         <p class="chart-note">未填写金额的收款核验不计入金额；订单面额不等于实际收入。</p>
       </article>
-      <article class="chart-wide">
+      <article>
         <h2>活跃学生趋势</h2>
         <DataChart :option="activeChart" label="每日创建帖子、评论或答疑调用的去重学生人数" />
         <p class="chart-note">活跃学生按当日创建帖子、评论或答疑调用去重；跨日合计表示人日。</p>
+      </article>
+      <article>
+        <h2>其他业务指标</h2>
+        <div class="extra-metrics">
+          <div v-for="item in otherTotals" :key="item.metric">
+            <span>{{ names[item.metric] || '业务指标' }}</span
+            ><strong
+              >{{ Number(item.value).toLocaleString('zh-CN') }}
+              <small>{{ unit(item) }}</small></strong
+            >
+          </div>
+        </div>
+        <p v-if="!otherTotals.length" class="muted">所选期间暂无其他业务指标</p>
       </article>
     </div>
     <p v-if="data && !data.items.length" class="empty">所选期间暂无统计数据</p>
@@ -218,84 +248,69 @@ onMounted(load);
 </template>
 <style scoped>
 .statistics-screen {
-  background: #0e2034;
-  color: #e6f2ff;
-  padding: 24px;
-  border: 1px solid #29445e;
-  border-radius: 12px;
   min-width: 0;
+  color: #182338;
 }
 .statistics-screen:fullscreen {
   overflow: auto;
-  border-radius: 0;
+  background: #f7f7f8;
   padding: 32px;
 }
 .screen-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-}
-.screen-kicker {
-  font-size: 11px;
-  letter-spacing: 2px;
-  color: #74bfff;
-  margin: 0 0 8px;
+  gap: 20px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 .screen-heading h1 {
-  color: #edf7ff;
+  font-size: 24px;
+  font-weight: 600;
   margin: 0;
 }
 .statistics-screen .muted,
 .chart-note {
-  color: #9cb6d0;
+  color: #7a8495;
   font-size: 12px;
 }
-.filters {
+.screen-heading .muted {
+  margin: 6px 0 0;
+}
+.statistics-range {
   display: flex;
+  align-items: center;
+  gap: 8px;
   flex-wrap: wrap;
-  gap: 12px;
-  align-items: end;
-  margin: 22px 0;
 }
-.statistics-screen .button.primary {
-  color: #173c66;
-  background: #b9dcff;
-  border-color: #8cc4f3;
-}
-.filters label {
-  display: grid;
-  gap: 6px;
-  font-size: 13px;
-}
-.filters input {
-  color: #d7eaff;
-  background: #172e46;
-  border-color: #36516d;
+.statistics-range input {
+  width: 145px;
+  background: white;
+  color: #455066;
 }
 .metric-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
-  gap: 12px;
-  margin-top: 20px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin: 20px 0;
 }
 .metric-grid article,
 .chart-grid article {
-  background: #142b42;
-  border: 1px solid #2b4660;
-  border-radius: 9px;
-  padding: 16px;
+  background: white;
+  border: 1px solid #e8ebf0;
+  border-radius: 8px;
+  padding: 20px;
   min-width: 0;
 }
 .metric-grid span {
   font-size: 12px;
-  color: #aac6df;
+  color: #7a8495;
 }
 .metric-grid strong {
   display: block;
-  font-size: 27px;
-  color: #7ec8ff;
-  margin-top: 12px;
+  font-size: 28px;
+  color: #182338;
+  margin-top: 14px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
@@ -303,38 +318,72 @@ onMounted(load);
 .metric-grid small {
   font-size: 12px;
   margin-left: 6px;
+  color: #7a8495;
+  font-weight: 400;
 }
 .metric-grid p {
   font-size: 11px;
-  color: #85a1bb;
+  color: #98a0ad;
+  margin: 8px 0 0;
 }
 .chart-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1.5fr 1fr;
   gap: 16px;
-  margin-top: 20px;
 }
 .chart-grid h2 {
-  font-size: 15px;
+  font-size: 14px;
+  font-weight: 600;
   margin: 0 0 18px;
-  color: #d7eaff;
-}
-.chart-wide {
-  grid-column: 1/-1;
+  color: #182338;
 }
 .chart-note {
-  margin: 8px 0 0;
+  margin: 10px 0 0;
+  line-height: 1.6;
 }
-@media (max-width: 850px) {
+.extra-metrics > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid #eef0f4;
+  font-size: 12px;
+  color: #7a8495;
+}
+.extra-metrics strong {
+  font-weight: 500;
+  color: #182338;
+}
+.extra-metrics small {
+  font-weight: 400;
+}
+@media (max-width: 1000px) {
+  .chart-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 700px) {
   .chart-grid {
     grid-template-columns: 1fr;
   }
-  .statistics-screen {
+  .metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .metric-grid article {
     padding: 16px;
   }
-  .filters label {
-    flex: 1;
-    min-width: 130px;
+  .statistics-range {
+    width: 100%;
+  }
+  .statistics-range input {
+    width: calc(50% - 20px);
+  }
+  .metric-grid strong {
+    font-size: 24px;
+  }
+  .statistics-screen:fullscreen {
+    padding: 16px;
   }
 }
 </style>

@@ -8,7 +8,7 @@ import AppSelect from './AppSelect.vue';
 import AssetUpload from './AssetUpload.vue';
 import ReferenceField from './ReferenceField.vue';
 const props = defineProps<{ order: Row; mode?: string }>(),
-  emit = defineEmits<{ changed: []; busy: [value: boolean] }>();
+  emit = defineEmits<{ changed: []; busy: [value: boolean]; cancel: [] }>();
 const reference = ref(''),
   receivedAt = ref(''),
   reason = ref(''),
@@ -56,7 +56,7 @@ async function receipt() {
       version: props.order.version,
       key: attempt(body),
     });
-    notice.value = '收款凭证已核验';
+    notice.value = '收款已核验';
     emit('changed');
   } catch (e) {
     error.value = errorText(e);
@@ -85,68 +85,126 @@ async function assign() {
 watch(busy, (value) => emit('busy', value));
 </script>
 <template>
-  <section>
+  <section class="order-operation">
     <p v-if="order.cancellationFinancialReviewRequired" class="notice">
       订单已取消且存在已确认收款，需要核对实际资金处理结果。取消订单不会自动退款。
     </p>
     <p v-if="error" class="error" role="alert">{{ error }}</p>
     <p v-if="notice" class="success" role="status">{{ notice }}</p>
-    <label v-if="canReceipt || canAssign"
-      >备注（选填）<input v-model="reason" maxlength="200" /></label
-    ><template v-if="canReceipt && order.receiptStatus === 'UNCONFIRMED'"
-      ><h3>核验收款凭证</h3>
-      <p class="muted">请核对实际到账情况。以下收款信息均为选填，历史核验记录保留。</p>
-      <AssetUpload owner-type="RECEIPT" :owner-id="String(order.id)" @ready="proof = $event" />
-      <form @submit.prevent="receipt">
-        <label>支付订单号（选填）<input v-model="reference" maxlength="200" /></label
-        ><label>收款时间<input v-model="receivedAt" type="datetime-local" /></label>
+    <form v-if="canReceipt && order.receiptStatus === 'UNCONFIRMED'" @submit.prevent="receipt">
+      <div class="receipt-fields">
         <label
-          >支付渠道（选填）<AppSelect v-model="channel"
-            ><option value="">未填写</option>
+          >支付渠道 <small>选填</small
+          ><AppSelect v-model="channel"
+            ><option value="">请选择支付渠道</option>
             <option value="WECHAT">微信</option>
             <option value="ALIPAY">支付宝</option>
             <option value="BANK_CARD">银行卡</option></AppSelect
           ></label
         >
         <label
-          >支付金额（选填，元）<input
+          >支付金额（元）<small>选填</small
+          ><input
             v-model="amount"
             inputmode="decimal"
             pattern="[0-9]{1,14}(\.[0-9]{1,6})?"
-            placeholder="填写实际到账金额"
+            placeholder="0.00"
         /></label>
-        <button class="button primary" :disabled="busy">确认核验</button>
-      </form></template
-    >
+        <label class="wide"
+          >支付订单号 <small>选填</small
+          ><input v-model="reference" maxlength="200" placeholder="输入支付流水或订单号"
+        /></label>
+        <label class="wide"
+          >收款时间 <small>选填</small><input v-model="receivedAt" type="datetime-local"
+        /></label>
+        <div class="wide">
+          <label>收款凭证 <small>选填</small></label
+          ><AssetUpload
+            compact
+            owner-type="RECEIPT"
+            :owner-id="String(order.id)"
+            @ready="proof = $event"
+          />
+        </div>
+        <label class="wide"
+          >备注 <small>选填</small
+          ><textarea v-model="reason" maxlength="200" placeholder="补充收款说明" />
+        </label>
+      </div>
+      <p class="muted">请核对实际到账情况后确认。</p>
+      <div class="operation-footer">
+        <button type="button" class="button" :disabled="busy" @click="emit('cancel')">取消</button
+        ><button class="button primary" :disabled="busy">确认已收款</button>
+      </div>
+    </form>
     <form v-if="canAssign" @submit.prevent="assign">
-      <h3>项目中介归属</h3>
-      <label class="checkbox"><input v-model="unassigned" type="checkbox" />不分配项目中介</label
-      ><ReferenceField
-        v-if="!unassigned"
-        v-model="partner"
-        field="partnerId"
-        dropdown
-        required
-      /><button class="button primary" :disabled="busy || (!unassigned && !partner)">
-        更新归属
-      </button>
+      <div>
+        <label>负责中介</label
+        ><ReferenceField
+          v-model="partner"
+          @update:model-value="unassigned = false"
+          field="partnerId"
+          dropdown
+          :required="!unassigned"
+        /><label class="checkbox"><input v-model="unassigned" type="checkbox" />不分配中介</label>
+      </div>
+      <label
+        >备注 <small>选填</small
+        ><textarea v-model="reason" maxlength="200" placeholder="补充本次分配说明" />
+      </label>
+      <div class="operation-footer">
+        <button type="button" class="button" :disabled="busy" @click="emit('cancel')">取消</button
+        ><button class="button primary" :disabled="busy || (!unassigned && !partner)">
+          确认分配
+        </button>
+      </div>
     </form>
   </section>
 </template>
 <style scoped>
 form {
   display: grid;
-  gap: 16px;
-  margin-top: 20px;
+  gap: 18px;
+  margin: 0;
+}
+.receipt-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.wide {
+  grid-column: 1/-1;
 }
 label {
-  display: grid;
-  gap: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
   font-size: 13px;
+  align-items: center;
+}
+label > input:not([type='checkbox']),
+label > textarea,
+label > :deep(.app-select) {
+  flex-basis: 100%;
+  margin-top: 3px;
+}
+small {
+  font-size: 11px;
+  color: #9aa2af;
+  font-weight: 400;
 }
 .checkbox {
   display: flex;
   gap: 8px;
   align-items: center;
+  margin-top: 10px;
+  font-size: 12px;
+}
+.muted {
+  margin: 0;
+  font-size: 12px;
+}
+.receipt-fields > div > label {
+  margin-bottom: 7px;
 }
 </style>

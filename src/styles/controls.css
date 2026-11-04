@@ -8,7 +8,7 @@
 body .workspace .button,
 body .workspace .btn {
   min-height: var(--control-height);
-  padding: 9px 16px;
+  padding: calc((var(--control-height) - 22px) / 2) 14px;
   font-size: var(--control-font);
   line-height: 20px;
   border-radius: var(--control-radius);
@@ -23,7 +23,7 @@ body
 body .workspace :is(select, .app-select) {
   height: var(--control-height);
   min-height: var(--control-height);
-  padding: 9px 12px;
+  padding: calc((var(--control-height) - 22px) / 2) 12px;
   font-size: var(--control-font);
   line-height: 20px;
   border-radius: var(--control-radius);

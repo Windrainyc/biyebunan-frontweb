@@ -214,9 +214,10 @@ onMounted(load);
           <p v-if="error" class="error" role="alert">{{ error }}</p>
           <form class="release-form" @submit.prevent="add">
             <div v-for="(title, value) in kinds" :key="value" class="release-file-row">
-              <strong>{{ title }}</strong>
+              <strong class="release-kind">{{ title }}</strong>
               <div>
                 <AssetUpload
+                  compact
                   owner-type="PROJECT"
                   :owner-id="String(project.id)"
                   @ready="batchFiles[String(value)] = $event"
@@ -304,8 +305,9 @@ label {
 }
 .release-file-row {
   display: grid;
-  grid-template-columns: 100px minmax(0, 1fr);
-  gap: 20px;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
   padding-bottom: 16px;
   border-bottom: 1px solid #edf0f4;
 }
@@ -318,5 +320,23 @@ label {
     grid-template-columns: 1fr;
     gap: 8px;
   }
+}
+</style>
+
+<style scoped>
+.release-kind {
+  font-size: 13px;
+  font-weight: 500;
+  color: #455066;
+}
+.release-file-row .success {
+  font-size: 11px;
+  margin: 6px 0;
+}
+.release-form > .muted {
+  font-size: 12px;
+}
+.release-form .release-file-row :deep(.upload-compact) {
+  max-width: 650px;
 }
 </style>

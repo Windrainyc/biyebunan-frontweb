@@ -6,6 +6,7 @@ import type { Row } from '../types/api';
 const props = defineProps<{
   ownerType: 'PROJECT' | 'KNOWLEDGE' | 'FORUM' | 'RECEIPT' | 'MATERIAL';
   ownerId: string;
+  compact?: boolean;
 }>();
 const emit = defineEmits<{ ready: [Row]; busy: [boolean] }>();
 const selected = ref<File>();
@@ -153,7 +154,7 @@ async function upload() {
 }
 </script>
 <template>
-  <div class="upload">
+  <div class="upload" :class="{ 'upload-compact': compact }">
     <label
       class="drop-zone"
       :class="{ dragging, chosen: selected }"
@@ -172,8 +173,12 @@ async function upload() {
           stroke-linejoin="round"
         />
       </svg>
-      <strong>{{ selected ? selected.name : '拖拽文件到这里，或点击选择' }}</strong>
-      <span>{{ selected ? '点击可重新选择文件' : '图片、视频、文档及其他文件 · 最大2GB' }}</span>
+      <strong>{{
+        selected ? selected.name : compact ? '点击选择文件' : '拖拽文件到这里，或点击选择'
+      }}</strong>
+      <span v-if="!compact">{{
+        selected ? '点击可重新选择文件' : '图片、视频、文档及其他文件 · 最大2GB'
+      }}</span>
       <input
         type="file"
         :disabled="busy"
@@ -181,7 +186,7 @@ async function upload() {
         @change="choose(($event.target as HTMLInputElement).files?.[0])"
       />
     </label>
-    <label v-if="selected" class="name-field"
+    <label v-if="selected && !compact" class="name-field"
       >文件名称<input
         v-model="filename"
         maxlength="200"
@@ -189,7 +194,7 @@ async function upload() {
         aria-label="上传文件名称"
       /><small>可在上传前修改名称，请保留正确的文件扩展名。</small></label
     >
-    <ol v-if="selected" class="upload-steps" aria-label="文件处理阶段">
+    <ol v-if="selected && !compact" class="upload-steps" aria-label="文件处理阶段">
       <li :class="{ active: busy && !asset }">上传文件</li>
       <li :class="{ active: asset && asset.state !== 'READY' }">安全检查</li>
       <li :class="{ active: asset?.state === 'READY' }">可使用</li>
@@ -204,7 +209,7 @@ async function upload() {
       :aria-label="message"
     />
     <p v-if="error" class="error" role="alert">{{ error }}</p>
-    <div class="upload-footer">
+    <div v-if="!compact || selected" class="upload-footer">
       <small>文件通过安全扫描后才可关联使用</small
       ><button
         type="button"
@@ -349,5 +354,57 @@ async function upload() {
 .upload-steps .active {
   color: #24559d;
   font-weight: 650;
+}
+</style>
+
+<style scoped>
+.upload-compact .drop-zone {
+  min-height: 44px;
+  flex-direction: row;
+  gap: 9px;
+  padding: 10px 12px;
+  border-radius: 5px;
+  background: #fcfdff;
+  border: 1px dashed #cdd7e7;
+  text-align: left;
+  justify-content: flex-start;
+  transform: none;
+}
+.upload-compact .drop-zone svg {
+  width: 20px;
+  height: 20px;
+}
+.upload-compact .drop-zone img {
+  width: 28px;
+  height: 28px;
+  object-fit: cover;
+}
+.upload-compact .drop-zone strong {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+.upload-compact .upload-footer {
+  margin-top: 7px;
+  gap: 8px;
+  flex-direction: row;
+  align-items: center;
+}
+.upload-compact .upload-footer small {
+  font-size: 10px;
+}
+.upload-compact .upload-footer .button {
+  min-height: 28px;
+  height: 28px;
+  padding: 0 9px;
+  font-size: 11px;
+}
+.upload-compact .upload-status {
+  margin: 7px 0;
+  font-size: 11px;
+}
+.upload-compact .error {
+  font-size: 12px;
 }
 </style>

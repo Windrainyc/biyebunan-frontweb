@@ -102,6 +102,7 @@ function changed() {
         : CreatePage
     "
     :busy="operationBusy"
+    :wide="route.query.operation === 'receipt'"
     :title="action?.title || '业务处理'"
     breadcrumb="业务处理"
     :description="
@@ -112,12 +113,14 @@ function changed() {
     <p v-if="loading" role="status">正在读取最新记录…</p>
     <p v-else-if="error" class="error" role="alert">{{ error }}</p>
     <template v-else-if="record && action">
-      <h2>{{ record.title || record.name || record.code || resource.title }}</h2>
-      <p>
-        当前状态：<StatusBadge
-          :value="String(record.state || record.status || record.stage || '')"
-        />
-      </p>
+      <div class="workflow-summary">
+        <h2>{{ record.title || record.name || record.code || resource.title }}</h2>
+        <p>
+          当前状态：<StatusBadge
+            :value="String(record.state || record.status || record.stage || '')"
+          />
+        </p>
+      </div>
       <ol v-if="resource.key === 'contents'" class="workflow-progress" aria-label="知识发布流程">
         <li
           v-for="step in [
@@ -149,6 +152,7 @@ function changed() {
         :order="record"
         :mode="String(route.query.operation)"
         @busy="operationBusy = $event"
+        @cancel="back"
         @changed="changed"
       />
       <RecordActions

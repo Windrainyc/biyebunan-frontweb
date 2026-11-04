@@ -41,7 +41,7 @@ onBeforeUnmount(() => {
 <template><div ref="el" class="data-chart" role="img" :aria-label="label" /></template>
 <style scoped>
 .data-chart {
-  height: 300px;
+  height: 260px;
   width: 100%;
   min-width: 0;
 }

@@ -1,11 +1,11 @@
 /* 第二版管理/中介原型的独立样式边界，避免改变学生端与表单业务规则。 */
 body .admin-workspace.workspace {
   display: block;
-  background: #f4f5f8;
+  background: #f7f7f8;
 }
 body .admin-workspace .workspace-body {
-  margin-left: 248px;
-  width: calc(100% - 248px);
+  margin-left: 208px;
+  width: calc(100% - 208px);
   padding-top: 68px;
 }
 body .admin-workspace .page {
@@ -45,16 +45,14 @@ body .admin-workspace .page {
 .admin-sidebar {
   position: fixed;
   inset: 0 auto 0 0;
-  width: 248px;
+  width: 208px;
   z-index: 60;
   display: flex;
   flex-direction: column;
   padding: 0 13px 14px;
-  color: #c4cde0;
-  background:
-    radial-gradient(circle at 20% 0, #354e913d, transparent 28%),
-    linear-gradient(180deg, #111b31, #0f182b);
-  border-right: 1px solid #ffffff0f;
+  color: #596477;
+  background: #fff;
+  border-right: 1px solid #e8ebf0;
 }
 .admin-sidebar > .management-brand {
   min-height: 70px;
@@ -111,17 +109,17 @@ body .admin-workspace .page {
   border: 1px solid transparent;
   border-radius: 8px;
   font-size: 12px;
-  color: #aab7ce;
+  color: #596477;
 }
 .admin-sidebar nav a:hover {
-  background: #ffffff09;
-  color: #fff;
+  background: #f5f7fb;
+  color: #002fa7;
 }
 .admin-sidebar nav a.active {
-  color: #fff;
-  background: linear-gradient(110deg, #2b46bd, #2540ac);
-  border-color: #536ed24d;
-  box-shadow: 0 4px 14px #00000012;
+  color: #002fa7;
+  background: #edf3ff;
+  border-color: transparent;
+  box-shadow: none;
 }
 .admin-sidebar nav .ali-icon {
   font-size: 16px;
@@ -183,11 +181,11 @@ body .admin-workspace .page {
   height: 68px;
   z-index: 40;
   border-bottom: 1px solid #e5e8efd9;
-  background: #f4f5f8ed;
+  background: #fff;
   backdrop-filter: blur(16px);
 }
 .admin-topbar {
-  left: 248px;
+  left: 208px;
   right: 0;
   padding: 0 28px;
 }
@@ -339,15 +337,16 @@ body .admin-workspace .page {
   position: fixed;
   z-index: 35;
   top: 68px;
-  left: 276px;
+  left: 240px;
   right: 28px;
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
   gap: 24px;
   min-height: 56px;
   border-bottom: 1px solid #dfe4ed;
-  background: #f4f5f8f5;
+  background: #f7f7f8;
 }
 .admin-section-navigation a {
   display: flex;
@@ -645,7 +644,7 @@ body .admin-workspace .summary-card strong {
 }
 body .partner-workspace.workspace {
   display: block;
-  background: #f4f5f8;
+  background: #f7f7f8;
 }
 body .partner-workspace .workspace-body {
   margin: 0;
@@ -1247,91 +1246,173 @@ body .management-dashboard .dash-heading h1 {
   }
 }
 
-/* 统一管理页密度：主内容优先，保留浅蓝视觉和40px操作尺寸。 */
-body .admin-workspace .page-heading {
-  margin-bottom: 16px;
-  align-items: center;
-}
-body .admin-workspace .page-heading h1 {
+/* 2026-11-04确认稿：管理端统一比例；学生、中介保留各自外壳。 */
+body .admin-workspace {
+  --control-height: 36px;
+  --control-radius: 5px;
+  --control-font: 13px;
+  --form-gap: 20px;
+  --button-primary-bg: #002fa7;
+  --button-primary-border: #002fa7;
+  --button-primary-ink: #fff;
+  --serif: 'Helvetica Neue', Arial, 'PingFang SC', sans-serif;
   font:
-    650 24px/1.4 -apple-system,
-    BlinkMacSystemFont,
+    14px/1.5 'Helvetica Neue',
+    Arial,
     'PingFang SC',
     sans-serif;
-  margin-bottom: 4px;
+  color: #182338;
+}
+.admin-sidebar .management-brand {
+  color: #182338;
+}
+.admin-sidebar .management-brand strong {
+  font: 600 20px/1.5 sans-serif;
+  letter-spacing: 0;
+}
+.admin-sidebar .management-brand small {
+  color: #7a8495;
+  border-color: #e8ebf0;
+}
+.admin-workspace-label {
+  background: #f8f9fb;
+  border-color: #e8ebf0;
+  border-radius: 6px;
+  padding: 10px;
+}
+.admin-workspace-label strong,
+.admin-sidebar-footer strong {
+  color: #455066;
+}
+.admin-workspace-label > .ali-icon,
+.admin-sidebar-footer .management-avatar {
+  background: #edf3ff;
+  color: #002fa7;
+}
+.admin-sidebar-footer {
+  border-color: #e8ebf0;
+}
+body .admin-workspace .page-heading {
+  margin-bottom: 20px;
+  align-items: center;
+}
+body .admin-workspace h1,
+body .admin-workspace .page-heading h1,
+body .admin-workspace .material-heading h1 {
+  font:
+    600 24px/1.4 'Helvetica Neue',
+    Arial,
+    'PingFang SC',
+    sans-serif;
+  margin: 0 0 6px;
+}
+body .admin-workspace h2 {
+  font-family: 'Helvetica Neue', Arial, 'PingFang SC', sans-serif;
 }
 body .admin-workspace .page-heading .eyebrow {
   display: none;
 }
 body .admin-workspace .page-heading .muted {
   margin: 4px 0 0;
+  font-size: 12px;
+  color: #7a8495;
+}
+body .admin-workspace .data-card {
+  border: 1px solid #e8ebf0;
+  border-radius: 8px;
+  box-shadow: none;
 }
 body .admin-workspace table th {
-  font-size: 13px;
-  padding: 12px 16px;
-  color: #59677c;
+  font-size: 12px;
+  padding: 10px 16px;
+  color: #7a8495;
+  background: #fafbfc;
 }
 body .admin-workspace table td {
-  font-size: 14px;
-  padding: 14px 16px;
+  font-size: 13px;
+  padding: 16px;
+  color: #455066;
+}
+body .admin-workspace td.actions {
+  display: table-cell;
+  vertical-align: middle;
+  white-space: normal;
+  min-width: 240px;
+  max-width: 340px;
+}
+body .admin-workspace td.actions .text-button {
+  border: 0;
+  background: transparent;
+  color: #315c9e;
+  font-size: 12px;
+  font-weight: 400;
+  min-height: 28px;
+  padding: 3px 5px;
+  margin: 1px 0;
+  border-radius: 4px;
+}
+body .admin-workspace td.actions .text-button:hover {
+  background: #edf3ff;
+}
+body .admin-workspace td.actions .text-button.danger {
+  color: #b94d4d;
 }
 body .admin-workspace .workflow-tabs {
   margin: 0 0 16px;
 }
-body .admin-workspace .actions .row-primary-action {
-  font-weight: 650;
-  color: #24559d;
-  background: #edf5ff;
-  padding: 6px 9px;
-  border-radius: 6px;
-}
-body .admin-workspace .actions .row-maintenance-action {
-  color: #66758a;
-  font-weight: 400;
-  background: transparent;
-}
-body .admin-workspace .actions {
-  white-space: normal;
-  min-width: 230px;
-  flex-wrap: wrap;
-}
-body .admin-workspace .actions button {
-  white-space: nowrap;
-  flex-shrink: 0;
-  margin-block: 3px;
-}
-
-body .admin-workspace h2,
-body .partner-workspace h2 {
-  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
-}
-body .admin-workspace .material-heading h1 {
-  font:
-    650 24px/1.4 -apple-system,
-    BlinkMacSystemFont,
-    'PingFang SC',
-    sans-serif;
-}
-body .admin-workspace .page {
-  padding-top: 20px;
-}
-body .admin-workspace .create-page-card {
-  padding: 24px;
-}
-@media (max-width: 720px) {
-  body .admin-workspace .create-page-card {
-    padding: 16px;
-  }
-  body .admin-workspace .actions {
-    min-width: 180px;
-  }
-}
-
 body .admin-workspace .tab-count {
-  font-size: 12px;
+  font-size: 11px;
   font-variant-numeric: tabular-nums;
   opacity: 0.8;
 }
 body .admin-workspace .summary-card strong {
-  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
+  font-family: inherit;
+}
+body .admin-workspace .page {
+  padding: 28px 32px;
+}
+body .admin-workspace.has-section-nav .page {
+  padding-top: 84px;
+}
+body .admin-workspace.has-settings-nav .page {
+  padding-top: 28px;
+  padding-left: 218px;
+}
+@media (max-width: 900px) {
+  body .admin-workspace.has-settings-nav .page {
+    padding: 84px 24px 24px;
+  }
+}
+@media (max-width: 600px) {
+  body .admin-workspace .page {
+    padding: 20px 16px;
+  }
+  body .admin-workspace.has-section-nav .page,
+  body .admin-workspace.has-settings-nav .page {
+    padding: 82px 16px 20px;
+  }
+  .admin-section-navigation {
+    left: 16px;
+    right: 16px;
+  }
+  .admin-section-navigation a {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  body .admin-workspace .page-heading {
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+}
+
+body .admin-workspace .button.primary,
+body .admin-workspace .btn-primary {
+  background: #002fa7;
+  border-color: #002fa7;
+  color: white;
+}
+body .admin-workspace td.actions .text-button.row-primary-action {
+  background: transparent;
+  color: #315c9e;
+  border: 0;
 }

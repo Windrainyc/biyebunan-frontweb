@@ -130,7 +130,7 @@ const totals = computed(() =>
 const chart = computed(() => ({
   color: ['#4b9bea', '#4fc6ae'],
   tooltip: { trigger: 'axis' },
-  legend: { data: ['登录人数', '浏览次数'] },
+  legend: { top: 0, bottom: 'auto', type: 'scroll', data: ['登录人数', '浏览次数'] },
   grid: { left: 45, right: 20, bottom: 35, top: 45 },
   xAxis: { type: 'category', data: daily.value.map((d) => d.day) },
   yAxis: { type: 'value', minInterval: 1 },
@@ -142,7 +142,7 @@ const chart = computed(() => ({
 onMounted(() => load());
 </script>
 <template>
-  <section>
+  <section class="activity-page">
     <h1>用户活动</h1>
     <p class="muted">
       按北京时间查询。仅记录功能上线后的真实访问；时长为可见且近期有交互的估算值，不作计费依据。
@@ -181,7 +181,10 @@ onMounted(() => load());
         <span>知识学习时长</span><strong>{{ duration(totals.learningSeconds) }}</strong>
       </article>
     </div>
-    <DataChart :option="chart" label="每日登录人数与页面浏览次数趋势" />
+    <article class="activity-chart">
+      <h2>访问趋势</h2>
+      <DataChart :option="chart" label="每日登录人数与页面浏览次数趋势" />
+    </article>
     <div class="table-scroll">
       <table>
         <thead>
@@ -249,6 +252,31 @@ onMounted(() => load());
   </section>
 </template>
 <style scoped>
+.activity-chart {
+  background: white;
+  border: 1px solid #e8ebf0;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+}
+.activity-chart h2 {
+  font-size: 14px;
+  margin: 0 0 18px;
+}
+.activity-page > .muted {
+  font-size: 12px;
+}
+.table-scroll {
+  background: white;
+  border: 1px solid #e8ebf0;
+  border-radius: 8px;
+}
+.activity-filters {
+  background: white;
+  border: 1px solid #e8ebf0;
+  border-radius: 8px;
+  padding: 16px;
+}
 .activity-filters {
   display: flex;
   flex-wrap: wrap;
@@ -259,7 +287,7 @@ onMounted(() => load());
 .activity-filters label {
   display: grid;
   gap: 6px;
-  width: 200px;
+  width: 180px;
   font-size: 13px;
 }
 .activity-metrics {
@@ -269,9 +297,9 @@ onMounted(() => load());
 }
 .activity-metrics article {
   padding: 16px;
-  background: #f2f7fd;
-  border: 1px solid #dfebf8;
-  border-radius: 10px;
+  background: #fff;
+  border: 1px solid #e8ebf0;
+  border-radius: 8px;
 }
 .activity-metrics span,
 small {
@@ -281,7 +309,7 @@ small {
 }
 .activity-metrics strong {
   display: block;
-  font-size: 23px;
+  font-size: 26px;
   margin-top: 8px;
 }
 .table-scroll {
