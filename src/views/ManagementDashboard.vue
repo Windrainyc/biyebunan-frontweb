@@ -491,9 +491,22 @@ watch(() => [...props.visiblePaths].sort().join('|'), load, { immediate: true })
                   ></progress
                   >{{ project.progress }}%
                 </td>
-                <td>{{ display(project.deliveryDate) }}</td>
                 <td>
-                  <RouterLink class="text-button" to="/partner/projects"
+                  {{ display(project.deliveryDate)
+                  }}<small
+                    v-if="
+                      project.deliveryDate &&
+                      String(project.deliveryDate).slice(0, 10) < today &&
+                      project.stage !== 'DONE'
+                    "
+                    class="deadline-warning"
+                    >已超过计划日期</small
+                  >
+                </td>
+                <td>
+                  <RouterLink
+                    class="text-button"
+                    :to="{ path: '/partner/projects', query: { view: String(project.id) } }"
                     >查看进度 <Icon name="right"
                   /></RouterLink>
                 </td>
@@ -519,7 +532,7 @@ watch(() => [...props.visiblePaths].sort().join('|'), load, { immediate: true })
           <RouterLink
             v-for="order in orders?.items"
             :key="String(order.id)"
-            to="/partner/orders"
+            :to="{ path: '/partner/orders', query: { view: String(order.id) } }"
             class="management-todo"
             ><Icon name="bag" />
             <div>
@@ -555,3 +568,21 @@ watch(() => [...props.visiblePaths].sort().join('|'), load, { immediate: true })
     </template>
   </section>
 </template>
+
+<style scoped>
+.partner-welcome {
+  padding: 24px;
+  min-height: 0;
+}
+.partner-welcome h1 {
+  font:
+    650 24px/1.4 -apple-system,
+    'PingFang SC',
+    sans-serif;
+}
+.deadline-warning {
+  display: block;
+  color: #a14a22;
+  margin-top: 5px;
+}
+</style>

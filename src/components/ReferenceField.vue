@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, onMounted, onBeforeUnmount, ref, watch, nextTick } from 'vue';
 import { auth, request, errorText } from '../api/client';
+import { label } from '../config/labels';
 import { operation } from '../config/contract';
 import type { Row, Page } from '../types/api';
 const props = defineProps<{
@@ -11,9 +12,31 @@ const props = defineProps<{
   multiple?: boolean;
   required?: boolean;
   dropdown?: boolean;
+  placeholder?: string;
 }>();
 const emit = defineEmits<{ 'update:modelValue': [unknown] }>();
 const expanded = ref(false);
+const invalid = ref(false);
+const trigger = ref<HTMLButtonElement>();
+const searchInput = ref<HTMLInputElement>();
+async function toggle() {
+  expanded.value = !expanded.value;
+  if (expanded.value) {
+    await nextTick();
+    searchInput.value?.focus();
+  }
+}
+function close() {
+  expanded.value = false;
+  trigger.value?.focus();
+}
+async function revealInvalid() {
+  invalid.value = true;
+  expanded.value = true;
+  await nextTick();
+  trigger.value?.focus();
+}
+
 const selectedTitles = ref<Record<string, string>>({});
 const query = ref(''),
   page = ref(1),
@@ -73,9 +96,10 @@ const selected = computed(() =>
       : [],
 );
 function choose(id: string) {
+  invalid.value = false;
   const row = rows.value.find((r) => value(r) === id);
   if (row) selectedTitles.value[id] = title(row);
-  if (!props.multiple) expanded.value = false;
+  if (!props.multiple) close();
   emit(
     'update:modelValue',
     props.multiple
@@ -114,6 +138,8 @@ async function load() {
     });
     if (current !== generation) return;
     rows.value = result.items;
+    for (const row of result.items)
+      if (selected.value.includes(value(row))) selectedTitles.value[value(row)] = title(row);
     total.value = result.total;
   } catch (e) {
     if (current === generation) error.value = errorText(e);
@@ -121,6 +147,26 @@ async function load() {
     if (current === generation) busy.value = false;
   }
 }
+watch(
+  () => [props.modelValue, path.value],
+  async () => {
+    const base = path.value;
+    const detail = operation('GET', base + '/{id}');
+    if (!detail || (detail.permission && !auth.permissions.includes(detail.permission))) return;
+    const ids = [...selected.value];
+    for (const id of ids) {
+      if (selectedTitles.value[id]) continue;
+      try {
+        const row = await request<Row>(base + '/' + encodeURIComponent(id));
+        if (base === path.value && selected.value.includes(id))
+          selectedTitles.value[id] = title(row);
+      } catch {
+        /* 不推断无权查看的关联数据名称。 */
+      }
+    }
+  },
+  { immediate: true },
+);
 onMounted(load);
 onBeforeUnmount(() => {
   generation++;
@@ -138,15 +184,18 @@ watch(
   <div
     class="reference"
     :class="{ dropdown }"
-    @keydown.esc.stop.prevent="expanded = false"
+    @keydown.esc.stop.prevent="close"
     @focusout="closeOutside($event)"
   >
     <button
       v-if="dropdown && supported"
       type="button"
+      ref="trigger"
       class="dropdown-trigger"
       :aria-expanded="expanded"
-      @click="expanded = !expanded"
+      :aria-label="label(field)"
+      :aria-invalid="invalid && !selected.length"
+      @click="toggle"
     >
       <span>{{
         selected.length
@@ -157,7 +206,7 @@ watch(
                   title(rows.find((r) => value(r) === id) || { name: '已选记录' }),
               )
               .join('、')
-          : '全部（请选择）'
+          : placeholder || '请选择'
       }}</span
       ><span aria-hidden="true">⌄</span>
     </button>
@@ -165,7 +214,9 @@ watch(
       <template v-if="supported"
         ><div class="search">
           <input
+            ref="searchInput"
             v-model="query"
+            :aria-label="`搜索${label(field)}`"
             placeholder="搜索并选择"
             @keydown.enter.prevent="
               page = 1;
@@ -238,16 +289,19 @@ watch(
           </button>
         </div>
         <p v-if="error" role="alert" class="error">{{ error }}</p>
-        <input
-          v-if="required"
-          class="validation"
-          tabindex="-1"
-          :value="selected.join(',')"
-          required
-          aria-label="请选择关联数据"
-      /></template>
+      </template>
       <p v-else class="muted">此字段需要在对应业务页面中选择。</p>
     </div>
+    <p v-if="invalid && !selected.length" class="error" role="alert">请选择{{ label(field) }}</p>
+    <input
+      v-if="required"
+      class="validation"
+      tabindex="-1"
+      :value="selected.join(',')"
+      required
+      aria-label="请选择关联数据"
+      @invalid.prevent="revealInvalid"
+    />
   </div>
 </template>
 <style scoped>

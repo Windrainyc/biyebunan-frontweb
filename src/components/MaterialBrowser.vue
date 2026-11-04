@@ -15,6 +15,7 @@ import { display } from '../config/labels';
 const props = defineProps<{ picker?: boolean; kind?: string }>();
 const emit = defineEmits<{ selected: [Row] }>();
 const categories = ref<Row[]>([]);
+const listView = ref(false);
 const uploadBusy = ref(false);
 const preview = ref<Row | null>(null);
 const actionError = ref('');
@@ -322,8 +323,12 @@ watch(
       {{ actionError }}
       <button type="button" class="button" @click="actionError = ''">知道了</button>
     </p>
+    <div class="material-view-switch" aria-label="素材展示方式">
+      <button class="button" :aria-pressed="!listView" @click="listView = false">缩略图</button>
+      <button class="button" :aria-pressed="listView" @click="listView = true">文件列表</button>
+    </div>
     <p v-if="loading" role="status">正在加载素材…</p>
-    <div v-else class="material-grid">
+    <div v-else class="material-grid" :class="{ 'material-list': listView }">
       <article v-for="row in rows" :key="String(row.id)" class="material-card">
         <button
           type="button"
@@ -558,6 +563,53 @@ footer {
   .material-card,
   .preview-hint {
     transition: none;
+  }
+}
+</style>
+
+<style scoped>
+.material-view-switch {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.material-view-switch [aria-pressed='true'] {
+  background: #edf5ff;
+  color: #24559d;
+}
+.material-grid.material-list {
+  display: flex;
+  flex-direction: column;
+}
+.material-list .material-card {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) 140px auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+}
+.material-list .material-preview {
+  width: 64px;
+  height: 56px;
+  grid-row: 1 / 3;
+}
+.material-list .material-type {
+  display: none;
+}
+.material-list .material-card > strong {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.material-list .material-actions {
+  border: 0;
+  padding: 0;
+}
+@media (max-width: 720px) {
+  .material-list .material-card {
+    grid-template-columns: 56px minmax(0, 1fr);
+  }
+  .material-list .material-actions {
+    grid-column: 2;
   }
 }
 </style>

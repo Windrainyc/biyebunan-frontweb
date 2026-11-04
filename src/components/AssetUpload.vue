@@ -189,6 +189,11 @@ async function upload() {
         aria-label="上传文件名称"
       /><small>可在上传前修改名称，请保留正确的文件扩展名。</small></label
     >
+    <ol v-if="selected" class="upload-steps" aria-label="文件处理阶段">
+      <li :class="{ active: busy && !asset }">上传文件</li>
+      <li :class="{ active: asset && asset.state !== 'READY' }">安全检查</li>
+      <li :class="{ active: asset?.state === 'READY' }">可使用</li>
+    </ol>
     <div v-if="message" class="upload-status" role="status">
       <span :class="{ pulse: busy }"></span>{{ message }}
     </div>
@@ -211,7 +216,7 @@ async function upload() {
           busy
             ? '正在处理…'
             : asset?.state === 'READY'
-              ? '已上传'
+              ? '可使用'
               : asset && ['QUARANTINED', 'UPLOADING'].includes(String(asset.state))
                 ? '检查扫描状态'
                 : '确认上传'
@@ -330,5 +335,19 @@ async function upload() {
     align-items: stretch;
     flex-direction: column;
   }
+}
+</style>
+
+<style scoped>
+.upload-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding-left: 20px;
+  color: #728095;
+}
+.upload-steps .active {
+  color: #24559d;
+  font-weight: 650;
 }
 </style>

@@ -53,7 +53,7 @@ async function submit() {
             ? '登录管理后台'
             : platform === 'partner'
               ? '登录中介协作平台'
-              : '欢迎登录'
+              : '登录学生平台'
         }}
       </h2>
       <p class="muted">请使用所属平台的账户登录</p>

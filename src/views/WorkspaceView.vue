@@ -10,10 +10,17 @@ import { utilityNavigation } from '../config/navigation-access';
 import ManagementNavigation from '../components/ManagementNavigation.vue';
 import { managementSections } from '../config/management-navigation';
 import { useNavigationState } from '../composables/useNavigationState';
+import PageLoading from '../components/PageLoading.vue';
 import PageLoadError from '../components/PageLoadError.vue';
 import type { Component } from 'vue';
 function page(loader: () => Promise<{ default: Component }>) {
-  return defineAsyncComponent({ loader, errorComponent: PageLoadError, timeout: 15000 });
+  return defineAsyncComponent({
+    loader,
+    loadingComponent: PageLoading,
+    delay: 150,
+    errorComponent: PageLoadError,
+    timeout: 30000,
+  });
 }
 const ManagementDashboard = page(() => import('./ManagementDashboard.vue'));
 const DashboardView = page(() => import('./DashboardView.vue'));

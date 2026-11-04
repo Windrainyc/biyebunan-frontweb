@@ -134,7 +134,7 @@ export function resources(platform: Platform): Resource[] {
         '知识库内容',
         p + '/knowledge',
         'book',
-        ['title', 'type', 'state', 'indexState'],
+        ['title', 'type', 'state', 'indexState', 'updatedAt'],
         '内容管理',
         '管理可引用的知识内容、文档和视频',
       ),

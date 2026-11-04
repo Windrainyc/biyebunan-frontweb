@@ -160,3 +160,31 @@ body .workspace .create-page-card input[type='checkbox'] {
   }
 }
 </style>
+
+<style>
+.create-page-heading {
+  margin-bottom: 18px;
+  gap: 18px;
+}
+.create-page-heading h1 {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+.create-page-heading .button {
+  margin-top: 12px;
+}
+.create-page-breadcrumb {
+  display: none;
+}
+.create-resource-form .resource-form-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 12;
+  background: #fff;
+  border-top: 1px solid #e1e7f0;
+  padding: 16px 0;
+}
+.create-page-card {
+  overflow: visible;
+}
+</style>

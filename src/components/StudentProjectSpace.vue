@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useRoute } from 'vue-router';
 import { computed, ref, onBeforeUnmount, watch } from 'vue';
 import { request, errorText } from '../api/client';
 import { display } from '../config/labels';
@@ -9,7 +10,12 @@ import ProjectDetail from './ProjectDetail.vue';
 import RecordActions from './RecordActions.vue';
 const props = defineProps<{ project: Row }>();
 const emit = defineEmits<{ back: []; changed: [result: Row]; refresh: [] }>();
-const tab = ref('overview');
+const route = useRoute();
+const tab = ref(
+  ['deliveries', 'qa', 'milestones'].includes(String(route.query.section))
+    ? String(route.query.section)
+    : 'overview',
+);
 const tabs = [
   { key: 'overview', label: '项目概览' },
   { key: 'deliveries', label: '交付物' },
@@ -224,20 +230,11 @@ function keyboardTab(event: KeyboardEvent, index: number) {
       </section>
       <aside class="project-side-panels">
         <section class="project-side-card">
-          <Icon name="folder" />
-          <h3>项目资料</h3>
-          <p>查看已发布的交付物与版本说明，按照当前项目权限获取下载授权。</p>
-          <button class="button" @click="tab = 'deliveries'">
-            查看交付物 <Icon name="right" />
-          </button>
-        </section>
-        <section class="project-side-card">
-          <Icon name="clock" />
-          <h3>交付有迹可循</h3>
-          <p>里程碑展示计划日期、权重与完成状态。最新进度以项目负责人更新为准。</p>
-          <button class="text-button" @click="tab = 'milestones'">
-            查看里程碑 <Icon name="right" />
-          </button>
+          <h3>当前项目</h3>
+          <p>{{ project.title }}</p>
+          <p>当前阶段：<StatusBadge :value="project.stage" /></p>
+          <p>计划交付：{{ display(project.deliveryDate) }}</p>
+          <p>完成进度：{{ progress }}%</p>
         </section>
         <section class="project-side-assistant">
           <Icon name="sparkles" />

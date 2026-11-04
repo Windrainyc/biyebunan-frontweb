@@ -17,6 +17,15 @@ const metrics = ref<Metric[] | null>(null),
   projects = ref<Row[]>([]),
   loading = ref(true),
   error = ref('');
+const pendingMilestones = computed(() =>
+  milestones.value
+    .filter((item) => !item.completed)
+    .sort((a, b) => String(a.dueDate || '9999').localeCompare(String(b.dueDate || '9999'))),
+);
+const projectLink = (section = 'overview') => ({
+  path: '/student/projects',
+  query: { view: String(project.value?.id || ''), section },
+});
 const milestones = ref<Row[]>([]),
   deliveries = ref<Row[]>([]),
   community = ref<Row[]>([]),
@@ -205,7 +214,7 @@ onBeforeUnmount(() => generation++);
         </li>
       </ol>
       <div class="hero-actions">
-        <RouterLink v-if="visible('projects')" class="button" to="/student/projects"
+        <RouterLink v-if="visible('projects')" class="button" :to="projectLink()"
           >查看项目<Icon name="right" /></RouterLink
         ><RouterLink v-if="visible('chat')" class="button ghost" to="/student/chat"
           ><Icon name="sparkles" />打开智能答疑</RouterLink
@@ -286,28 +295,28 @@ onBeforeUnmount(() => generation++);
       <section class="student-overview-panel">
         <header>
           <h2>接下来要做</h2>
-          <RouterLink to="/student/projects">项目里程碑 <Icon name="right" /></RouterLink>
+          <RouterLink :to="projectLink('milestones')">项目里程碑 <Icon name="right" /></RouterLink>
         </header>
-        <div v-for="item in milestones" :key="String(item.id)" class="student-overview-row">
+        <div v-for="item in pendingMilestones" :key="String(item.id)" class="student-overview-row">
           <Icon :name="item.completed ? 'check' : 'clock'" />
           <div>
             <strong>{{ item.name }}</strong
             ><small>{{ item.completed ? '已完成' : '待完成' }} · {{ display(item.dueDate) }}</small>
           </div>
         </div>
-        <p v-if="!milestones.length" class="muted">
-          {{ loading ? '正在读取里程碑…' : '当前项目暂无里程碑' }}
+        <p v-if="!pendingMilestones.length" class="muted">
+          {{ loading ? '正在读取里程碑…' : '当前已加载里程碑中没有待办' }}
         </p>
       </section>
       <section class="student-overview-panel">
         <header>
           <h2>项目交付物</h2>
-          <RouterLink to="/student/projects">全部 <Icon name="right" /></RouterLink>
+          <RouterLink :to="projectLink('deliveries')">全部 <Icon name="right" /></RouterLink>
         </header>
         <RouterLink
           v-for="item in deliveries"
           :key="String(item.id)"
-          to="/student/projects"
+          :to="projectLink('deliveries')"
           class="student-overview-row"
           ><Icon name="file" />
           <div>
@@ -327,7 +336,7 @@ onBeforeUnmount(() => generation++);
         <RouterLink
           v-for="item in community"
           :key="String(item.id)"
-          to="/student/posts"
+          :to="{ path: '/student/posts', query: { view: String(item.id) } }"
           class="student-overview-row"
           ><Icon name="message" />
           <div>
@@ -345,7 +354,10 @@ onBeforeUnmount(() => generation++);
           <h2>继续探索，<br />让项目更进一步。</h2>
           <p class="muted">浏览当前可访问的知识资料</p>
         </div>
-        <RouterLink v-for="item in learning" :key="String(item.id)" to="/student/knowledge"
+        <RouterLink
+          v-for="item in learning"
+          :key="String(item.id)"
+          :to="{ path: '/student/knowledge', query: { view: String(item.id) } }"
           ><small>{{ display(item.type) }}</small>
           <h3>{{ item.title }}</h3>
           <span>阅读资料 <Icon name="right" /></span

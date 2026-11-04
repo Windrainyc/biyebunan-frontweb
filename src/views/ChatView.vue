@@ -39,16 +39,26 @@ const conversations = ref<Row[]>([]),
   busy = ref(false),
   disconnected = ref(false);
 const conversationSearch = ref('');
+let catalogGeneration = 0;
+async function searchConversations() {
+  catalogGeneration++;
+  catalogs.conversations.page.value = 0;
+  catalogs.conversations.rows.value = [];
+  catalogs.conversations.total.value = 0;
+  catalogs.conversations.loading.value = false;
+  await loadCatalog('conversations');
+}
 const conversationListOpen = ref(false);
-const filteredConversations = computed(() =>
-  conversations.value.filter((c) => String(c.title).includes(conversationSearch.value)),
-);
+const activeConversation = ref<Row | null>(null);
+const filteredConversations = computed(() => conversations.value);
 const contextProject = computed(() =>
   projects.value.find(
     (p) =>
       String(p.id) ===
       String(
-        conversations.value.find((c) => String(c.id) === conversation.value)?.projectId ||
+        (activeConversation.value?.id === conversation.value
+          ? activeConversation.value.projectId
+          : conversations.value.find((c) => String(c.id) === conversation.value)?.projectId) ||
           project.value,
       ),
   ),
@@ -57,6 +67,7 @@ async function chooseConversation(id: string) {
   if (busy.value || pending.value) return;
   conversationListOpen.value = false;
   conversation.value = id;
+  activeConversation.value = conversations.value.find((c) => String(c.id) === id) || null;
   answer.value = '';
   disconnected.value = false;
   await history();
@@ -115,15 +126,20 @@ const catalogs = {
 let disposed = false;
 async function loadCatalog(name: Catalog) {
   const catalog = catalogs[name];
+  const current = catalogGeneration;
   if (catalog.loading.value) return;
   catalog.loading.value = true;
   catalog.error.value = '';
   try {
     const next = catalog.page.value + 1;
     const result = await request<Page<Row>>(`/student/${name}`, {
-      query: { page: next, size: 20 },
+      query: {
+        page: next,
+        size: 20,
+        ...(name === 'conversations' ? { q: conversationSearch.value } : {}),
+      },
     });
-    if (disposed) return;
+    if (disposed || (name === 'conversations' && current !== catalogGeneration)) return;
     const seen = new Set(catalog.rows.value.map((row) => row.id));
     catalog.rows.value.push(...result.items.filter((row) => !seen.has(row.id)));
     catalog.page.value = next;
@@ -131,9 +147,11 @@ async function loadCatalog(name: Catalog) {
     if (name === 'models' && !model.value && !pending.value)
       model.value = String(models.value[0]?.id || '');
   } catch (e) {
-    if (!disposed) catalog.error.value = errorText(e);
+    if (!disposed && (name !== 'conversations' || current === catalogGeneration))
+      catalog.error.value = errorText(e);
   } finally {
-    if (!disposed) catalog.loading.value = false;
+    if (!disposed && (name !== 'conversations' || current === catalogGeneration))
+      catalog.loading.value = false;
   }
 }
 async function initialize() {
@@ -213,6 +231,7 @@ async function send() {
           key: conversationAttempt({ projectId: project.value, title: text.value.slice(0, 40) }),
         });
         conversation.value = String(c.id);
+        activeConversation.value = c;
         conversations.value.unshift(c);
       }
       pending.value = {
@@ -288,9 +307,13 @@ onBeforeUnmount(() => {
       ><input
         v-model="conversationSearch"
         type="search"
-        placeholder="搜索已加载对话"
-        aria-label="搜索已加载对话"
+        placeholder="搜索全部对话标题"
+        @keydown.enter.prevent="searchConversations"
+        aria-label="搜索全部对话标题"
       />
+      <button class="button" :disabled="busy || !!pending" @click="searchConversations">
+        搜索对话
+      </button>
       <div class="student-conversation-list">
         <button
           v-for="item in filteredConversations"
@@ -421,6 +444,26 @@ onBeforeUnmount(() => {
       <p v-if="pending && !busy" class="notice" role="status">
         上次提问的提交结果尚未确认。请重试同一次提问，模型和会话暂时锁定，避免重复创建与计费。
       </p>
+      <div
+        v-if="!messages.length && !busy && !pending"
+        class="question-templates"
+        aria-label="问题模板"
+      >
+        <button
+          v-for="prompt in [
+            '请解释这段代码的作用：',
+            '请帮我分析这个报错，并说明排查步骤：',
+            '请帮我梳理当前项目的实现思路：',
+          ]"
+          :key="prompt"
+          type="button"
+          class="button"
+          @click="text = prompt"
+        >
+          {{ prompt.replace('：', '') }}
+        </button>
+        <small class="muted">选择模板后补充具体内容，再点击发送。</small>
+      </div>
       <form class="composer" @submit.prevent="send">
         <textarea
           v-model="text"
@@ -522,5 +565,17 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: flex-end;
   margin-top: 12px;
+}
+</style>
+
+<style scoped>
+.question-templates {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 12px 0;
+}
+.question-templates small {
+  width: 100%;
 }
 </style>

@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { listLocation, positivePage } from '../config/list-location';
+import PartnerStudentOrders from '../components/PartnerStudentOrders.vue';
 import AppSelect from '../components/AppSelect.vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute, useRouter, onBeforeRouteLeave, onBeforeRouteUpdate } from 'vue-router';
 import WorkflowPage from '../components/WorkflowPage.vue';
 import { recordActions } from '../config/record-actions';
 import CreatePage from '../components/CreatePage.vue';
@@ -40,22 +42,86 @@ import SchemaField from '../components/SchemaField.vue';
 let attempt = writeAttempt();
 const editRead = latestRequest(),
   detailRead = latestRequest();
-function closeForm() {
+const jumpPage = ref(1);
+function jump() {
+  page.value = Math.min(
+    Math.max(1, Math.ceil(total.value / size.value)),
+    positivePage(jumpPage.value),
+  );
+  void load();
+}
+const initialForm = ref('');
+const listScroll = ref(0);
+const dirty = computed(() => formOpen.value && JSON.stringify(form.value) !== initialForm.value);
+const discardOpen = ref(false);
+let discardResolve: ((value: boolean) => void) | undefined;
+function confirmLeave(): boolean | Promise<boolean> {
+  if (!dirty.value || saving.value) return true;
+  if (discardResolve) return false;
+  discardOpen.value = true;
+  return new Promise((resolve) => {
+    discardResolve = resolve;
+  });
+}
+function finishDiscard(value: boolean) {
+  discardOpen.value = false;
+  if (value) initialForm.value = JSON.stringify(form.value);
+  discardResolve?.(value);
+  discardResolve = undefined;
+}
+onBeforeUnmount(() => discardResolve?.(false));
+onBeforeRouteLeave(confirmLeave);
+onBeforeRouteUpdate(confirmLeave);
+function unload(event: BeforeUnloadEvent) {
+  if (dirty.value) {
+    event.preventDefault();
+    event.returnValue = '';
+  }
+}
+onMounted(() => window.addEventListener('beforeunload', unload));
+onBeforeUnmount(() => window.removeEventListener('beforeunload', unload));
+async function closeForm() {
+  if (!(await confirmLeave())) return;
   editRead.invalidate();
   formOpen.value = false;
-  if (creatingPage.value)
-    void router.push({ path: `/${auth.platform}/${props.resource.key}`, query: route.query });
+  requestAnimationFrame(() => window.scrollTo(0, listScroll.value));
+  if (creatingPage.value || route.query.edit) {
+    const { edit, ...query } = route.query;
+    void router.push({ path: `/${auth.platform}/${props.resource.key}`, query });
+  }
 }
 function closeDetail() {
   detailRead.invalidate();
   detail.value = null;
+  requestAnimationFrame(() => window.scrollTo(0, listScroll.value));
+  if (route.query.view) {
+    const { view, section, ...query } = route.query;
+    void router.push({ path: route.path, query });
+  }
 }
 const props = defineProps<{ resource: Resource }>();
 const route = useRoute();
 const router = useRouter();
 const creatingPage = computed(() => route.params.action === 'new' && !route.query.form);
+function listQuery() {
+  listScroll.value = window.scrollY;
+  const preserved = Object.fromEntries(
+    Object.entries(route.query).filter(([key]) => !queryNames.value.has(key)),
+  );
+  return {
+    ...preserved,
+    ...listLocation({
+      ...extraFilters.value,
+      q: q.value,
+      status: status.value,
+      sort: sort.value,
+      page: page.value,
+      size: size.value,
+    }),
+  };
+}
 function beginCreate() {
-  void router.push({ path: `/${auth.platform}/${props.resource.key}/new`, query: route.query });
+  void router.push({ path: `/${auth.platform}/${props.resource.key}/new`, query: listQuery() });
 }
 const studentCards = computed(
   () =>
@@ -110,6 +176,27 @@ const detailFields = computed(() => {
 });
 const extraFilters = ref<Record<string, unknown>>({});
 let loadGeneration = 0;
+const knowledgeCounts = ref<Record<string, number | null>>({});
+let countGeneration = 0;
+async function loadKnowledgeCounts() {
+  if (props.resource.key !== 'contents') return;
+  const current = ++countGeneration;
+  knowledgeCounts.value = {};
+  await Promise.all(
+    ['', 'DRAFT', 'REVIEW', 'PUBLISHED', 'WITHDRAWN'].map(async (state) => {
+      try {
+        const result = await request<Page<Row>>(props.resource.path, {
+          query: { page: 1, size: 1, ...(state ? { status: state } : {}) },
+        });
+        if (current === countGeneration) knowledgeCounts.value[state] = result.total;
+      } catch {
+        if (current === countGeneration) knowledgeCounts.value[state] = null;
+      }
+    }),
+  );
+}
+onMounted(loadKnowledgeCounts);
+onBeforeUnmount(() => countGeneration++);
 const listOp = computed(() => operation('GET', props.resource.path));
 const queryNames = computed(
   () => new Set(listOp.value?.parameters.filter((p) => p.in === 'query').map((p) => p.name)),
@@ -303,7 +390,10 @@ async function open(row?: Row) {
     form.value.status = editing.value?.status ?? 'ENABLED';
   attempt = writeAttempt();
   writeKey.value = crypto.randomUUID();
+  initialForm.value = JSON.stringify(form.value);
   formOpen.value = true;
+  if (row && route.query.edit !== String(row.id))
+    void router.push({ path: route.path, query: { ...listQuery(), edit: String(row.id) } });
 }
 async function save() {
   saving.value = true;
@@ -316,8 +406,12 @@ async function save() {
       version: editing.value?.version,
       key: attempt(body),
     });
-    closeForm();
-    notice.value = '数据已保存';
+    await closeForm();
+    void loadKnowledgeCounts();
+    notice.value =
+      props.resource.key === 'contents' && !editing.value
+        ? '草稿已保存，可在列表中提交审核。'
+        : '数据已保存';
     await load();
   } catch (e) {
     error.value = errorText(e);
@@ -365,7 +459,11 @@ async function inspect(row: Row) {
     const loaded = allowed('GET', props.resource.path + '/{id}')
       ? await request<Row>(props.resource.path + '/' + row.id)
       : row;
-    if (current()) detail.value = loaded;
+    if (current()) {
+      detail.value = loaded;
+      if (!route.query.form && route.query.view !== String(row.id))
+        void router.push({ path: route.path, query: { ...listQuery(), view: String(row.id) } });
+    }
   } catch (e) {
     if (current()) error.value = errorText(e);
   }
@@ -404,12 +502,24 @@ function applyRouteFilters() {
     queryNames.value.has('status') && typeof route.query.status === 'string'
       ? route.query.status
       : '';
-  extraFilters.value =
-    queryNames.value.has('state') && typeof route.query.state === 'string'
-      ? { state: route.query.state }
-      : {};
-  sort.value = sorts.value[0] || '';
-  page.value = 1;
+  extraFilters.value = {};
+  for (const field of extraFields.value) {
+    const value = route.query[field.key];
+    if (value != null)
+      extraFilters.value[field.key] =
+        field.type === 'boolean'
+          ? value === 'true'
+          : field.type === 'array'
+            ? Array.isArray(value)
+              ? value
+              : [value]
+            : value;
+  }
+  sort.value = sorts.value.includes(String(route.query.sort))
+    ? String(route.query.sort)
+    : sorts.value[0] || '';
+  page.value = positivePage(route.query.page);
+  size.value = [10, 20, 50].includes(Number(route.query.size)) ? Number(route.query.size) : 20;
   void load();
 }
 onMounted(applyRouteFilters);
@@ -450,7 +560,40 @@ watch(
   },
   { immediate: true },
 );
-watch(() => route.query, applyRouteFilters);
+watch(() => [route.query.q, route.query.status, route.query.state], applyRouteFilters);
+watch(
+  () => route.query.edit,
+  async (id) => {
+    if (typeof id !== 'string') {
+      if (!creatingPage.value) formOpen.value = false;
+      return;
+    }
+    if (formOpen.value && String(editing.value?.id) === id) return;
+    if (allowed('GET', props.resource.path + '/{id}')) await open({ id });
+    else {
+      const row = rows.value.find((item) => String(item.id) === id);
+      if (row) await open(row);
+    }
+  },
+  { immediate: true },
+);
+watch(
+  () => route.query.view,
+  async (id) => {
+    if (typeof id !== 'string') {
+      detail.value = null;
+      return;
+    }
+    if (detail.value?.id === id) return;
+    if (allowed('GET', props.resource.path + '/{id}')) await inspect({ id });
+    else {
+      const existing = rows.value.find((row) => String(row.id) === id);
+      if (existing) await inspect(existing);
+      else error.value = '当前记录暂不可直接打开，请在列表中查找。';
+    }
+  },
+  { immediate: true },
+);
 const hasStatusTabs = computed(
   () =>
     auth.platform !== 'student' &&
@@ -460,32 +603,33 @@ const hasStatusTabs = computed(
 );
 </script>
 <template>
+  <Teleport to="body">
+    <div v-if="discardOpen" class="modal-backdrop" style="z-index: 300">
+      <section
+        class="modal"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="discard-title"
+        v-dialog="() => finishDiscard(false)"
+      >
+        <h2 id="discard-title">放弃未保存的修改？</h2>
+        <p>离开后，本次修改不会保存。</p>
+        <div class="actions">
+          <button class="button" @click="finishDiscard(false)">继续编辑</button
+          ><button class="button danger" @click="finishDiscard(true)">放弃修改并离开</button>
+        </div>
+      </section>
+    </div>
+  </Teleport>
   <WorkflowPage
     v-if="route.query.process && route.params.action !== 'new'"
     :resource="resource"
-    @changed="load()"
+    @changed="
+      load();
+      loadKnowledgeCounts();
+    "
   />
   <section :class="{ 'student-resource': studentCards, ['student-' + resource.key]: studentCards }">
-    <nav v-if="resource.key === 'contents'" class="workflow-tabs" aria-label="知识内容状态">
-      <button
-        v-for="tab in [
-          { value: '', title: '全部内容' },
-          { value: 'DRAFT', title: '草稿' },
-          { value: 'REVIEW', title: '待审核' },
-          { value: 'PUBLISHED', title: '已发布' },
-          { value: 'WITHDRAWN', title: '已撤回' },
-        ]"
-        :key="tab.value"
-        class="button"
-        :class="{ primary: status === tab.value }"
-        @click="
-          status = tab.value;
-          search();
-        "
-      >
-        {{ tab.title }}
-      </button>
-    </nav>
     <section v-if="isStudentKnowledge" class="student-knowledge-hero">
       <div class="knowledge-hero-top">
         <div>
@@ -540,6 +684,30 @@ const hasStatusTabs = computed(
         }}
       </button>
     </div>
+    <nav
+      v-if="resource.key === 'contents'"
+      class="workflow-tabs"
+      aria-label="知识内容状态（全部内容数量）"
+    >
+      <button
+        v-for="tab in [
+          { value: '', title: '全部内容' },
+          { value: 'DRAFT', title: '草稿' },
+          { value: 'REVIEW', title: '待审核' },
+          { value: 'PUBLISHED', title: '已发布' },
+          { value: 'WITHDRAWN', title: '已撤回' },
+        ]"
+        :key="tab.value"
+        class="button"
+        :class="{ primary: status === tab.value }"
+        @click="
+          status = tab.value;
+          search();
+        "
+      >
+        {{ tab.title }} <span class="tab-count">{{ knowledgeCounts[tab.value] ?? '—' }}</span>
+      </button>
+    </nav>
     <PartnerInvitation
       v-if="resource.key === 'users' && auth.platform === 'admin'"
       @changed="load"
@@ -662,7 +830,7 @@ const hasStatusTabs = computed(
             aria-label="搜索关键词"
             maxlength="100"
           /><AppSelect
-            v-if="queryNames.has('status') && !hasStatusTabs"
+            v-if="queryNames.has('status') && !hasStatusTabs && resource.key !== 'contents'"
             v-model="status"
             aria-label="筛选状态"
           >
@@ -714,6 +882,30 @@ const hasStatusTabs = computed(
             </div>
           </details>
         </form>
+        <div
+          v-if="
+            Object.values(extraFilters).some(
+              (value) => value !== '' && value != null && (!Array.isArray(value) || value.length),
+            )
+          "
+          class="active-filter-tags"
+          aria-label="已选筛选条件"
+        >
+          <template v-for="(value, key) in extraFilters" :key="key">
+            <button
+              v-if="value !== '' && value != null && (!Array.isArray(value) || value.length)"
+              class="button"
+              type="button"
+              @click="
+                delete extraFilters[key];
+                search();
+              "
+            >
+              {{ label(String(key)) }}：<ReferenceName :field="String(key)" :value="value" />
+              <Icon name="close" />
+            </button>
+          </template>
+        </div>
         <div v-if="studentCards" class="student-resource-grid" :aria-busy="loading">
           <article
             v-for="(row, index) in rows"
@@ -843,14 +1035,18 @@ const hasStatusTabs = computed(
                   </button>
 
                   <button
-                    v-for="action in recordActions(resource.key, row)"
+                    v-for="(action, actionIndex) in recordActions(resource.key, row)"
                     :key="action.path"
                     class="text-button"
+                    :class="{
+                      'row-primary-action': actionIndex === 0,
+                      'row-maintenance-action': action.path.endsWith('/reindex'),
+                    }"
                     @click="
                       router.push({
                         path: route.path,
                         query: {
-                          ...route.query,
+                          ...listQuery(),
                           process: String(row.id),
                           operation: action.path.split('/').pop(),
                         },
@@ -904,7 +1100,7 @@ const hasStatusTabs = computed(
             "
           >
             上一页</button
-          ><span>第 {{ page }} 页</span
+          ><span>第 {{ page }} / {{ Math.max(1, Math.ceil(total / size)) }} 页</span
           ><button
             class="button"
             :disabled="page * size >= total || loading"
@@ -915,6 +1111,16 @@ const hasStatusTabs = computed(
           >
             下一页
           </button>
+          <form class="page-jump" @submit.prevent="jump">
+            <input
+              v-model.number="jumpPage"
+              type="number"
+              min="1"
+              :max="Math.max(1, Math.ceil(total / size))"
+              aria-label="跳转页码"
+            />
+            <button class="button" :disabled="loading || listFailed">跳转</button>
+          </form>
         </div>
       </div>
       <ForumSidebar
@@ -927,28 +1133,15 @@ const hasStatusTabs = computed(
       />
     </div>
     <component
-      :is="creatingPage ? CreatePage : 'div'"
+      :is="CreatePage"
       v-if="formOpen"
-      :class="creatingPage ? undefined : 'modal-backdrop'"
-      :title="resource.key === 'posts' ? '发布帖子' : '新增' + resource.title.replace('管理', '')"
+      :class="undefined"
+      :title="(editing ? '编辑' : '新增') + resource.title.replace('管理', '')"
       :description="resource.subtitle"
       :busy="saving"
       @back="closeForm"
     >
-      <form
-        :class="creatingPage ? 'create-resource-form' : 'modal resource-form-modal'"
-        v-dialog="
-          creatingPage
-            ? undefined
-            : () => {
-                if (!saving) closeForm();
-              }
-        "
-        :role="creatingPage ? undefined : 'dialog'"
-        :aria-modal="creatingPage ? undefined : true"
-        aria-labelledby="form-title"
-        @submit.prevent="save"
-      >
+      <form class="create-resource-form" aria-labelledby="form-title" @submit.prevent="save">
         <div class="resource-modal-heading">
           <h2 id="form-title">
             {{
@@ -970,9 +1163,13 @@ const hasStatusTabs = computed(
           </button>
         </div>
         <div class="resource-form-body">
-          <div v-if="creatingPage" class="create-section-heading">
-            <h2>基本信息</h2>
-            <p class="muted">标有 * 的字段为必填项。</p>
+          <div class="create-section-heading">
+            <h2>{{ resource.key === 'contents' ? '内容资料与可见范围' : '基本信息' }}</h2>
+            <p class="muted">
+              标有 * 的字段为必填项。{{
+                resource.key === 'contents' && !editing ? '保存后为草稿，可返回列表提交审核。' : ''
+              }}
+            </p>
           </div>
           <div class="form-grid">
             <div
@@ -1026,7 +1223,15 @@ const hasStatusTabs = computed(
         <footer class="resource-form-footer">
           <button type="button" class="button" :disabled="saving" @click="closeForm">取消</button
           ><button class="button primary" :disabled="saving">
-            {{ saving ? '保存中…' : '保存' }}
+            {{
+              saving
+                ? '保存中…'
+                : resource.key === 'contents' && !editing
+                  ? '保存草稿'
+                  : editing
+                    ? '保存修改'
+                    : '保存'
+            }}
           </button>
         </footer>
       </form>
@@ -1053,14 +1258,13 @@ const hasStatusTabs = computed(
       "
       @close="closeDetail"
     />
-    <div v-else-if="detail" class="modal-backdrop">
-      <section
-        class="modal resource-detail-modal"
-        v-dialog="closeDetail"
-        role="dialog"
-        aria-modal="true"
-        aria-label="记录详情"
-      >
+    <CreatePage
+      v-else-if="detail"
+      :title="String(detail.title || detail.name || resource.title)"
+      description="记录详情"
+      @back="closeDetail"
+    >
+      <section class="resource-detail-page" aria-label="记录详情">
         <div class="resource-modal-heading">
           <h2>{{ resource.title }}详情</h2>
           <button class="modal-close" aria-label="关闭记录详情" @click="closeDetail">
@@ -1105,6 +1309,10 @@ const hasStatusTabs = computed(
               </p>
             </article>
           </section>
+          <PartnerStudentOrders
+            v-if="auth.platform === 'partner' && resource.key === 'students'"
+            :student-id="String(detail.id)"
+          />
           <InvitationDetail
             v-if="auth.platform === 'admin' && resource.key === 'users'"
             :user="detail"
@@ -1154,7 +1362,7 @@ const hasStatusTabs = computed(
           <button class="button" @click="closeDetail">关闭</button>
         </footer>
       </section>
-    </div>
+    </CreatePage>
     <div v-if="projectAction" class="modal-backdrop">
       <section
         class="modal resource-detail-modal"
@@ -1416,5 +1624,39 @@ td {
   flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 20px;
+}
+</style>
+
+<style scoped>
+.active-filter-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 20px 14px;
+}
+.active-filter-tags .button {
+  min-height: 32px;
+  font-size: 12px;
+}
+.resource-detail-page .resource-modal-heading,
+.resource-detail-page .resource-detail-footer {
+  display: none;
+}
+.resource-detail-page .resource-detail-body {
+  overflow: visible;
+  max-height: none;
+  padding: 0;
+}
+</style>
+
+<style scoped>
+.page-jump {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.page-jump input {
+  width: 72px;
+  min-width: 0;
 }
 </style>

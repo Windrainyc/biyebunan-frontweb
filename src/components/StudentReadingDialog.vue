@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import ContentOutline from './ContentOutline.vue';
+import CreatePage from './CreatePage.vue';
 import type { Row } from '../types/api';
 import { display } from '../config/labels';
 import Icon from './Icon.vue';
@@ -13,14 +15,12 @@ withDefaults(defineProps<{ content: Row; kind?: 'knowledge' | 'forum' }>(), { ki
 const emit = defineEmits<{ close: []; changed: [] }>();
 </script>
 <template>
-  <div class="knowledge-reader-backdrop">
-    <section
-      class="knowledge-reader"
-      v-dialog="() => emit('close')"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="knowledge-reader-title"
-    >
+  <CreatePage
+    :title="String(content.title)"
+    :description="kind === 'forum' ? '答疑广场 · 帖子详情' : '知识库阅读'"
+    @back="emit('close')"
+  >
+    <section class="knowledge-reader reading-page" aria-labelledby="knowledge-reader-title">
       <header class="knowledge-reader-header">
         <div>
           <strong>{{ kind === 'forum' ? '帖子详情' : '知识库阅读' }}</strong>
@@ -48,6 +48,9 @@ const emit = defineEmits<{ close: []; changed: [] }>();
           <h2 id="knowledge-reader-title">{{ content.title }}</h2>
           <p>更新于 {{ display(content.updatedAt) }}</p>
         </div>
+        <ContentOutline
+          :text="String(kind === 'forum' ? content.body || '' : content.markdown || '')"
+        />
         <template v-if="kind === 'forum'"
           ><div class="forum-reader-meta">
             <span>{{ content.authorId === auth.user?.id ? '我发布的帖子' : '社区成员发布' }}</span
@@ -63,7 +66,7 @@ const emit = defineEmits<{ close: []; changed: [] }>();
         ><KnowledgeDetail v-else :content="content" />
       </div>
       <footer v-if="kind === 'knowledge'" class="knowledge-reader-footer">
-        <span>正文和文件仅按当前访问权限提供</span>
+        <span>仅展示当前账户可阅读的正文与文件</span>
         <RouterLink
           v-if="content.publishedVersionId && content.indexState === 'READY'"
           :to="{
@@ -78,7 +81,7 @@ const emit = defineEmits<{ close: []; changed: [] }>();
         >
       </footer>
     </section>
-  </div>
+  </CreatePage>
 </template>
 <style scoped>
 .knowledge-reader-cover.forum-reader-cover {
@@ -207,5 +210,38 @@ const emit = defineEmits<{ close: []; changed: [] }>();
     padding: 14px 18px;
     flex-wrap: wrap;
   }
+}
+</style>
+
+<style scoped>
+.reading-page {
+  width: 100%;
+  max-height: none;
+  border: 0;
+  box-shadow: none;
+}
+.reading-page .knowledge-reader-scroll {
+  overflow: visible;
+  padding: 0;
+}
+.reading-page .knowledge-reader-header {
+  display: none;
+}
+.reading-page .knowledge-reader-cover {
+  padding: 20px;
+  min-height: 0;
+  margin-bottom: 20px;
+}
+.reading-page .knowledge-reader-footer {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  padding: 16px 0;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.reading-page :deep(.markdown-content) {
+  font-size: 16px;
+  line-height: 1.85;
 }
 </style>
