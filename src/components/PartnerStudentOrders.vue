@@ -3,7 +3,10 @@ import { watch, ref, onBeforeUnmount } from 'vue';
 import { request, errorText } from '../api/client';
 import type { Row, Page } from '../types/api';
 import StatusBadge from './StatusBadge.vue';
-const props = defineProps<{ studentId: string }>();
+const props = withDefaults(defineProps<{ studentId: string; kind?: 'orders' | 'projects' }>(), {
+  kind: 'orders',
+});
+const noun = () => (props.kind === 'projects' ? '项目' : '订单');
 const rows = ref<Row[]>([]),
   total = ref(0),
   page = ref(1),
@@ -17,7 +20,7 @@ async function load() {
   error.value = '';
   rows.value = [];
   try {
-    const result = await request<Page<Row>>('/partner/orders', {
+    const result = await request<Page<Row>>(`/partner/${props.kind}`, {
       query: { studentId: props.studentId, page: page.value, size: 10 },
     });
     if (current !== generation) return;
@@ -40,9 +43,9 @@ watch(
 </script>
 <template>
   <section class="student-orders">
-    <h2>关联订单</h2>
-    <p class="muted">仅显示你有权查看的该学生订单。</p>
-    <p v-if="loading" role="status">正在读取订单…</p>
+    <h2>关联{{ noun() }}</h2>
+    <p class="muted">仅显示你有权查看的该学生{{ noun() }}。</p>
+    <p v-if="loading" role="status">正在读取{{ noun() }}…</p>
     <p v-else-if="error" class="error" role="alert">
       {{ error }} <button class="button" @click="load">重试</button>
     </p>
@@ -50,15 +53,15 @@ watch(
       <RouterLink
         v-for="row in rows"
         :key="String(row.id)"
-        :to="{ path: '/partner/orders', query: { view: String(row.id) } }"
+        :to="{ path: `/partner/${kind}`, query: { view: String(row.id) } }"
         class="student-order-row"
       >
         <span
           ><strong>{{ row.title }}</strong
-          ><small>{{ row.orderNo }}</small></span
-        ><StatusBadge :value="row.status" />
+          ><small>{{ row.orderNo || row.deliveryDate }}</small></span
+        ><StatusBadge :value="row.status || row.stage" />
       </RouterLink>
-      <p v-if="!rows.length" class="muted">暂无关联订单</p>
+      <p v-if="!rows.length" class="muted">暂无关联{{ noun() }}</p>
       <div class="pagination">
         <span>共 {{ total }} 条</span
         ><button

@@ -4,6 +4,7 @@ import { auth, request, errorText } from '../api/client';
 import { writeAttempt } from '../api/attempt';
 import type { Row, Page } from '../types/api';
 import { display } from '../config/labels';
+import KnowledgeHistory from './KnowledgeHistory.vue';
 import AssetCover from './AssetCover.vue';
 import AssetUpload from './AssetUpload.vue';
 import MarkdownContent from './MarkdownContent.vue';
@@ -120,6 +121,7 @@ watch(
 );
 </script>
 <template>
+  <KnowledgeHistory v-if="auth.platform === 'admin'" :content-id="String(content.id)" />
   <div
     v-if="content.coverAssetId"
     style="height: 220px; border-radius: 12px; overflow: hidden; margin-bottom: 16px"

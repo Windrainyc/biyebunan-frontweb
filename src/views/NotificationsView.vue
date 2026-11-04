@@ -12,6 +12,7 @@ interface Notification {
   read: boolean;
   createdAt: string;
   announcementId?: string;
+  projectId?: string;
 }
 const items = ref<Notification[]>([]),
   page = ref(1),
@@ -113,6 +114,12 @@ onBeforeUnmount(() => {
           <span>{{ display(item.createdAt) }}</span>
         </div>
         <p>{{ item.body }}</p>
+        <RouterLink
+          v-if="item.projectId"
+          class="button"
+          :to="{ path: `/${auth.platform}/projects`, query: { view: item.projectId } }"
+          >查看关联项目</RouterLink
+        >
         <button v-if="item.announcementId" class="button" @click="showAnnouncement(item)">
           查看详情
         </button>

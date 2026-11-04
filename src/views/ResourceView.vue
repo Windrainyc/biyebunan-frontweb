@@ -1313,6 +1313,11 @@ const hasStatusTabs = computed(
             v-if="auth.platform === 'partner' && resource.key === 'students'"
             :student-id="String(detail.id)"
           />
+          <PartnerStudentOrders
+            kind="projects"
+            v-if="auth.platform === 'partner' && resource.key === 'students'"
+            :student-id="String(detail.id)"
+          />
           <InvitationDetail
             v-if="auth.platform === 'admin' && resource.key === 'users'"
             :user="detail"
