@@ -247,9 +247,7 @@ onMounted(load);
           {{ fileMetadata[String(d.assetId)]?.filename || '文件信息暂不可用' }}
           <template v-if="fileMetadata[String(d.assetId)]">
             ·
-            {{
-              (Number(fileMetadata[String(d.assetId)]?.size || 0) / 1024).toFixed(1)
-            }}
+            {{ (Number(fileMetadata[String(d.assetId)]?.size || 0) / 1024).toFixed(1) }}
             KB</template
           >
           · {{ d.releaseId === selectedRelease.id ? '本次更新' : '沿用先前版本' }}
