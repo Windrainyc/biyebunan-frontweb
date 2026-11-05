@@ -244,7 +244,7 @@ onBeforeUnmount(() => {
       :busy="busy || avatarUploading"
       @back="closeEditor"
     >
-      <form v-if="profile" @submit.prevent="save">
+      <form v-if="profile" id="profile-edit-form" @submit.prevent="save">
         <div v-if="auth.platform === 'student'" class="avatar-editor">
           <div class="avatar-edit-heading">
             <UserAvatar :index="avatarIndex" :asset-id="avatarAssetId" :size="72" />
@@ -327,16 +327,27 @@ onBeforeUnmount(() => {
             重新读取资料
           </button>
         </p>
-        <footer>
-          <span>资料变更将保存到当前账户</span
+      </form>
+      <template #footer
+        ><small>仅保存当前账户的资料</small>
+        <div class="footer-actions">
+          <button
+            type="button"
+            class="button"
+            :disabled="busy || avatarUploading"
+            @click="closeEditor"
+          >
+            取消</button
           ><button
+            type="submit"
+            form="profile-edit-form"
             class="button primary"
             :disabled="busy || avatarUploading || conflict || !school || !major || !name.trim()"
           >
             {{ busy ? '保存中…' : '保存资料' }}
           </button>
-        </footer>
-      </form>
+        </div></template
+      >
     </CompactDialog>
   </section>
 </template>

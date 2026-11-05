@@ -31,6 +31,7 @@ const emit = defineEmits<{ back: [] }>();
           </button>
         </header>
         <div class="operation-body"><slot /></div>
+        <footer v-if="$slots.footer" class="fixed-operation-footer"><slot name="footer" /></footer>
       </section></div
   ></Teleport>
 </template>
@@ -250,5 +251,35 @@ const emit = defineEmits<{ back: [] }>();
   background: #002fa7;
   color: #fff;
   border-color: #002fa7;
+}
+</style>
+
+<style>
+.fixed-operation-footer {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid #e8ebf0;
+  padding: 16px 24px;
+  background: white;
+}
+.fixed-operation-footer .footer-actions {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+}
+.fixed-operation-footer small {
+  color: #8b94a3;
+  font-size: 11px;
+}
+@media (max-width: 600px) {
+  .fixed-operation-footer {
+    padding: 14px 18px;
+  }
+  .fixed-operation-footer small {
+    display: none;
+  }
 }
 </style>

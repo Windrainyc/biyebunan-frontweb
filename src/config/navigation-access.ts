@@ -57,7 +57,7 @@ export function utilityNavigation(platform: Platform, permissions: readonly stri
       icon: 'activity',
       method: 'GET',
       endpoint: `/${platform}/statistics`,
-      platforms: ['admin', 'student', 'partner'],
+      platforms: ['admin', 'partner'],
     },
     {
       key: 'notifications',

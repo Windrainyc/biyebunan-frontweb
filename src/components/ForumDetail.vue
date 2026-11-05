@@ -8,7 +8,7 @@ import AssetUpload from './AssetUpload.vue';
 import RecordActions from './RecordActions.vue';
 import MarkdownContent from './MarkdownContent.vue';
 const props = defineProps<{ post: Row }>(),
-  emit = defineEmits<{ changed: [] }>();
+  emit = defineEmits<{ changed: []; replied: [] }>();
 const comments = ref<Row[]>([]),
   page = ref(1),
   total = ref(0),
@@ -117,6 +117,7 @@ async function send() {
     parent.value = null;
     notice.value = '回复已提交';
     await load();
+    emit('replied');
   } catch (e) {
     error.value = errorText(e);
   } finally {

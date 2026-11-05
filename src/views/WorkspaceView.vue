@@ -35,6 +35,7 @@ const ActivityView = page(() => import('./ActivityView.vue'));
 const StatisticsView = page(() => import('./StatisticsView.vue'));
 const ChatView = page(() => import('./ChatView.vue'));
 const MaterialBrowser = page(() => import('../components/MaterialBrowser.vue'));
+const ForumView = page(() => import('./ForumView.vue'));
 const ResourceView = page(() => import('./ResourceView.vue'));
 import Icon from '../components/Icon.vue';
 import type { Platform } from '../types/api';
@@ -232,13 +233,23 @@ async function exit() {
           v-else-if="platform === 'student' && route.params.resource === 'bind-order'"
         /><ActivityView
           v-else-if="platform === 'admin' && route.params.resource === 'activity'"
-        /><StatisticsView v-else-if="route.params.resource === 'statistics'" />
+        /><StatisticsView
+          v-else-if="platform !== 'student' && route.params.resource === 'statistics'"
+        />
         <NotificationsView v-else-if="route.params.resource === 'notifications'" />
         <ChatView
           v-else-if="platform === 'student' && route.params.resource === 'chat'"
         /><MaterialBrowser
           v-else-if="platform === 'admin' && selected?.key === 'materials'"
-        /><ResourceView
+        /><ForumView
+          v-else-if="
+            platform === 'student' &&
+            selected?.key === 'posts' &&
+            !route.params.action &&
+            !route.query.edit
+          "
+        />
+        <ResourceView
           v-else-if="selected"
           :key="selected.path"
           :resource="selected"

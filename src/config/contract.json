@@ -6473,6 +6473,154 @@
         }
       },
       "required": ["items", "page", "size", "total"]
+    },
+    "ForumFeed": {
+      "type": "object",
+      "required": [
+        "id",
+        "boardId",
+        "authorId",
+        "title",
+        "body",
+        "boardName",
+        "authorName",
+        "state",
+        "createdAt",
+        "avatarIndex",
+        "replyCount",
+        "heat"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "boardId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "authorId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "title": {
+          "type": "string"
+        },
+        "body": {
+          "type": "string"
+        },
+        "boardName": {
+          "type": "string"
+        },
+        "authorName": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "avatarIndex": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "replyCount": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "heat": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "ForumFeedPage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/ForumFeed"
+          }
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        }
+      },
+      "required": ["items", "page", "size", "total"]
+    },
+    "ForumActive": {
+      "type": "object",
+      "required": ["id", "displayName", "avatarIndex", "contributions"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "avatarIndex": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "contributions": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "ForumKeyword": {
+      "type": "object",
+      "required": ["name", "count"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "count": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "ForumCommunity": {
+      "type": "object",
+      "required": ["activeUsers", "hotPosts", "keywords"],
+      "properties": {
+        "activeUsers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/ForumActive"
+          }
+        },
+        "hotPosts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/ForumFeed"
+          }
+        },
+        "keywords": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/ForumKeyword"
+          }
+        }
+      }
     }
   },
   "operations": {
@@ -21287,6 +21435,92 @@
         "items": {
           "$ref": "#/components/schemas/DeliveryVersion"
         }
+      }
+    },
+    "GET /student/forum/feed": {
+      "operationId": "get_student_forum_feed",
+      "summary": "学生论坛分页发现",
+      "permission": "get_student_posts",
+      "body": null,
+      "parameters": [
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1
+          }
+        },
+        {
+          "name": "size",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20
+          }
+        },
+        {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "description": "",
+            "maxLength": 100
+          }
+        },
+        {
+          "name": "boardId",
+          "in": "query",
+          "required": false,
+          "description": "",
+          "schema": {
+            "type": "string",
+            "description": "资源标识",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "scope",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "enum": ["all", "mine", "participated"],
+            "default": "all"
+          }
+        },
+        {
+          "name": "mode",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "enum": ["latest", "hot", "unanswered"],
+            "default": "latest"
+          }
+        }
+      ],
+      "response": {
+        "$ref": "#/components/schemas/ForumFeedPage"
+      }
+    },
+    "GET /student/forum/community": {
+      "operationId": "get_student_forum_community",
+      "summary": "近七天公开社区热度、活跃成员与关键词",
+      "permission": "get_student_posts",
+      "body": null,
+      "parameters": [],
+      "response": {
+        "$ref": "#/components/schemas/ForumCommunity"
       }
     }
   }

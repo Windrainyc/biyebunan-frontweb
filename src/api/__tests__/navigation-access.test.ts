@@ -23,6 +23,7 @@ describe('专用页面导航权限', () => {
     const links = utilityNavigation('student', permissions);
     expect(links.every((r) => r.path.startsWith('/student/'))).toBe(true);
     expect(links.map((r) => r.key)).not.toContain('chat-audit');
+    expect(links.map((r) => r.key)).not.toContain('statistics');
     expect(links.map((r) => r.key)).toContain('bind-order');
   });
 });
