@@ -100,7 +100,7 @@ export function resources(platform: Platform): Resource[] {
       ),
       resource(
         'models',
-        '大模型配置',
+        '模型服务',
         p + '/models',
         'cpu',
         ['name', 'code', 'provider', 'contextLimit', 'status'],

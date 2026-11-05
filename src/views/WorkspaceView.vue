@@ -23,6 +23,7 @@ function page(loader: () => Promise<{ default: Component }>) {
     timeout: 30000,
   });
 }
+const ManagedModelsView = page(() => import('./ManagedModelsView.vue'));
 const ManagementDashboard = page(() => import('./ManagementDashboard.vue'));
 const DashboardView = page(() => import('./DashboardView.vue'));
 const KnowledgeSearchView = page(() => import('./KnowledgeSearchView.vue'));
@@ -80,12 +81,17 @@ const homeEntries = computed(() =>
         configuredLinks.value.some((m) => m.path === `/${platform.value}/${r.key}`),
       ),
 );
+const canManageModels = computed(() =>
+  ['models:read', 'model-prices:read', 'get_admin_model_keys'].every((p) =>
+    auth.permissions.includes(p),
+  ),
+);
 const selected = computed(() => entries.value.find((r) => r.key === route.params.resource));
 const managementLinks = computed(() => {
   const candidates = [
     ...entries.value.map((entry) => ({ ...entry, path: `/${platform.value}/${entry.key}` })),
     ...utilityLinks.value,
-  ];
+  ].filter((entry) => !['model-prices', 'model-keys'].includes(entry.key) || !canManageModels);
   return navigation.value?.configured === false
     ? candidates
     : candidates.filter((entry) => configuredLinks.value.some((link) => link.path === entry.path));
@@ -239,6 +245,9 @@ async function exit() {
         />
         <StudentNotificationsView
           v-else-if="platform === 'student' && route.params.resource === 'notifications'"
+        />
+        <ManagedModelsView
+          v-else-if="platform === 'admin' && route.params.resource === 'models' && canManageModels"
         />
         <NotificationsView v-else-if="route.params.resource === 'notifications'" />
         <ChatView

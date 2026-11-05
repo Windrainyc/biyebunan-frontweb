@@ -6621,6 +6621,85 @@
           }
         }
       }
+    },
+    "ManagedModelService": {
+      "type": "object",
+      "required": [
+        "version",
+        "enabled",
+        "keyConfigured",
+        "checkedAt",
+        "checkError",
+        "availableCodes",
+        "models",
+        "endpoint",
+        "priceSource",
+        "priceVersion",
+        "priceCheckedAt"
+      ],
+      "properties": {
+        "version": {
+          "type": "integer"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "keyConfigured": {
+          "type": "boolean"
+        },
+        "checkedAt": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        },
+        "checkError": {
+          "type": ["string", "null"]
+        },
+        "availableCodes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "models": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["code", "name", "selected", "input", "output", "cached"],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "selected": {
+                "type": "boolean"
+              },
+              "input": {
+                "type": "string"
+              },
+              "output": {
+                "type": "string"
+              },
+              "cached": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "endpoint": {
+          "type": "string"
+        },
+        "priceSource": {
+          "type": "string"
+        },
+        "priceVersion": {
+          "type": "string"
+        },
+        "priceCheckedAt": {
+          "type": "string"
+        }
+      }
     }
   },
   "operations": {
@@ -21521,6 +21600,124 @@
       "parameters": [],
       "response": {
         "$ref": "#/components/schemas/ForumCommunity"
+      }
+    },
+    "GET /admin/model-service": {
+      "operationId": "get_admin_model_service",
+      "summary": "查询官方模型服务",
+      "permission": null,
+      "body": null,
+      "parameters": [],
+      "response": {
+        "$ref": "#/components/schemas/ManagedModelService"
+      }
+    },
+    "PUT /admin/model-service": {
+      "operationId": "put_admin_model_service",
+      "summary": "保存官方模型服务配置并停用",
+      "permission": null,
+      "body": {
+        "type": "object",
+        "required": ["codes"],
+        "properties": {
+          "secretValue": {
+            "type": ["string", "null"],
+            "maxLength": 4096,
+            "writeOnly": true
+          },
+          "codes": {
+            "type": "array",
+            "maxItems": 2,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "enum": ["deepseek-flash", "deepseek-v4-pro"]
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "If-Match",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "response": {
+        "$ref": "#/components/schemas/ManagedModelService"
+      }
+    },
+    "POST /admin/model-service/check": {
+      "operationId": "post_admin_model_service_check",
+      "summary": "只读检查官方账户模型目录",
+      "permission": null,
+      "body": null,
+      "parameters": [
+        {
+          "name": "If-Match",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "response": {
+        "$ref": "#/components/schemas/ManagedModelService"
+      }
+    },
+    "POST /admin/model-service/status": {
+      "operationId": "post_admin_model_service_status",
+      "summary": "显式启停官方模型服务",
+      "permission": null,
+      "body": {
+        "type": "object",
+        "required": ["enabled"],
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "If-Match",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "response": {
+        "$ref": "#/components/schemas/ManagedModelService"
       }
     }
   }
