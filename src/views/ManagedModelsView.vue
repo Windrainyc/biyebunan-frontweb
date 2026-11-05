@@ -86,6 +86,15 @@ async function act(kind: 'save' | 'check' | 'status') {
   error.value = '';
   notice.value = '';
   try {
+    if (kind === 'check' && (dirty.value || !state.value.checkedAt)) {
+      install(
+        await request<State>('/admin/model-service', {
+          method: 'PUT',
+          version: state.value.version,
+          body: { secretValue: secret.value.trim() || null, codes: codes.value },
+        }),
+      );
+    }
     const s = await request<State>('/admin/model-service' + (kind === 'save' ? '' : '/' + kind), {
       method: kind === 'save' ? 'PUT' : 'POST',
       version: state.value.version,
@@ -167,14 +176,21 @@ onBeforeRouteLeave(() => !dirty.value || confirm('配置尚未保存，确定离
               :disabled="busy || !canWrite"
               maxlength="4096"
             /><button
-              :disabled="busy || !canWrite || dirty || !state.keyConfigured || state.enabled"
+              :disabled="
+                busy || !canWrite || (!secret.trim() && !state.keyConfigured) || state.enabled
+              "
               @click="act('check')"
             >
-              检查连接
+              {{ busy ? '处理中…' : dirty || !state.checkedAt ? '保存并检查连接' : '检查连接' }}
             </button>
           </div>
           <p class="help">
-            密钥加密保存，不返回原文。填写或调整模型后先保存，再检查连接；检查不会生成文字。
+            密钥加密保存，不返回原文。检查时自动保存当前配置，仅查询官方模型列表，不生成文字。
+          </p>
+          <p v-if="state.enabled" class="help">服务运行中，请先停用服务再修改并检查连接。</p>
+          <p v-else-if="!canWrite" class="help">当前账户没有模型配置权限。</p>
+          <p v-else-if="!secret.trim() && !state.keyConfigured" class="help">
+            填写 API Key 后即可保存并检查连接。
           </p>
           <p v-if="state.checkError" class="error help">{{ state.checkError }}</p>
         </section>
