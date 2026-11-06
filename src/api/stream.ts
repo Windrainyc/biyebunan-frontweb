@@ -36,6 +36,8 @@ export async function events(
         if (event.sequence !== cursor + 1) throw new Error('答疑事件存在缺口，请重新连接');
         receive(event);
         cursor = event.sequence;
+        // 终态已持久化；不再等待代理关闭连接，避免界面一直占用。
+        if (['completed', 'failed', 'cancelled'].includes(event.type)) return;
       }
     }
   } finally {

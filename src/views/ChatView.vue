@@ -91,7 +91,42 @@ const run = ref<Row | null>(null),
   sequence = ref(0),
   pending = ref<{ key: string; body: Record<string, unknown> } | null>(null);
 let controller: AbortController | undefined;
-const conversationAttempt = writeAttempt();
+let conversationAttempt = writeAttempt();
+const draftNotice = ref('');
+const checkingConversation = ref(false);
+async function newConversation() {
+  if (checkingConversation.value) return;
+  checkingConversation.value = true;
+  try {
+    if (busy.value || pending.value) {
+      if (!run.value?.id) {
+        error.value = '上次提交结果尚未确认，请先使用原请求重试，避免重复计费。';
+        return;
+      }
+      const latest = await request<Row>(`/student/runs/${run.value.id}`);
+      if (!['SUCCEEDED', 'FAILED', 'CANCELLED'].includes(String(latest.state))) {
+        error.value = '当前回答仍在处理，请等待完成，或先停止本次答疑。';
+        return;
+      }
+      controller?.abort();
+      pending.value = null;
+      busy.value = false;
+      sessionStorage.removeItem(storageKey());
+    }
+    await chooseConversation('');
+    text.value = '';
+    error.value = '';
+    project.value = '';
+    run.value = null;
+    sequence.value = 0;
+    conversationAttempt = writeAttempt();
+    draftNotice.value = '已开启新对话，请选择项目并输入第一个问题。';
+  } catch (e) {
+    error.value = errorText(e);
+  } finally {
+    checkingConversation.value = false;
+  }
+}
 const historyState = useConversationHistory(
   () => conversation.value,
   (id, page) =>
@@ -249,6 +284,7 @@ async function send() {
         activeConversation.value = c;
         conversations.value.unshift(c);
       }
+      run.value = null;
       pending.value = {
         key: crypto.randomUUID(),
         body: {
@@ -324,7 +360,7 @@ onBeforeUnmount(() => {
       :class="{ 'is-open': conversationListOpen }"
       aria-label="对话列表"
     >
-      <button class="button" :disabled="busy || !!pending" @click="chooseConversation('')">
+      <button class="button" :disabled="checkingConversation" @click="newConversation">
         <Icon name="plus" />新建对话</button
       ><input
         v-model="conversationSearch"
@@ -368,6 +404,7 @@ onBeforeUnmount(() => {
     </aside>
     <div class="student-chat-main">
       <h1>你的学习搭子</h1>
+      <p v-if="draftNotice && !conversation" class="muted" role="status">{{ draftNotice }}</p>
       <p class="muted">围绕项目提问，回答与用量均会保存。关闭页面不会自动取消正在执行的答疑。</p>
       <p v-if="error" class="error" role="alert">{{ error }}</p>
       <p v-if="source" class="notice">

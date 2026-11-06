@@ -8,6 +8,7 @@ const route = useRoute(),
 const platform = computed(() => route.params.platform as Platform);
 const phone = ref(''),
   password = ref(''),
+  showPassword = ref(false),
   mfa = ref(''),
   busy = ref(false),
   error = ref('');
@@ -74,13 +75,23 @@ async function submit() {
           maxlength="11"
           placeholder="请输入手机号" /></label
       ><label
-        >密码<input
-          v-model="password"
-          type="password"
-          autocomplete="current-password"
-          required
-          minlength="10"
-          placeholder="请输入密码" /></label
+        >密码<span class="password-field"
+          ><input
+            v-model="password"
+            :type="showPassword ? 'text' : 'password'"
+            autocomplete="current-password"
+            required
+            minlength="10"
+            placeholder="请输入密码"
+          /><button
+            type="button"
+            :aria-label="showPassword ? '隐藏密码' : '显示密码'"
+            :aria-pressed="showPassword"
+            @click="showPassword = !showPassword"
+          >
+            {{ showPassword ? '隐藏' : '显示' }}
+          </button></span
+        ></label
       ><label v-if="platform === 'admin'"
         >动态验证码<input
           v-model="mfa"
@@ -116,6 +127,31 @@ async function submit() {
   </main>
 </template>
 <style scoped>
+.password-field {
+  position: relative;
+  display: flex;
+  min-width: 0;
+}
+.password-field input {
+  width: 100%;
+  min-width: 0;
+  padding-right: 64px;
+}
+.password-field button {
+  position: absolute;
+  right: 8px;
+  top: 0;
+  bottom: 0;
+  background: transparent;
+  border: 0;
+  color: #3659b8;
+  cursor: pointer;
+  padding: 0 8px;
+}
+.password-field button:focus-visible {
+  outline: 2px solid #3659b8;
+  outline-offset: -2px;
+}
 .login-page {
   min-height: 100vh;
   display: grid;
