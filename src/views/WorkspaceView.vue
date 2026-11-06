@@ -23,6 +23,7 @@ function page(loader: () => Promise<{ default: Component }>) {
     timeout: 30000,
   });
 }
+const OssStorageView = page(() => import('./OssStorageView.vue'));
 const ManagedModelsView = page(() => import('./ManagedModelsView.vue'));
 const ManagementDashboard = page(() => import('./ManagementDashboard.vue'));
 const DashboardView = page(() => import('./DashboardView.vue'));
@@ -245,6 +246,9 @@ async function exit() {
         />
         <StudentNotificationsView
           v-else-if="platform === 'student' && route.params.resource === 'notifications'"
+        />
+        <OssStorageView
+          v-else-if="platform === 'admin' && route.params.resource === 'storage-configs'"
         />
         <ManagedModelsView
           v-else-if="platform === 'admin' && route.params.resource === 'models' && canManageModels"

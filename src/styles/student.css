@@ -560,7 +560,7 @@ body .student-workspace .empty-project {
     grid-template-columns: 1fr;
   }
 }
-body .student-workspace .page:has(.student-chat-layout) {
+body .student-workspace .page:has(.qa-chat-layout) {
   max-width: none;
   padding: 0;
 }

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ChatKnowledgePicker from '../components/ChatKnowledgePicker.vue';
 import QuotaChart from '../components/QuotaChart.vue';
 import AppSelect from '../components/AppSelect.vue';
 import { useRoute } from 'vue-router';
@@ -28,6 +29,12 @@ const source = ref(
     : '',
 );
 const sourceTitle = String(route.query.title || '已选知识资料').slice(0, 200);
+const materialsOpen = ref(false);
+const selectedSources = ref<{ versionId: string; title: string }[]>(
+  source.value ? [{ versionId: source.value, title: sourceTitle }] : [],
+);
+const autoKnowledge = ref(true);
+const retrievalNotice = ref('');
 const conversations = ref<Row[]>([]),
   projects = ref<Row[]>([]),
   models = ref<Row[]>([]),
@@ -284,6 +291,19 @@ async function send() {
         activeConversation.value = c;
         conversations.value.unshift(c);
       }
+      let sourceIds = selectedSources.value.map((x) => x.versionId);
+      retrievalNotice.value = '';
+      if (autoKnowledge.value) {
+        const found = await request<Page<Row>>('/student/knowledge-search', {
+          query: { q: text.value.trim().slice(0, 100), mode: 'QUESTION', page: 1, size: 3 },
+        });
+        sourceIds = [
+          ...new Set([...sourceIds, ...found.items.map((x) => String(x.versionId))]),
+        ].slice(0, 8);
+        retrievalNotice.value = found.items.length
+          ? `已检索到${found.items.length}份可访问知识，并随本次问题提交。`
+          : '未检索到相关知识，本次回答仅使用对话和手动选择的资料。';
+      }
       run.value = null;
       pending.value = {
         key: crypto.randomUUID(),
@@ -292,7 +312,7 @@ async function send() {
           clientMessageId: crypto.randomUUID(),
           text: text.value,
           modelId: model.value,
-          sourceVersionIds: source.value ? [source.value] : [],
+          sourceVersionIds: sourceIds,
           maxOutputTokens: Math.min(
             2048,
             Number(models.value.find((m) => m.id === model.value)?.maxOutputTokens || 2048),
@@ -345,34 +365,24 @@ onBeforeUnmount(() => {
 });
 </script>
 <template>
-  <section class="student-chat-layout">
-    <button
-      class="button conversation-toggle"
-      :aria-expanded="conversationListOpen"
-      aria-controls="conversation-list-panel"
-      @click="conversationListOpen = !conversationListOpen"
-    >
-      <Icon name="menu" />{{ conversationListOpen ? '收起对话列表' : '选择或新建对话' }}
-    </button>
+  <section class="qa-chat-layout">
     <aside
-      id="conversation-list-panel"
-      class="student-chat-sidebar"
+      class="qa-chat-sidebar"
       :class="{ 'is-open': conversationListOpen }"
       aria-label="对话列表"
     >
       <button class="button" :disabled="checkingConversation" @click="newConversation">
-        <Icon name="plus" />新建对话</button
-      ><input
-        v-model="conversationSearch"
-        type="search"
-        placeholder="搜索全部对话标题"
-        @keydown.enter.prevent="searchConversations"
-        aria-label="搜索全部对话标题"
-      />
-      <button class="button" :disabled="busy || !!pending" @click="searchConversations">
-        搜索对话
+        <Icon name="plus" />新建对话
       </button>
-      <div class="student-conversation-list">
+      <form @submit.prevent="searchConversations">
+        <input
+          v-model="conversationSearch"
+          type="search"
+          placeholder="搜索对话"
+          aria-label="搜索全部对话标题"
+        /><button class="text-button" :disabled="busy || !!pending">搜索</button>
+      </form>
+      <div class="qa-session-list">
         <button
           v-for="item in filteredConversations"
           :key="String(item.id)"
@@ -386,83 +396,57 @@ onBeforeUnmount(() => {
         <p v-if="!filteredConversations.length" class="muted">
           {{
             catalogs.conversations.loading.value
-              ? '正在读取对话…'
-              : catalogs.conversations.error.value
-                ? '对话读取失败，请重试'
-                : '暂无匹配对话'
+              ? '正在读取…'
+              : catalogs.conversations.error.value || '暂无匹配对话'
           }}
         </p>
+        <button
+          v-if="
+            conversations.length < catalogs.conversations.total.value ||
+            catalogs.conversations.error.value
+          "
+          class="text-button"
+          @click="loadCatalog('conversations')"
+        >
+          {{ catalogs.conversations.error.value ? '重试读取' : '加载更多对话' }}
+        </button>
       </div>
-      <section class="chat-quota">
-        <h3>我的额度</h3>
+      <section class="qa-quota">
+        <h3>本月可用额度</h3>
         <QuotaChart v-if="quota" :quota="quota" compact />
         <p v-if="quotaError" class="error">
           {{ quotaError }}<button class="text-button" @click="refreshQuota">重试</button>
         </p>
-        <RouterLink to="/student/profile" class="text-button">查看额度账户 →</RouterLink>
+        <RouterLink to="/student/profile">用量明细</RouterLink>
       </section>
     </aside>
-    <div class="student-chat-main">
-      <h1>你的学习搭子</h1>
-      <p v-if="draftNotice && !conversation" class="muted" role="status">{{ draftNotice }}</p>
-      <p class="muted">围绕项目提问，回答与用量均会保存。关闭页面不会自动取消正在执行的答疑。</p>
-      <p v-if="error" class="error" role="alert">{{ error }}</p>
-      <p v-if="source" class="notice">
-        本次引用：{{ sourceTitle
-        }}<button class="button" :disabled="busy || !!pending" @click="source = ''">
-          移除引用
-        </button>
-      </p>
-      <div class="chat-controls">
-        <AppSelect
-          v-if="!conversation"
-          v-model="project"
-          :disabled="busy || !!pending"
-          aria-label="选择项目"
-        >
-          <option value="">请选择项目</option>
-          <option v-for="p in projects" :key="String(p.id)" :value="p.id">
-            {{ p.title }}
-          </option></AppSelect
-        ><AppSelect v-model="model" :disabled="busy || !!pending" aria-label="选择模型">
-          <option value="">请选择可用模型</option>
-          <option v-for="m in models" :key="String(m.id)" :value="m.id">
-            {{ m.name }}
-          </option>
-        </AppSelect>
-      </div>
-      <div
-        v-if="
-          Object.values(catalogs).some((c) => c.error.value || c.rows.value.length < c.total.value)
-        "
-        class="chat-controls"
-      >
-        <template v-for="(catalog, name) in catalogs" :key="name">
+    <main class="qa-chat-main">
+      <header class="qa-chat-bar">
+        <div>
           <button
-            v-if="catalog.error.value || catalog.rows.value.length < catalog.total.value"
-            class="button"
-            :disabled="busy || catalog.loading.value"
-            @click="loadCatalog(name)"
+            class="button qa-mobile"
+            @click="conversationListOpen = !conversationListOpen"
+            :aria-expanded="conversationListOpen"
           >
-            {{ catalog.error.value ? '重试读取' : '加载更多'
-            }}{{ name === 'conversations' ? '会话' : name === 'projects' ? '项目' : '模型' }}
+            对话
           </button>
-          <span v-if="catalog.error.value" class="error" role="alert">{{
-            catalog.error.value
-          }}</span>
-        </template>
-      </div>
-      <p v-if="!models.length && catalogs.models.page.value > 0" class="notice">
-        当前没有可用模型，请联系平台管理员配置。
-      </p>
-      <div class="messages" :aria-busy="historyLoading">
+          <h1>{{ activeConversation?.title || '新对话' }}</h1>
+          <small>{{ contextProject?.title || '选择项目，开始新的问题' }}</small>
+        </div>
+        <button class="button" @click="materialsOpen = true">
+          项目与知识资料 <span v-if="selectedSources.length">{{ selectedSources.length }}</span>
+        </button>
+      </header>
+      <div class="qa-messages" :aria-busy="historyLoading">
+        <p v-if="error" class="error" role="alert">{{ error }}</p>
+        <p v-if="draftNotice && !conversation" class="notice" role="status">{{ draftNotice }}</p>
         <p v-if="historyError" class="error" role="alert">
-          {{ historyError }}
-          <button class="button" :disabled="historyLoading" @click="retryHistory">
+          {{ historyError
+          }}<button class="button" :disabled="historyLoading" @click="retryHistory">
             重试读取消息
           </button>
         </p>
-        <p v-if="historyLoading" class="muted" role="status">正在读取消息…</p>
+        <p v-if="historyLoading" role="status">正在读取消息…</p>
         <button
           v-if="messages.length < historyTotal"
           class="button"
@@ -474,232 +458,501 @@ onBeforeUnmount(() => {
         <article
           v-for="message in messages"
           :key="String(message.id)"
-          :class="['message', message.role === 'USER' ? 'mine' : '']"
+          class="qa-message"
+          :class="{ mine: message.role === 'USER' }"
         >
-          <strong>{{ message.role === 'USER' ? '我的提问' : '智能答疑' }}</strong>
+          <small v-if="message.role !== 'USER'" class="qa-answer-label">知项答疑</small>
           <p v-if="message.role === 'USER'">{{ message.text }}</p>
-          <MarkdownContent v-else :text="String(message.text || '')" />
-          <details v-if="citations(message).length">
-            <summary>查看回答引用（{{ citations(message).length }}）</summary>
-            <blockquote v-for="citation in citations(message)" :key="citation.chunkId">
+          <MarkdownContent v-else :text="String(message.text || '')" copy-code />
+          <details v-if="citations(message).length" class="qa-citations">
+            <summary>本次参考资料（{{ citations(message).length }}）</summary>
+            <blockquote v-for="(citation, index) in citations(message)" :key="citation.chunkId">
               <small
-                >{{ citation.sourceType === 'KNOWLEDGE' ? '知识资料' : '项目交付' }} · 第{{
-                  citation.page
-                }}页</small
+                >[{{ index + 1 }}] 知识版本 {{ citation.versionId.slice(0, 8)
+                }}<template v-if="citation.page > 0"> · 分片 {{ citation.page }}</template></small
               >
               <p>{{ citation.quote }}</p>
             </blockquote>
+            <p class="muted">展示本次提交给模型的原文片段，请结合回答核实。</p>
           </details>
         </article>
-        <article v-if="answer" class="message">
-          <strong>智能答疑</strong>
-          <MarkdownContent :text="answer" />
+        <article v-if="answer" class="qa-message">
+          <small class="qa-answer-label">知项答疑 · 正在回答</small
+          ><MarkdownContent :text="answer" copy-code />
         </article>
-        <p v-if="!messages.length && !answer && !historyLoading && !historyError" class="empty">
-          {{ conversation ? '这段对话还没有消息。' : '选择项目后，输入你的第一个问题。' }}
-        </p>
-      </div>
-      <div v-if="disconnected" class="notice">
-        连接已中断，重新连接只获取已保存的回答，不会重新发起模型调用。<button
-          class="button"
-          @click="subscribe"
+        <div
+          v-if="!messages.length && !answer && !historyLoading && !historyError"
+          class="qa-empty"
         >
-          重新连接
-        </button>
-      </div>
-      <p v-if="pending && !busy" class="notice" role="status">
-        上次提问的提交结果尚未确认。请重试同一次提问，模型和会话暂时锁定，避免重复创建与计费。
-      </p>
-      <div
-        v-if="!messages.length && !busy && !pending"
-        class="question-templates"
-        aria-label="问题模板"
-      >
-        <button
-          v-for="prompt in [
-            '请解释这段代码的作用：',
-            '请帮我分析这个报错，并说明排查步骤：',
-            '请帮我梳理当前项目的实现思路：',
-          ]"
-          :key="prompt"
-          type="button"
-          class="button"
-          @click="text = prompt"
-        >
-          {{ prompt.replace('：', '') }}
-        </button>
-        <small class="muted">选择模板后补充具体内容，再点击发送。</small>
-      </div>
-      <form class="composer" @submit.prevent="send">
-        <textarea
-          v-model="text"
-          rows="2"
-          maxlength="16000"
-          placeholder="描述你的问题、报错信息或需要解释的代码"
-          aria-label="提问正文"
-          :disabled="busy || !!pending"
-        />
-        <div>
-          <span class="muted">{{ text.length }} / 16000</span
-          ><button v-if="busy && run" type="button" class="button" @click="cancel">停止答疑</button
-          ><button
-            class="button primary"
-            :disabled="busy || (!pending && (!model || !text.trim()))"
+          <small>从一个具体问题开始</small>
+          <h2>今天想解决什么？</h2>
+          <p>选择项目，带上知识资料，让回答更贴近你的任务。</p>
+          <AppSelect
+            v-if="!conversation"
+            v-model="project"
+            :disabled="busy || !!pending"
+            aria-label="选择项目"
+            ><option value="">请选择项目</option>
+            <option v-for="p in projects" :key="String(p.id)" :value="p.id">
+              {{ p.title }}
+            </option></AppSelect
           >
-            {{ pending ? '重试同一次提问' : '发送问题' }}
+          <div class="question-templates">
+            <button
+              v-for="prompt in [
+                '请解释这段代码的作用：',
+                '请帮我分析这个报错，并说明排查步骤：',
+                '请帮我梳理当前项目的实现思路：',
+              ]"
+              :key="prompt"
+              type="button"
+              class="button"
+              :disabled="busy || !!pending"
+              @click="text = prompt"
+            >
+              {{ prompt.replace('：', '') }}
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="qa-composer-wrap">
+        <p v-if="retrievalNotice" class="muted qa-small" role="status">{{ retrievalNotice }}</p>
+        <div v-if="disconnected" class="notice">
+          连接已中断，重连只读取已保存回答。<button class="text-button" @click="subscribe">
+            重新连接
           </button>
         </div>
-      </form>
-    </div>
-    <aside class="student-chat-context" aria-label="项目上下文">
-      <h2>项目上下文</h2>
-      <article v-if="contextProject">
-        <small>当前项目</small>
-        <h3>{{ contextProject.title }}</h3>
-        <p>{{ display(contextProject.stage) }}</p>
-        <progress
-          :value="Number(contextProject.progress) || 0"
-          max="100"
-          aria-label="项目阶段进度"
-        ></progress
-        ><RouterLink to="/student/projects" class="text-button"
-          >查看项目资料 <Icon name="right"
-        /></RouterLink>
-      </article>
-      <p v-else class="muted">选择项目或已有会话后显示关联项目。</p>
-      <article>
-        <h3>回答引用</h3>
-        <p v-if="source">{{ sourceTitle }}</p>
-        <p v-else>已保存回答中的引用可在消息下方展开查看。</p>
-        <RouterLink to="/student/search" class="text-button">检索知识资料</RouterLink>
-      </article>
-    </aside>
+        <p v-if="pending && !busy" class="notice">提交结果尚未确认，请重试同一次提问。</p>
+        <form class="qa-composer" @submit.prevent="send">
+          <textarea
+            v-model="text"
+            rows="2"
+            maxlength="16000"
+            placeholder="继续提问，或添加知识资料帮助回答…"
+            aria-label="提问正文"
+            :disabled="busy || !!pending"
+          />
+          <div class="qa-composer-tools">
+            <div>
+              <AppSelect v-model="model" :disabled="busy || !!pending" aria-label="选择模型"
+                ><option value="">请选择模型</option>
+                <option v-for="m in models" :key="String(m.id)" :value="m.id">
+                  {{ m.name }}
+                </option></AppSelect
+              ><button type="button" class="text-button" @click="materialsOpen = true">
+                引用知识
+              </button>
+            </div>
+            <div>
+              <small class="muted">{{ text.length }} / 16000</small
+              ><button v-if="busy && run" type="button" class="button" @click="cancel">停止</button
+              ><button
+                class="button primary"
+                :disabled="busy || (!pending && (!model || !text.trim()))"
+              >
+                {{ busy ? '处理中…' : pending ? '重试原请求' : '发送' }}
+              </button>
+            </div>
+          </div>
+        </form>
+        <p class="qa-composer-hint">
+          回答可能有误，请结合资料核实。关闭页面不会取消正在生成的回答。
+        </p>
+      </div>
+    </main>
+    <Teleport to="body"
+      ><div v-if="materialsOpen" class="qa-drawer-mask" @click.self="materialsOpen = false">
+        <aside
+          v-dialog="() => (materialsOpen = false)"
+          role="dialog"
+          aria-modal="true"
+          aria-label="项目与知识资料"
+          class="qa-drawer"
+        >
+          <header>
+            <h2>项目与知识资料</h2>
+            <button class="text-button" @click="materialsOpen = false">关闭</button>
+          </header>
+          <h3>当前项目</h3>
+          <p v-if="conversation">{{ contextProject?.title || '当前会话关联项目' }}</p>
+          <AppSelect v-else v-model="project" :disabled="busy || !!pending" aria-label="选择项目"
+            ><option value="">请选择项目</option>
+            <option v-for="p in projects" :key="String(p.id)" :value="p.id">
+              {{ p.title }}
+            </option></AppSelect
+          ><template v-for="name in ['projects', 'models'] as const" :key="name"
+            ><p v-if="catalogs[name].error.value" class="error">{{ catalogs[name].error.value }}</p>
+            <button
+              v-if="
+                catalogs[name].error.value ||
+                catalogs[name].rows.value.length < catalogs[name].total.value
+              "
+              class="text-button"
+              :disabled="catalogs[name].loading.value"
+              @click="loadCatalog(name)"
+            >
+              {{ name === 'projects' ? '加载更多项目' : '加载更多模型' }}
+            </button></template
+          ><label class="qa-auto"
+            ><input
+              v-model="autoKnowledge"
+              type="checkbox"
+              :disabled="busy || !!pending"
+            />自动检索相关知识（关键词）</label
+          >
+          <p class="muted qa-small">
+            未命中会明确说明；语义检索需另行配置，不产生额外 embedding 调用。
+          </p>
+          <div v-for="item in selectedSources" :key="item.versionId" class="qa-selected">
+            <span>{{ item.title }}</span
+            ><button
+              class="text-button"
+              :disabled="busy || !!pending"
+              @click="
+                selectedSources = selectedSources.filter((x) => x.versionId !== item.versionId)
+              "
+            >
+              移除
+            </button>
+          </div>
+          <ChatKnowledgePicker
+            :selected="selectedSources"
+            :disabled="busy || !!pending"
+            @change="selectedSources = $event"
+          />
+        </aside></div
+    ></Teleport>
   </section>
 </template>
 <style scoped>
-.conversation-toggle {
-  display: none;
-}
-@media (max-width: 800px) {
-  .conversation-toggle {
-    display: flex;
-    margin: 12px 16px 0;
-    justify-self: start;
-  }
-}
-.chat-controls {
-  display: flex;
-  gap: 12px;
-  margin: 12px 0;
-  flex-wrap: wrap;
-}
-.messages {
-  min-height: 280px;
-  max-height: 50vh;
-  overflow: auto;
+.qa-chat-layout {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  height: calc(100dvh - 72px);
+  min-height: 500px;
   background: white;
-  border: 1px solid #e2e6ef;
-  border-radius: 12px;
-  padding: 20px;
 }
-.message {
-  background: #f5f7fb;
-  border-radius: 12px;
-  padding: 18px;
-  margin-bottom: 18px;
-  max-width: 90%;
-  font-size: 14px;
+.qa-chat-sidebar {
+  padding: 24px 16px;
+  background: #f3f5f9;
+  border-right: 1px solid #e5e9ef;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-height: 0;
 }
-.message.mine {
-  background: #edf2ff;
-  margin-left: auto;
+.qa-chat-sidebar form {
+  display: flex;
+  gap: 6px;
 }
-.message p {
-  white-space: pre-wrap;
-  line-height: 1.9;
+.qa-chat-sidebar form > button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.qa-chat-sidebar input {
+  width: 100%;
+  min-width: 0;
+}
+.qa-session-list {
+  flex: 1;
+  overflow: auto;
+}
+.qa-session-list > button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  margin: 7px 0;
+  border: 0;
+  background: transparent;
+  padding: 12px;
+  border-radius: 8px;
+  color: #26334a;
+}
+.qa-session-list > button.selected {
+  background: white;
+  color: #315cde;
+}
+.qa-session-list strong {
+  font-size: 13px;
+  font-weight: 500;
+  display: block;
   overflow-wrap: anywhere;
 }
-.composer {
-  margin-top: 12px;
+.qa-session-list small {
+  display: block;
+  font-size: 11px;
+  color: #788398;
+  margin-top: 4px;
 }
-.composer textarea {
-  width: 100%;
+.qa-quota {
+  border-top: 1px solid #e5e9ef;
+  padding-top: 14px;
+  font-size: 12px;
 }
-.composer > div {
+.qa-quota h3 {
+  font-size: 12px;
+}
+.qa-chat-main {
   display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.qa-chat-bar {
+  padding: 16px 30px;
+  border-bottom: 1px solid #e5e9ef;
+  display: flex;
+  justify-content: space-between;
   gap: 12px;
   align-items: center;
-  justify-content: flex-end;
-  margin-top: 12px;
 }
-</style>
-
-<style scoped>
+.qa-chat-bar h1 {
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 1.5;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.qa-chat-bar small {
+  font-size: 12px;
+  color: #788398;
+}
+.qa-chat-bar > button {
+  flex-shrink: 0;
+}
+.qa-messages {
+  flex: 1;
+  min-height: 100px;
+  overflow: auto;
+  padding: 30px max(28px, calc((100% - 800px) / 2));
+}
+.qa-message {
+  margin-bottom: 28px;
+  line-height: 1.9;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+.qa-message.mine {
+  background: #f0f3fa;
+  border-radius: 14px 14px 3px 14px;
+  max-width: 85%;
+  width: fit-content;
+  margin-left: auto;
+  padding: 12px 17px;
+}
+.qa-message.mine p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+.qa-answer-label {
+  display: block;
+  color: #355ee8;
+  margin-bottom: 12px;
+  font-size: 12px;
+}
+.qa-message :deep(.reading-prose) {
+  font-size: 15px;
+}
+.qa-message :deep(pre) {
+  background: #fafbfd;
+  color: #354460;
+  border: 1px solid #e5e9ef;
+  border-radius: 8px;
+  font-size: 13px;
+}
+.qa-citations {
+  font-size: 12px;
+  color: #45649b;
+  margin-top: 16px;
+}
+.qa-citations blockquote {
+  margin: 10px 0;
+  padding: 12px;
+  background: #f7f9fc;
+  border-left: 2px solid #cad6ec;
+}
+.qa-citations p {
+  white-space: pre-wrap;
+}
+.qa-composer-wrap {
+  padding: 12px max(28px, calc((100% - 850px) / 2)) 15px;
+  background: white;
+  flex-shrink: 0;
+}
+.qa-composer {
+  border: 1px solid #d7deeb;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 4px 18px #17223805;
+}
+.qa-composer textarea {
+  border: 0;
+  resize: vertical;
+  width: 100%;
+  min-height: 65px;
+  max-height: 150px;
+  padding: 4px;
+  box-shadow: none;
+}
+.qa-composer-tools {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+}
+.qa-composer-tools > div {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+}
+.qa-composer-tools :deep(.app-select) {
+  max-width: 200px;
+  font-size: 12px;
+}
+.qa-composer-tools small {
+  font-size: 11px;
+}
+.qa-composer-hint {
+  text-align: center;
+  font-size: 11px;
+  color: #788398;
+  margin: 7px 0 0;
+}
+.qa-empty {
+  text-align: center;
+  padding: 35px 0;
+}
+.qa-empty h2 {
+  font-size: 26px;
+  font-family: inherit;
+}
+.qa-empty p {
+  font-size: 13px;
+  color: #788398;
+}
+.qa-empty :deep(.app-select) {
+  max-width: 360px;
+  margin: 18px auto;
+}
 .question-templates {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  padding: 12px 0;
+  justify-content: center;
+  margin-top: 20px;
 }
-.question-templates small {
+.question-templates button {
+  font-size: 12px;
+}
+.qa-mobile {
+  display: none;
+}
+.qa-small {
+  font-size: 12px;
+}
+.qa-drawer-mask {
+  position: fixed;
+  inset: 0;
+  background: #17223830;
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+}
+.qa-drawer {
+  background: white;
+  width: min(390px, 100%);
+  height: 100dvh;
+  overflow: auto;
+  padding: 26px;
+  box-shadow: -12px 0 32px #17223809;
+}
+.qa-drawer header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.qa-drawer h2 {
+  font-size: 18px;
+}
+.qa-drawer h3 {
+  font-size: 15px;
+  margin-top: 24px;
+}
+.qa-drawer :deep(.app-select) {
   width: 100%;
 }
-</style>
-
-<style scoped>
-.student-chat-sidebar {
-  background: #f0f3f9;
-  border: 0;
-  border-radius: 14px;
-  padding: 20px 16px;
+.qa-auto {
+  display: flex;
+  gap: 8px;
+  margin: 24px 0 8px;
+  align-items: center;
 }
-.student-chat-main {
-  background: white;
-  border: 1px solid #e6ebf3;
-  border-radius: 16px;
-  padding: 24px;
-  min-width: 0;
+.qa-selected {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  gap: 10px;
+  border-bottom: 1px solid #e5e9ef;
 }
-.student-chat-main h1 {
-  font-size: 24px;
-  font-family: inherit;
-  margin: 0 0 10px;
-}
-.student-chat-main > p.muted {
-  font-size: 12px;
-  line-height: 1.7;
-  color: #8793a7;
-}
-.chat-quota {
-  background: white;
-  padding: 15px;
-  border-radius: 12px;
-  margin-top: auto;
-}
-.chat-quota h3 {
-  margin: 0;
-  font-size: 13px;
-}
-.chat-quota .text-button {
-  display: block;
-  margin-top: 14px;
-  font-size: 12px;
-}
-.student-chat-context {
-  background: #f8faff;
-  border-color: #e5eaf4;
-  border-radius: 14px;
-}
-.student-conversation-list button {
-  border-radius: 8px;
-}
-.student-conversation-list button.selected {
-  background: white;
-  color: #315cde;
-}
-@media (max-width: 650px) {
-  .student-chat-main {
-    padding: 16px;
+@media (max-width: 800px) {
+  .qa-chat-layout {
+    grid-template-columns: 1fr;
+    height: calc(100dvh - 72px);
+    min-height: 450px;
+  }
+  .qa-chat-sidebar {
+    display: none;
+  }
+  .qa-chat-sidebar.is-open {
+    display: flex;
+    position: fixed;
+    inset: 72px 25% 0 0;
+    z-index: 100;
+    background: #f3f5f9;
+    box-shadow: 15px 0 30px #17223830;
+  }
+  .qa-mobile {
+    display: inline-flex;
+    margin-right: 8px;
+  }
+  .qa-chat-bar {
+    padding: 12px 16px;
+  }
+  .qa-chat-bar h1 {
+    font-size: 14px;
+    display: inline;
+  }
+  .qa-chat-bar small {
+    display: none;
+  }
+  .qa-chat-bar > button {
+    font-size: 12px;
+    padding: 6px 8px;
+  }
+  .qa-messages {
+    padding: 22px 20px;
+  }
+  .qa-composer-wrap {
+    padding: 8px 12px 12px;
+  }
+  .qa-composer-tools {
+    flex-wrap: wrap;
+  }
+  .qa-composer-tools :deep(.app-select) {
+    max-width: 170px;
+  }
+  .qa-composer-tools small {
+    display: none;
+  }
+  .qa-composer-tools button {
+    font-size: 12px;
+  }
+  .qa-composer-hint {
+    font-size: 10px;
+  }
+  .qa-empty h2 {
+    font-size: 22px;
   }
 }
 </style>

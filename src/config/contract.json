@@ -1,6 +1,130 @@
 {
   "version": "1.0.35",
   "schemas": {
+    "OssView": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "bucket": {
+          "type": "string"
+        },
+        "region": {
+          "type": "string"
+        },
+        "endpoint": {
+          "type": "string"
+        },
+        "accessTail": {
+          "type": "string"
+        },
+        "checkedAt": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        },
+        "checkError": {
+          "type": ["string", "null"]
+        },
+        "defaultUpload": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "version",
+        "bucket",
+        "region",
+        "endpoint",
+        "accessTail",
+        "checkedAt",
+        "checkError",
+        "defaultUpload"
+      ]
+    },
+    "OssSave": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": ["string", "null"],
+          "format": "uuid"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "bucket": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$"
+        },
+        "region": {
+          "type": "string",
+          "pattern": "^[a-z]{2}-[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "accessKeyId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "writeOnly": true
+        },
+        "accessKeySecret": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "writeOnly": true
+        }
+      },
+      "required": ["version", "bucket", "region", "accessKeyId", "accessKeySecret"]
+    },
+    "StorageMigrationView": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "queued": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "running": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "done": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "failed": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "remainingAssets": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "remainingExports": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "canStopOldStorage": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "queued",
+        "running",
+        "done",
+        "failed",
+        "remainingAssets",
+        "remainingExports",
+        "canStopOldStorage"
+      ]
+    },
     "ActivityWrite": {
       "type": "object",
       "additionalProperties": false,
@@ -3687,9 +3811,28 @@
           "type": ["string", "null"],
           "format": "uuid",
           "description": "关联公告，普通业务提醒为空"
+        },
+        "eventType": {
+          "type": ["string", "null"],
+          "description": "来源可信业务事件的类型"
+        },
+        "targetId": {
+          "type": ["string", "null"],
+          "format": "uuid",
+          "description": "业务目标标识，目标接口重新验权"
         }
       },
-      "required": ["id", "title", "body", "read", "createdAt", "announcementId", "projectId"]
+      "required": [
+        "id",
+        "title",
+        "body",
+        "read",
+        "createdAt",
+        "announcementId",
+        "projectId",
+        "eventType",
+        "targetId"
+      ]
     },
     "Membership": {
       "type": "object",
@@ -4144,6 +4287,21 @@
         }
       },
       "required": ["partnerId"]
+    },
+    "PostModeration": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": ["APPROVE", "HIDE", "LOCK", "UNLOCK", "PIN", "UNPIN"]
+        },
+        "reason": {
+          "type": "string",
+          "maxLength": 200
+        }
+      },
+      "required": ["action"]
     },
     "Moderation": {
       "type": "object",
@@ -16141,10 +16299,10 @@
           "name": "mode",
           "in": "query",
           "required": false,
-          "description": "KEYWORD默认；SEMANTIC需部署嵌入服务，否则503。相似度阈值0.2，分页遵循sort。",
+          "description": "KEYWORD默认；QUESTION按问题关键词检索最多3个可见已发布知识；SEMANTIC需部署嵌入服务，否则503。",
           "schema": {
             "type": "string",
-            "enum": ["KEYWORD", "SEMANTIC"],
+            "enum": ["KEYWORD", "SEMANTIC", "QUESTION"],
             "default": "KEYWORD"
           }
         },
@@ -17870,7 +18028,7 @@
       "summary": "帖子审核治理",
       "permission": "post_admin_posts_id_moderation",
       "body": {
-        "$ref": "#/components/schemas/Moderation"
+        "$ref": "#/components/schemas/PostModeration"
       },
       "parameters": [
         {
@@ -21718,6 +21876,150 @@
       ],
       "response": {
         "$ref": "#/components/schemas/ManagedModelService"
+      }
+    },
+    "GET /admin/oss-service": {
+      "operationId": "get_admin_oss_service",
+      "summary": "读取脱敏OSS配置",
+      "permission": "storages:read",
+      "body": null,
+      "parameters": [],
+      "response": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/OssView"
+        }
+      }
+    },
+    "POST /admin/oss-service": {
+      "operationId": "save_admin_oss_service",
+      "summary": "加密保存OSS密钥",
+      "permission": "storages:write",
+      "body": {
+        "$ref": "#/components/schemas/OssSave"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "response": {
+        "$ref": "#/components/schemas/OssView"
+      }
+    },
+    "GET /admin/oss-service/migration": {
+      "operationId": "get_admin_oss_migration",
+      "summary": "读取迁移清单统计",
+      "permission": "storages:read",
+      "body": null,
+      "parameters": [],
+      "response": {
+        "$ref": "#/components/schemas/StorageMigrationView"
+      }
+    },
+    "POST /admin/oss-service/{id}/check": {
+      "operationId": "check_admin_oss_service",
+      "summary": "OSS安全检查或存储操作",
+      "permission": "storages:write",
+      "body": null,
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "If-Match",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "response": {
+        "$ref": "#/components/schemas/OssView"
+      }
+    },
+    "POST /admin/oss-service/{id}/activate": {
+      "operationId": "activate_admin_oss_service",
+      "summary": "OSS安全检查或存储操作",
+      "permission": "storages:write",
+      "body": null,
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "If-Match",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "response": {
+        "$ref": "#/components/schemas/OssView"
+      }
+    },
+    "POST /admin/oss-service/{id}/migrate": {
+      "operationId": "migrate_admin_oss_service",
+      "summary": "OSS安全检查或存储操作",
+      "permission": "storages:write",
+      "body": null,
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "If-Match",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "response": {
+        "$ref": "#/components/schemas/StorageMigrationView"
       }
     }
   }

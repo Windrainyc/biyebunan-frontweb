@@ -1,10 +1,19 @@
 <script lang="ts">
-import { defineComponent, h } from 'vue';
+import { defineComponent, h, ref } from 'vue';
 import { markdownBlocks, inlineMarkdown } from '../config/markdown';
 /** 全部正文通过Vue文本节点输出，不使用v-html，保留不支持语法的原文。 */
 export default defineComponent({
-  props: { text: { type: String, required: true } },
+  props: { text: { type: String, required: true }, copyCode: Boolean },
   setup(props) {
+    const copyStatus = ref<Record<string, string>>({});
+    async function copy(text: string) {
+      try {
+        await navigator.clipboard.writeText(text);
+        copyStatus.value[text] = '已复制';
+      } catch {
+        copyStatus.value[text] = '复制失败，请手动选择代码';
+      }
+    }
     const inline = (text: string) =>
       inlineMarkdown(text).map((node) =>
         node.kind === 'text'
@@ -23,7 +32,20 @@ export default defineComponent({
         { class: 'reading-prose' },
         markdownBlocks(props.text).map((block) => {
           if (block.kind === 'rule') return h('hr');
-          if (block.kind === 'code') return h('pre', [h('code', block.text)]);
+          if (block.kind === 'code')
+            return props.copyCode
+              ? h('div', { class: 'reading-code-block' }, [
+                  h('div', { class: 'reading-code-toolbar' }, [
+                    h('span', '代码'),
+                    h(
+                      'button',
+                      { type: 'button', onClick: () => copy(block.text) },
+                      copyStatus.value[block.text] || '复制代码',
+                    ),
+                  ]),
+                  h('pre', [h('code', block.text)]),
+                ])
+              : h('pre', [h('code', block.text)]);
           if (block.kind === 'list')
             return h(
               block.ordered ? 'ol' : 'ul',
@@ -63,6 +85,27 @@ export default defineComponent({
 });
 </script>
 <style>
+.reading-code-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f1f3f6;
+  border: 1px solid #e3e7ed;
+  border-radius: 8px 8px 0 0;
+  font-size: 12px;
+}
+.reading-code-toolbar button {
+  border: 0;
+  background: transparent;
+  color: #52627b;
+  cursor: pointer;
+  font: inherit;
+}
+.reading-code-block pre {
+  margin-top: 0;
+  border-radius: 0 0 8px 8px;
+}
 .reading-prose {
   color: #40506a;
   line-height: 1.95;

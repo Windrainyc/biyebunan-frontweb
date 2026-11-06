@@ -12,6 +12,7 @@ import ProjectDetail from './ProjectDetail.vue';
 import OrderDetail from './OrderDetail.vue';
 import KnowledgeDetail from './KnowledgeDetail.vue';
 import RecordActions from './RecordActions.vue';
+import MarkdownContent from './MarkdownContent.vue';
 import StatusBadge from './StatusBadge.vue';
 const props = defineProps<{ resource: Resource }>();
 const emit = defineEmits<{ changed: [] }>();
@@ -97,12 +98,14 @@ function changed() {
 <template>
   <component
     :is="
-      ['transition', 'receipt', 'assignment', 'stage'].includes(String(route.query.operation))
+      ['transition', 'receipt', 'assignment', 'stage', 'moderation'].includes(
+        String(route.query.operation),
+      )
         ? CompactDialog
         : CreatePage
     "
     :busy="operationBusy"
-    :wide="route.query.operation === 'receipt'"
+    :wide="['receipt', 'moderation'].includes(String(route.query.operation))"
     :title="action?.title || '业务处理'"
     breadcrumb="业务处理"
     :description="
@@ -135,6 +138,11 @@ function changed() {
           {{ step.title }}
         </li>
       </ol>
+      <MarkdownContent
+        v-if="resource.key === 'posts'"
+        :text="String(record.body || '')"
+        class="review-body"
+      />
       <KnowledgeDetail v-if="resource.key === 'contents'" :content="record" readonly />
       <ProjectDetail
         v-if="
@@ -171,6 +179,12 @@ function changed() {
 </template>
 
 <style scoped>
+.review-body {
+  max-height: 220px;
+  overflow: auto;
+  border-bottom: 1px solid #e5e9ef;
+  padding-bottom: 16px;
+}
 .workflow-progress {
   display: flex;
   flex-wrap: wrap;

@@ -34,6 +34,18 @@ const fields = computed(() =>
     const field = { key, ...schema(v) };
     if (props.resourceKey === 'comments' && key === 'action')
       field.enum = field.enum?.filter((value) => ['APPROVE', 'HIDE'].includes(String(value)));
+    if (props.resourceKey === 'posts' && key === 'action') {
+      const state = String(props.record.state);
+      field.enum = field.enum?.filter(
+        (value) =>
+          value === 'HIDE' ||
+          (value === 'APPROVE' && ['PENDING', 'HIDDEN'].includes(state)) ||
+          (value === 'LOCK' && state === 'PUBLISHED') ||
+          (value === 'UNLOCK' && state === 'LOCKED') ||
+          (value === 'PIN' && !props.record.pinned && ['PUBLISHED', 'LOCKED'].includes(state)) ||
+          (value === 'UNPIN' && props.record.pinned),
+      );
+    }
     return field;
   }),
 );
@@ -98,7 +110,12 @@ watch(busy, (value) => emit('busy', value));
     <p v-if="notice" class="success" role="status">{{ notice }}</p>
     <form v-if="selected" class="action-form" @submit.prevent="submit">
       <label v-for="field in fields" :key="field.key"
-        >{{ label(field.key)
+        >{{
+          resourceKey === 'posts' && field.key === 'action'
+            ? '审核结果'
+            : field.key === 'reason' && !bodySchema.required?.includes('reason')
+              ? '处理原因（选填）'
+              : label(field.key)
         }}<AppSelect v-if="field.enum" v-model="values[field.key]" required>
           <option value="">请选择</option>
           <option v-for="value in field.enum" :key="String(value)" :value="value">
