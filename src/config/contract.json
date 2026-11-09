@@ -1,5 +1,5 @@
 {
-  "version": "1.0.35",
+  "version": "1.0.36",
   "schemas": {
     "OssView": {
       "type": "object",
@@ -82,48 +82,6 @@
         }
       },
       "required": ["version", "bucket", "region", "accessKeyId", "accessKeySecret"]
-    },
-    "StorageMigrationView": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "queued": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "running": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "done": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "failed": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "remainingAssets": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "remainingExports": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "canStopOldStorage": {
-          "type": "boolean"
-        }
-      },
-      "required": [
-        "queued",
-        "running",
-        "done",
-        "failed",
-        "remainingAssets",
-        "remainingExports",
-        "canStopOldStorage"
-      ]
     },
     "ActivityWrite": {
       "type": "object",
@@ -21912,16 +21870,6 @@
         "$ref": "#/components/schemas/OssView"
       }
     },
-    "GET /admin/oss-service/migration": {
-      "operationId": "get_admin_oss_migration",
-      "summary": "读取迁移清单统计",
-      "permission": "storages:read",
-      "body": null,
-      "parameters": [],
-      "response": {
-        "$ref": "#/components/schemas/StorageMigrationView"
-      }
-    },
     "POST /admin/oss-service/{id}/check": {
       "operationId": "check_admin_oss_service",
       "summary": "OSS安全检查或存储操作",
@@ -21984,42 +21932,6 @@
       ],
       "response": {
         "$ref": "#/components/schemas/OssView"
-      }
-    },
-    "POST /admin/oss-service/{id}/migrate": {
-      "operationId": "migrate_admin_oss_service",
-      "summary": "OSS安全检查或存储操作",
-      "permission": "storages:write",
-      "body": null,
-      "parameters": [
-        {
-          "name": "id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "format": "uuid"
-          }
-        },
-        {
-          "name": "If-Match",
-          "in": "header",
-          "required": true,
-          "schema": {
-            "type": "string"
-          }
-        },
-        {
-          "name": "Idempotency-Key",
-          "in": "header",
-          "required": true,
-          "schema": {
-            "type": "string"
-          }
-        }
-      ],
-      "response": {
-        "$ref": "#/components/schemas/StorageMigrationView"
       }
     }
   }

@@ -1,0 +1,38 @@
+[
+  {
+    "method": "POST",
+    "host": "47.95.140.221:18781",
+    "path": "/api/v1/admin/uploads",
+    "postDataBytes": 227
+  },
+  {
+    "method": "PUT",
+    "host": "biyebunanstudy.oss-cn-beijing.aliyuncs.com",
+    "path": "/documents/quarantine/6bb95ed3-7287-4ed4-89e7-381d494bb63f/a97dc7a7-6a82-4c79-9444-441b45501951",
+    "postDataBytes": null
+  },
+  {
+    "method": "POST",
+    "host": "47.95.140.221:18781",
+    "path": "/api/v1/admin/uploads/a97dc7a7-6a82-4c79-9444-441b45501951/complete",
+    "postDataBytes": null
+  },
+  {
+    "method": "POST",
+    "host": "47.95.140.221:18781",
+    "path": "/api/v1/admin/activity",
+    "postDataBytes": 88
+  },
+  {
+    "method": "POST",
+    "host": "47.95.140.221:18781",
+    "path": "/api/v1/admin/activity",
+    "postDataBytes": 83
+  },
+  {
+    "method": "POST",
+    "host": "47.95.140.221:18781",
+    "path": "/api/v1/admin/activity",
+    "postDataBytes": 84
+  }
+]

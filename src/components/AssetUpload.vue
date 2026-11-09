@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, ref, watch } from 'vue';
 import { createSHA256 } from 'hash-wasm';
+import { requireOssUploadTarget } from '../api/upload-target';
 import { auth, request, errorText } from '../api/client';
 import type { Row } from '../types/api';
 const props = defineProps<{
@@ -119,12 +120,13 @@ async function upload() {
         mimeType: file.type || 'application/octet-stream',
       },
     });
-    message.value = '正在上传文件';
+    const uploadUrl = requireOssUploadTarget(grant.url, grant.method);
+    message.value = '正在直传文件';
     progress.value = 0;
     await new Promise<void>((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       activeUpload = xhr;
-      xhr.open(grant.method, grant.url);
+      xhr.open(grant.method, uploadUrl);
       for (const [key, value] of Object.entries(grant.headers)) {
         // 浏览器根据实际文件自动设置长度，禁止脚本手动设置该请求头。
         if (key.toLowerCase() !== 'content-length') xhr.setRequestHeader(key, value);

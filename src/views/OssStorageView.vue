@@ -13,15 +13,6 @@ interface State {
   checkError: string | null;
   defaultUpload: boolean;
 }
-interface Progress {
-  queued: number;
-  running: number;
-  done: number;
-  failed: number;
-  remainingAssets: number;
-  remainingExports: number;
-  canStopOldStorage: boolean;
-}
 const configs = ref<State[]>([]),
   selected = ref(''),
   bucket = ref(''),
@@ -30,8 +21,7 @@ const configs = ref<State[]>([]),
   secret = ref(''),
   busy = ref(false),
   error = ref(''),
-  message = ref(''),
-  progress = ref<Progress | null>(null);
+  message = ref('');
 let alive = true;
 function choose(id: string) {
   selected.value = id;
@@ -49,13 +39,9 @@ async function load() {
   busy.value = true;
   error.value = '';
   try {
-    const [s, p] = await Promise.all([
-      request<State[]>('/admin/oss-service'),
-      request<Progress>('/admin/oss-service/migration'),
-    ]);
+    const s = await request<State[]>('/admin/oss-service');
     if (!alive) return;
     configs.value = s;
-    progress.value = p;
     if (!selected.value && s.length) choose(s[0]!.id);
   } catch (e) {
     if (alive) error.value = errorText(e);
@@ -90,19 +76,11 @@ async function action(kind: string) {
       if (!s) return;
       await request(`/admin/oss-service/${s.id}/${kind}`, { method: 'POST', version: s.version });
       message.value =
-        kind === 'check'
-          ? '检查已完成，请查看下方结果。'
-          : kind === 'activate'
-            ? '新上传已使用此OSS配置，历史文件位置保持不变。'
-            : '已排队迁移可安全处理的文件，原文件保留。';
+        kind === 'check' ? '检查已完成，请查看下方结果。' : '新上传已使用此 OSS 配置。';
     }
-    const [s, p] = await Promise.all([
-      request<State[]>('/admin/oss-service'),
-      request<Progress>('/admin/oss-service/migration'),
-    ]);
+    const s = await request<State[]>('/admin/oss-service');
     if (alive) {
       configs.value = s;
-      progress.value = p;
     }
   } catch (e) {
     if (alive) error.value = errorText(e);
@@ -134,16 +112,15 @@ onBeforeUnmount(() => {
         <label
           >当前配置<AppSelect
             :model-value="selected"
-            :options="[
-              { value: '', label: '新增配置' },
-              ...configs.map((s) => ({
-                value: s.id,
-                label: s.bucket + (s.defaultUpload ? ' · 默认上传' : ''),
-              })),
-            ]"
             @update:model-value="choose(String($event))"
             :disabled="busy"
-        /></label>
+          >
+            <option value="">新增配置</option>
+            <option v-for="s in configs" :key="s.id" :value="s.id">
+              {{ s.bucket + (s.defaultUpload ? ' · 默认上传' : '') }}
+            </option>
+          </AppSelect></label
+        >
         <div class="oss-fields">
           <label
             >Bucket<input
@@ -209,7 +186,8 @@ onBeforeUnmount(() => {
           <li>HTTPS 传输、OSS 托管 AES256 加密</li>
           <li>开启版本控制，固定下载文件版本</li>
           <li>每次下载先校验业务权限，签名 60 秒有效</li>
-          <li>上传文件继续经过隔离扫描</li>
+          <li>浏览器直传 OSS，上传后隔离扫描</li>
+          <li>学生下载授权按账号和来源限流，签名有效期内仍可被转发</li>
         </ul>
         <div class="oss-state">
           <strong>{{
@@ -245,48 +223,6 @@ onBeforeUnmount(() => {
         </button>
       </aside>
     </div>
-    <section class="oss-card oss-migration">
-      <div>
-        <h2>历史文件迁移</h2>
-        <p>
-          迁移会校验大小和 SHA256
-          后切换文件位置，保留旧存储原件。视频衍生文件、隔离文件和历史导出需另行核查。
-        </p>
-      </div>
-      <dl v-if="progress">
-        <div>
-          <dt>排队 / 执行中</dt>
-          <dd>{{ progress.queued }} / {{ progress.running }}</dd>
-        </div>
-        <div>
-          <dt>已校验迁移</dt>
-          <dd>{{ progress.done }}</dd>
-        </div>
-        <div>
-          <dt>失败待核查</dt>
-          <dd>{{ progress.failed }}</dd>
-        </div>
-        <div>
-          <dt>旧存储资产 / 导出</dt>
-          <dd>{{ progress.remainingAssets }} / {{ progress.remainingExports }}</dd>
-        </div>
-      </dl>
-      <p class="muted">
-        旧存储保持运行，全部引用、备份与清理任务核对完成后才能停止。有效签名链接在到期前可被转发，请勿公开分享。
-      </p>
-      <button
-        class="button"
-        :disabled="
-          busy ||
-          !current()?.checkedAt ||
-          !!current()?.checkError ||
-          !auth.permissions.includes('storages:write')
-        "
-        @click="action('migrate')"
-      >
-        开始迁移到当前 OSS
-      </button>
-    </section>
   </section>
 </template>
 <style scoped>
@@ -359,25 +295,6 @@ onBeforeUnmount(() => {
   margin: 20px 0;
   font-size: 13px;
 }
-.oss-migration {
-  margin-top: 20px;
-  font-size: 13px;
-  line-height: 1.8;
-}
-.oss-migration dl {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-}
-.oss-migration dt {
-  font-size: 12px;
-  color: #7e899a;
-}
-.oss-migration dd {
-  margin: 5px 0;
-  font-size: 22px;
-  font-weight: 600;
-}
 @media (max-width: 800px) {
   .oss-grid,
   .oss-fields {
@@ -385,9 +302,6 @@ onBeforeUnmount(() => {
   }
   .oss-card {
     padding: 18px;
-  }
-  .oss-migration dl {
-    grid-template-columns: 1fr 1fr;
   }
   .oss-page > header {
     align-items: flex-start;
