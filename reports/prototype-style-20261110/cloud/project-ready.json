@@ -1,0 +1,12 @@
+{
+  "versions": 0,
+  "selected": 1,
+  "overflow": false,
+  "bad": [
+    {
+      "path": "/api/v1/student/activity",
+      "status": 400
+    }
+  ],
+  "text": "交付版本\n\n暂无可查看的交付版本\n\n共 0 条 · 第 1 页\n上一页版本\n下一页版本"
+}

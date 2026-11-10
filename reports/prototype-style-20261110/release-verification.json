@@ -1,0 +1,33 @@
+{
+  "release": "style-20261110",
+  "archiveSha256": "9c65fa9382e3a5a3ec2af71c02fdcc46eef2b4d0ff852350c99d2398a7500fd4",
+  "staticFilesPerPlatform": 97,
+  "platforms": [
+    "student",
+    "admin",
+    "partner"
+  ],
+  "apiRestarted": false,
+  "databaseMigrated": false,
+  "rollbackConfig": "/opt/zhixiang/releases/style-20261110/compose.before.json",
+  "http": [
+    {
+      "role": "student",
+      "status": 200,
+      "indexMatched": true,
+      "anonymousAuth": 401
+    },
+    {
+      "role": "admin",
+      "status": 200,
+      "indexMatched": true,
+      "anonymousAuth": 401
+    },
+    {
+      "role": "partner",
+      "status": 200,
+      "indexMatched": true,
+      "anonymousAuth": 401
+    }
+  ]
+}

@@ -264,7 +264,10 @@ onMounted(load);
       >
         暂无可查看的交付版本
       </p>
-      <div :class="{ 'student-release-layout': auth.platform === 'student' }">
+      <div
+        v-if="auth.platform !== 'student' || studentVersions.length"
+        :class="{ 'student-release-layout': auth.platform === 'student' }"
+      >
         <nav
           v-if="auth.platform === 'student' && studentVersions.length"
           class="student-version-nav"
