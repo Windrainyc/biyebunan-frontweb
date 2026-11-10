@@ -1,0 +1,18 @@
+[
+  {
+    "role": "student",
+    "route": "dashboard",
+    "width": 1440,
+    "overflow": false
+  },
+  {
+    "role": "student",
+    "route": "dashboard",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "role": "student",
+    "errors": []
+  }
+]

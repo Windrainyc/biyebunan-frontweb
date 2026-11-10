@@ -18,8 +18,8 @@ const tab = ref(
     : 'deliveries',
 );
 const tabs = [
-  { key: 'overview', label: '项目概览' },
   { key: 'deliveries', label: '版本与交付' },
+  { key: 'overview', label: '项目概览' },
   { key: 'qa', label: '答疑记录' },
 ];
 const stages = [
@@ -83,45 +83,30 @@ function keyboardTab(event: KeyboardEvent, index: number) {
 </script>
 <template>
   <section class="student-project-space">
-    <button class="text-button project-back" @click="emit('back')">
-      <Icon name="left" />返回项目列表
-    </button>
-    <header>
+    <header class="project-reference-heading">
       <div>
-        <p class="eyebrow">项目空间</p>
-        <h1>{{ project.title }}</h1>
-        <p class="muted">
-          <Icon name="calendar" />计划交付 {{ display(project.deliveryDate) }}
-          <span>·</span> 最近更新 {{ display(project.updatedAt) }}
-        </p>
+        <p class="eyebrow">把每一步，积累成作品</p>
+        <h1>我的项目</h1>
+        <p class="muted">从第一次想法，到最后一次打磨。</p>
       </div>
-      <RouterLink
+      <button class="button project-back" @click="emit('back')">
+        <Icon name="left" />返回项目列表
+      </button>
+    </header>
+    <div class="project-reference-banner">
+      <div>
+        <h2>{{ project.title }}</h2>
+        <p>计划交付 {{ display(project.deliveryDate) }} · {{ display(project.stage) }}</p>
+      </div>
+      <span class="project-reference-stamp" aria-hidden="true"
+        >{{ String(currentStage + 1).padStart(2, '0') }} /
+        {{ String(stages.length).padStart(2, '0') }}</span
+      ><RouterLink
         :to="{ path: '/student/chat', query: { projectId: String(project.id) } }"
         class="button primary"
-        ><Icon name="sparkles" />智能答疑</RouterLink
+        ><Icon name="sparkles" />问问项目助手</RouterLink
       >
-    </header>
-    <section class="project-progress-overview" aria-label="项目进度">
-      <div>
-        <div class="project-progress-caption">
-          <strong>{{ progress }}%</strong><span>项目阶段进度</span
-          ><StatusBadge :value="project.stage" />
-        </div>
-        <ol class="project-stage-track">
-          <li
-            v-for="(stage, index) in stages"
-            :key="stage"
-            :class="{ done: index < currentStage, current: index === currentStage }"
-          >
-            <span></span>{{ display(stage) }}
-          </li>
-        </ol>
-      </div>
-      <div class="project-deadline">
-        <small>计划交付日期</small><strong>{{ display(project.deliveryDate) }}</strong
-        ><span>以项目最新计划为准</span>
-      </div>
-    </section>
+    </div>
     <div class="project-tabs" role="tablist" aria-label="项目内容">
       <button
         v-for="(item, index) in tabs"
@@ -138,15 +123,36 @@ function keyboardTab(event: KeyboardEvent, index: number) {
         {{ item.label }}
       </button>
     </div>
-    <div class="project-detail-layout">
+    <div class="project-detail-layout" :class="{ 'project-deliveries-view': tab === 'deliveries' }">
       <section
         :id="'project-panel-' + tab"
         class="project-main-panel"
         role="tabpanel"
         :aria-labelledby="'project-tab-' + tab"
       >
-        <template v-if="tab === 'overview'"
-          ><div class="project-panel-heading">
+        <template v-if="tab === 'overview'">
+          <section class="project-progress-overview" aria-label="项目进度">
+            <div>
+              <div class="project-progress-caption">
+                <strong>{{ progress }}%</strong><span>项目阶段进度</span
+                ><StatusBadge :value="project.stage" />
+              </div>
+              <ol class="project-stage-track">
+                <li
+                  v-for="(stage, index) in stages"
+                  :key="stage"
+                  :class="{ done: index < currentStage, current: index === currentStage }"
+                >
+                  <span></span>{{ display(stage) }}
+                </li>
+              </ol>
+            </div>
+            <div class="project-deadline">
+              <small>计划交付日期</small><strong>{{ display(project.deliveryDate) }}</strong
+              ><span>以项目最新计划为准</span>
+            </div>
+          </section>
+          <div class="project-panel-heading">
             <h2>项目概览</h2>
             <p>项目资料和进度集中在这里，最新交付版本随时可查。</p>
           </div>
@@ -222,7 +228,7 @@ function keyboardTab(event: KeyboardEvent, index: number) {
         >
         <ProjectDetail v-else :project="project" section="deliveries" @changed="emit('refresh')" />
       </section>
-      <aside class="project-side-panels">
+      <aside v-if="tab !== 'deliveries'" class="project-side-panels">
         <section class="project-side-card">
           <h3>当前项目</h3>
           <p>{{ project.title }}</p>

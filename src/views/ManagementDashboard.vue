@@ -420,7 +420,14 @@ watch(() => [...props.visiblePaths].sort().join('|'), load, { immediate: true })
                     ><small>{{ order.orderNo }}</small></span
                   >
                 </td>
-                <td>¥{{ order.amount }}</td>
+                <td>
+                  {{
+                    Number(order.amount).toLocaleString('zh-CN', {
+                      style: 'currency',
+                      currency: 'CNY',
+                    })
+                  }}
+                </td>
                 <td><StatusBadge :value="order.status" /></td>
                 <td>{{ display(order.createdAt).split(' ')[0] }}</td>
               </tr>
@@ -431,7 +438,8 @@ watch(() => [...props.visiblePaths].sort().join('|'), load, { immediate: true })
           {{ orders === null ? '暂未取得订单数据' : '暂无订单' }}
         </p>
       </section>
-      <section class="management-panel">
+      <details class="management-panel admin-token-details">
+        <summary>词元用量与费用 <span>展开查看</span></summary>
         <header>
           <div>
             <h2>词元用量与费用</h2>
@@ -473,7 +481,7 @@ watch(() => [...props.visiblePaths].sort().join('|'), load, { immediate: true })
             <dd>{{ total(['model_unresolved_runs']) }} 次</dd>
           </div>
         </dl>
-      </section>
+      </details>
     </div>
     <template v-else>
       <section class="management-panel">

@@ -103,7 +103,7 @@ const totals = computed(() => {
 });
 function chart(keys: string[], money = false) {
   return {
-    color: ['#002fa7', '#42b3a0', '#e5ad55'],
+    color: ['#ac8bdd', '#95b2df', '#e6ad8b'],
     backgroundColor: 'transparent',
     textStyle: { color: '#7a8495' },
     tooltip: { trigger: 'axis' },
@@ -114,7 +114,7 @@ function chart(keys: string[], money = false) {
       textStyle: { color: '#7a8495' },
       data: keys.map((k) => names[k]),
     },
-    grid: { left: money ? 65 : 45, right: 22, bottom: 35, top: 45 },
+    grid: { left: money ? 65 : 45, right: 22, bottom: 35, top: 64 },
     xAxis: {
       type: 'category',
       axisLabel: { color: '#7a8495' },
@@ -185,7 +185,7 @@ onMounted(load);
   <section ref="screen" class="statistics-screen">
     <header class="screen-heading">
       <div>
-        <h1>数据统计</h1>
+        <h1>统计分析</h1>
         <p class="muted">订单、收款与交付的业务概览 · 北京时间</p>
       </div>
       <form class="statistics-range" @submit.prevent="load">

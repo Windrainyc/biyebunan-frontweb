@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import ChatKnowledgePicker from '../components/ChatKnowledgePicker.vue';
-import QuotaChart from '../components/QuotaChart.vue';
 import AppSelect from '../components/AppSelect.vue';
 import { useRoute } from 'vue-router';
 import Icon from '../components/Icon.vue';
@@ -375,6 +374,11 @@ onBeforeUnmount(() => {
 });
 </script>
 <template>
+  <header class="qa-reference-heading">
+    <p class="eyebrow">好问题，让进展发生</p>
+    <h1>不用一个人想</h1>
+    <p>连接你的项目资料，把复杂的问题一点点拆开。</p>
+  </header>
   <section class="qa-chat-layout">
     <aside
       class="qa-chat-sidebar"
@@ -423,7 +427,11 @@ onBeforeUnmount(() => {
       </div>
       <section class="qa-quota">
         <h3>本月可用额度</h3>
-        <QuotaChart v-if="quota" :quota="quota" compact />
+        <div v-if="quota" class="qa-quota-summary">
+          <strong>{{ Number(quota.availableTokens || 0).toLocaleString('zh-CN') }}</strong
+          ><span> 可用词元</span>
+          <p>预占 {{ Number(quota.reservedTokens || 0).toLocaleString('zh-CN') }} 词元</p>
+        </div>
         <p v-if="quotaError" class="error">
           {{ quotaError }}<button class="text-button" @click="refreshQuota">重试</button>
         </p>
@@ -440,10 +448,10 @@ onBeforeUnmount(() => {
           >
             对话
           </button>
-          <h1>{{ activeConversation?.title || '新对话' }}</h1>
+          <h1>{{ activeConversation?.title || '知项项目助手' }}</h1>
           <small>{{ contextProject?.title || '选择项目，开始新的问题' }}</small>
         </div>
-        <button class="button" @click="materialsOpen = true">
+        <button v-if="!wideContext" class="button" @click="materialsOpen = true">
           项目与知识资料 <span v-if="selectedSources.length">{{ selectedSources.length }}</span>
         </button>
       </header>
@@ -494,11 +502,11 @@ onBeforeUnmount(() => {
           v-if="!messages.length && !answer && !historyLoading && !historyError"
           class="qa-empty"
         >
-          <small>从一个具体问题开始</small>
-          <h2>今天想解决什么？</h2>
+          <span class="qa-welcome-icon"><Icon name="sparkles" /></span>
+          <h2>你的想法，我们一起往下走。</h2>
           <p>选择项目，带上知识资料，让回答更贴近你的任务。</p>
           <AppSelect
-            v-if="!conversation"
+            v-if="!conversation && !wideContext"
             v-model="project"
             :disabled="busy || !!pending"
             aria-label="选择项目"
@@ -513,6 +521,7 @@ onBeforeUnmount(() => {
                 '请解释这段代码的作用：',
                 '请帮我分析这个报错，并说明排查步骤：',
                 '请帮我梳理当前项目的实现思路：',
+                '请帮我检查接口和页面的联调步骤：',
               ]"
               :key="prompt"
               type="button"

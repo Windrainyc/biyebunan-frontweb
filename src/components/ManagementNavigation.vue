@@ -13,6 +13,7 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{ logout: []; retry: [] }>();
 const route = useRoute();
+const sectionNavigation = ref<HTMLDetailsElement | null>(null);
 const opened = ref(false),
   account = ref(false),
   searchOpen = ref(false),
@@ -46,12 +47,16 @@ watch(
     opened.value = false;
     account.value = false;
     searchOpen.value = false;
+    if (sectionNavigation.value && active.value?.key !== 'settings')
+      sectionNavigation.value.open = false;
   },
 );
 function close() {
   opened.value = false;
   account.value = false;
   searchOpen.value = false;
+  if (sectionNavigation.value && active.value?.key !== 'settings')
+    sectionNavigation.value.open = false;
 }
 </script>
 <template>
@@ -72,12 +77,14 @@ function close() {
       >
       <div class="admin-workspace-label">
         <Icon name="grid" />
-        <div><strong>知项运营后台</strong><small>管理员工作区</small></div>
+        <div><strong>知项运营空间</strong><small>运营工作区</small></div>
       </div>
       <nav aria-label="管理后台主导航">
         <section>
-          <h3>工作台</h3>
-          <RouterLink to="/admin" :class="{ active: route.path === '/admin' }"
+          <h3>工作空间</h3>
+          <RouterLink
+            to="/admin"
+            :class="{ active: ['/admin', '/admin/dashboard'].includes(route.path) }"
             ><Icon name="grid" />数据总览</RouterLink
           >
         </section>
@@ -85,8 +92,10 @@ function close() {
         <p v-if="error" class="nav-state" role="alert">
           导航加载失败 <button @click="emit('retry')">重试</button>
         </p>
-        <section v-for="group in ['业务管理', '内容与智能', '系统']" :key="group">
-          <h3 v-if="sections.some((s) => s.group === group)">{{ group }}</h3>
+        <section v-for="group in ['工作空间', '内容与用户', '运营与系统']" :key="group">
+          <h3 v-if="group !== '工作空间' && sections.some((s) => s.group === group)">
+            {{ group }}
+          </h3>
           <RouterLink
             v-for="section in sections.filter((s) => s.group === group)"
             :key="section.key"
@@ -99,6 +108,10 @@ function close() {
           暂无可用导航，请联系管理员。
         </p>
       </nav>
+      <div class="admin-sidebar-note">
+        <Icon name="sparkles" />
+        <div>一个更从容的工作台<small>连接项目、内容和每一位用户</small></div>
+      </div>
       <div class="admin-sidebar-footer">
         <span class="management-avatar">{{ auth.user?.displayName?.slice(0, 1) }}</span>
         <div>
@@ -152,7 +165,9 @@ function close() {
             ><span>知</span><strong>知项</strong><small>中介协作</small></RouterLink
           >
           <nav class="partner-primary" :class="{ open: opened }" aria-label="中介主导航">
-            <RouterLink to="/partner" :class="{ active: route.path === '/partner' }"
+            <RouterLink
+              to="/partner"
+              :class="{ active: ['/partner', '/partner/dashboard'].includes(route.path) }"
               >工作概览</RouterLink
             ><RouterLink
               v-for="link in partnerMain"
@@ -187,13 +202,19 @@ function close() {
         </div>
       </div>
     </header>
-    <div
+    <details
       v-if="platform === 'admin' && active && active.links.length > 1"
+      :open="active.key === 'settings'"
+      ref="sectionNavigation"
       class="admin-section-navigation"
       :class="{ 'is-settings': active.key === 'settings' }"
       aria-label="当前栏目导航"
     >
-      <p v-if="active.key === 'settings'">基础数据配置</p>
+      <summary :class="{ 'settings-navigation-title': active.key === 'settings' }">
+        {{ active.key === 'settings' ? '基础配置' : '栏目功能' }}
+        <Icon v-if="active.key !== 'settings'" name="down" />
+      </summary>
+      <p v-if="active.key === 'settings'">基础配置</p>
       <RouterLink
         v-for="link in active.links"
         :key="link.path"
@@ -201,7 +222,7 @@ function close() {
         active-class="active"
         ><Icon :name="link.icon" />{{ link.title }}</RouterLink
       >
-    </div>
+    </details>
     <p v-if="platform === 'partner' && error" class="management-nav-error error" role="alert">
       导航加载失败 <button class="button" @click="emit('retry')">重试</button>
     </p>

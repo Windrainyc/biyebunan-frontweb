@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Icon from './Icon.vue';
 import CreatePage from './CreatePage.vue';
 import { useCreateRoute } from '../composables/useCreateRoute';
 const deliveryRoute = useCreateRoute('delivery');
@@ -210,7 +211,7 @@ onMounted(load);
     </p>
     <p v-if="loading" class="muted" role="status">正在加载项目资料…</p>
     <div class="delivery-content">
-      <div class="release-toolbar">
+      <div v-if="auth.platform !== 'student'" class="release-toolbar">
         <h3>{{ selectedRelease ? selectedRelease.label + ' · 版本文件' : '交付版本' }}</h3>
         <button v-if="selectedRelease" class="text-button" @click="load">← 返回版本列表</button>
         <button
@@ -293,7 +294,15 @@ onMounted(load);
           <h3 v-if="auth.platform === 'student' && visibleDeliveries.length">
             {{ studentVersions.find((x) => x.key === studentVersion)?.title }} · 版本文件
           </h3>
-          <article v-for="d in visibleDeliveries" :key="String(d.id)" class="delivery">
+          <article
+            v-for="d in visibleDeliveries"
+            :key="String(d.id)"
+            class="delivery"
+            :class="{ 'student-file-row': auth.platform === 'student' }"
+          >
+            <span v-if="auth.platform === 'student'" class="student-file-type" aria-hidden="true"
+              ><Icon name="file"
+            /></span>
             <div>
               <strong>{{ kinds[String(d.kind)] || '交付文件' }}</strong
               ><span>第{{ d.releaseNumber || d.versionNumber }}版 · {{ display(d.state) }}</span>
@@ -307,7 +316,7 @@ onMounted(load);
               >
               · {{ d.releaseId === selectedRelease.id ? '本次更新' : '沿用先前版本' }}
             </p>
-            <p>{{ d.note }}</p>
+            <p v-if="d.note">{{ d.note }}</p>
             <button class="button" @click="download(d)">下载文件</button
             ><a
               v-if="downloadGrant && downloadGrant.id === d.id"
@@ -607,65 +616,6 @@ label {
   max-width: 380px;
   overflow-wrap: anywhere;
 }
-.student-release-layout {
-  display: grid;
-  grid-template-columns: 245px minmax(0, 1fr);
-  gap: 24px;
-}
-.student-version-nav {
-  padding: 18px;
-  background: #fff;
-  border: 1px solid #e6e8f2;
-  border-radius: 22px;
-}
-.student-version-nav h3 {
-  font-size: 15px;
-  margin: 0 0 18px;
-}
-.student-version-button {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-  text-align: left;
-  padding: 16px 12px;
-  margin-bottom: 8px;
-  border: 0;
-  border-radius: 12px;
-  background: transparent;
-  color: #4f4b67;
-}
-.student-version-button.selected {
-  background: #eeeafa;
-  color: #665bea;
-}
-.student-version-button small {
-  font-size: 11px;
-  line-height: 1.6;
-}
-.student-version-nav > p {
-  font-size: 12px;
-  line-height: 1.7;
-}
-.student-release-layout .version-file-panel {
-  min-width: 0;
-  padding: 22px;
-  border: 1px solid #e6e8f2;
-  border-radius: 22px;
-  background: #fff;
-}
-.student-release-layout .delivery {
-  border: 1px solid #eeedf5;
-  border-radius: 12px;
-  padding: 16px;
-  margin: 14px 0;
-}
-@media (max-width: 800px) {
-  .student-release-layout {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 16px;
-  }
-}
 </style>
 
 <style scoped>
@@ -712,64 +662,5 @@ label {
 .release-table td:nth-child(2) {
   max-width: 380px;
   overflow-wrap: anywhere;
-}
-.student-release-layout {
-  display: grid;
-  grid-template-columns: 245px minmax(0, 1fr);
-  gap: 24px;
-}
-.student-version-nav {
-  padding: 18px;
-  background: #fff;
-  border: 1px solid #e6e8f2;
-  border-radius: 22px;
-}
-.student-version-nav h3 {
-  font-size: 15px;
-  margin: 0 0 18px;
-}
-.student-version-button {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-  text-align: left;
-  padding: 16px 12px;
-  margin-bottom: 8px;
-  border: 0;
-  border-radius: 12px;
-  background: transparent;
-  color: #4f4b67;
-}
-.student-version-button.selected {
-  background: #eeeafa;
-  color: #665bea;
-}
-.student-version-button small {
-  font-size: 11px;
-  line-height: 1.6;
-}
-.student-version-nav > p {
-  font-size: 12px;
-  line-height: 1.7;
-}
-.student-release-layout .version-file-panel {
-  min-width: 0;
-  padding: 22px;
-  border: 1px solid #e6e8f2;
-  border-radius: 22px;
-  background: #fff;
-}
-.student-release-layout .delivery {
-  border: 1px solid #eeedf5;
-  border-radius: 12px;
-  padding: 16px;
-  margin: 14px 0;
-}
-@media (max-width: 800px) {
-  .student-release-layout {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 16px;
-  }
 }
 </style>

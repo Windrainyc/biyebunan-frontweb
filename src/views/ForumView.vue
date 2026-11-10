@@ -186,49 +186,66 @@ onBeforeUnmount(() => {
     <template v-if="!selectedId">
       <header class="forum-intro">
         <div>
+          <p class="eyebrow">分享卡点，也分享灵光一现</p>
           <h1>交流广场</h1>
           <p>分享一个想法，解决一个问题，一起把项目做好。</p>
         </div>
         <button v-if="canCreate" class="button primary" @click="create">发布讨论</button>
       </header>
+      <section class="forum-reference-banner">
+        <span><Icon name="message" /> 想法在这里碰面</span>
+        <h2>你的一个小发现，<br />可能刚好帮到另一位同学。</h2>
+        <p>分享方法，交换经验。每一个认真回应，都让项目向前一点。</p>
+        <div class="forum-banner-art" aria-hidden="true">
+          <span><Icon name="sparkles" />这个问题，你是怎么解决的？<i></i><i></i></span
+          ><span><Icon name="right" />一起拆开看看。<i></i></span>
+        </div>
+      </section>
       <div class="forum-grid">
-        <aside class="topic-nav">
-          <small>发现话题</small
-          ><button
-            :class="{ selected: !board && scope === 'all' }"
-            @click="filter({ boardId: undefined, scope: 'all' })"
-          >
-            全部话题</button
-          ><button
-            v-for="b in boards"
-            :key="String(b.id)"
-            :class="{ selected: board === b.id }"
-            @click="filter({ boardId: String(b.id), scope: 'all' })"
-          >
-            {{ b.name }}
-          </button>
-          <p v-if="boardError" class="error">
-            {{ boardError }}<button @click="loadBoards">重试</button>
-          </p>
-          <button v-if="boards.length < boardTotal" :disabled="boardLoading" @click="loadBoards">
-            加载更多板块
-          </button>
-          <p v-if="boardLoading" role="status">加载板块…</p>
-          <small class="personal">我的空间</small
-          ><button
-            :class="{ selected: scope === 'mine' }"
-            @click="filter({ scope: 'mine', boardId: undefined })"
-          >
-            我的发布</button
-          ><button
-            :class="{ selected: scope === 'participated' }"
-            @click="filter({ scope: 'participated', boardId: undefined })"
-          >
-            我的参与
-          </button>
-        </aside>
         <section class="discussion-panel" :aria-busy="loading">
           <div class="forum-tools">
+            <details class="forum-filter-menu">
+              <summary>板块与我的讨论 <Icon name="down" /></summary>
+              <aside class="topic-nav">
+                <small>发现话题</small
+                ><button
+                  :class="{ selected: !board && scope === 'all' }"
+                  @click="filter({ boardId: undefined, scope: 'all' })"
+                >
+                  全部话题</button
+                ><button
+                  v-for="b in boards"
+                  :key="String(b.id)"
+                  :class="{ selected: board === b.id }"
+                  @click="filter({ boardId: String(b.id), scope: 'all' })"
+                >
+                  {{ b.name }}
+                </button>
+                <p v-if="boardError" class="error">
+                  {{ boardError }}<button @click="loadBoards">重试</button>
+                </p>
+                <button
+                  v-if="boards.length < boardTotal"
+                  :disabled="boardLoading"
+                  @click="loadBoards"
+                >
+                  加载更多板块
+                </button>
+                <p v-if="boardLoading" role="status">加载板块…</p>
+                <small class="personal">我的空间</small
+                ><button
+                  :class="{ selected: scope === 'mine' }"
+                  @click="filter({ scope: 'mine', boardId: undefined })"
+                >
+                  我的发布</button
+                ><button
+                  :class="{ selected: scope === 'participated' }"
+                  @click="filter({ scope: 'participated', boardId: undefined })"
+                >
+                  我的参与
+                </button>
+              </aside>
+            </details>
             <form class="forum-search" @submit.prevent="filter({ q: search.trim() || undefined })">
               <input
                 v-model="search"
@@ -279,7 +296,9 @@ onBeforeUnmount(() => {
             </h2>
             <p class="discussion-excerpt">{{ excerpt(row.body) }}</p>
             <div class="discussion-meta">
-              <span>{{ row.state === 'PENDING' ? '待审核 · 仅自己可见' : row.boardName }}</span
+              <button @click="open(row.id)">
+                {{ row.state === 'PENDING' ? '待审核 · 仅自己可见' : '查看讨论' }}
+                <Icon name="right" /></button
               ><button @click="open(row.id)">{{ row.replyCount }} 回复</button>
             </div>
           </article>
@@ -296,12 +315,15 @@ onBeforeUnmount(() => {
         </section>
         <aside class="community-column">
           <section class="community-card welcome">
-            <h2>有问题，来聊聊。</h2>
-            <p>描述你的尝试和遇到的困难，让讨论更容易得到回应。</p>
-            <button v-if="canCreate" class="button primary" @click="create">发布讨论</button>
+            <small>一起聊聊</small>
+            <h2>第一次演示项目，<br />怎样讲清楚你的思路？</h2>
+            <p>从「功能介绍」到「使用场景」，分享你的表达小技巧。</p>
+            <button v-if="canCreate" class="text-button" @click="create">
+              加入这场讨论 <Icon name="right" />
+            </button>
           </section>
-          <section class="community-card">
-            <h2>社区热度</h2>
+          <details class="community-card community-live">
+            <summary>社区热度与关键词</summary>
             <p v-if="communityLoading" role="status">正在读取社区数据…</p>
             <p v-if="communityError" class="error" role="alert">
               {{ communityError }}<button @click="loadCommunity">重试</button>
@@ -374,7 +396,7 @@ onBeforeUnmount(() => {
               <p v-else>暂无话题标签</p>
               <p class="community-note">近 7 天公开帖子标签与板块</p></template
             >
-          </section>
+          </details>
           <section class="community-card">
             <h2>让问题更容易被解答</h2>
             <p>1. 用标题说明具体问题</p>

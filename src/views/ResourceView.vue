@@ -105,9 +105,40 @@ function closeDetail() {
   }
 }
 const props = defineProps<{ resource: Resource }>();
+
+const adminVisualCards = computed(
+  () => auth.platform === 'admin' && ['contents', 'posts'].includes(props.resource.key),
+);
+const adminTitles: Record<string, string> = {
+  orders: '订单管理',
+  projects: '项目交付',
+  contents: '知识与素材',
+  users: '用户与会员',
+  posts: '论坛管理',
+};
+const adminDescriptions: Record<string, string> = {
+  orders: '把每一笔订单，变成可追踪的交付。',
+  projects: '把进度看清楚，让每一次交付都有条不紊。',
+  contents: '让好经验沉淀，让更多人少走一点弯路。',
+  users: '了解每一位用户，陪伴每一步成长。',
+  posts: '保护有价值的讨论，也让每一次表达被尊重。',
+};
+function processRecord(row: Row, path: string) {
+  void router.push({
+    path: route.path,
+    query: { ...listQuery(), process: String(row.id), operation: path.split('/').pop() },
+  });
+}
+function excerpt(value: unknown) {
+  return String(value || '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/[#*_`]/g, '')
+    .slice(0, 150);
+}
+
 const tableColumns = computed(() =>
   props.resource.key === 'orders' && auth.platform === 'admin'
-    ? props.resource.columns.filter((column) => column !== 'orderNo')
+    ? ['title', 'studentId', 'amount', 'status', 'receiptStatus', 'partnerId']
     : props.resource.columns,
 );
 
@@ -667,15 +698,23 @@ const hasStatusTabs = computed(
       loadKnowledgeCounts();
     "
   />
-  <section :class="{ 'student-resource': studentCards, ['student-' + resource.key]: studentCards }">
+  <section
+    :class="{
+      'student-resource': studentCards,
+      ['admin-resource-' + resource.key]: auth.platform === 'admin',
+      'admin-visual-cards': adminVisualCards,
+      ['student-' + resource.key]: studentCards,
+    }"
+  >
     <section v-if="isStudentKnowledge" class="knowledge-library-intro">
       <header class="knowledge-library-heading">
+        <span class="eyebrow">让知识，变成你的工具</span>
         <h1>知识库</h1>
         <p>把眼前的问题，变成下一步的答案。</p>
       </header>
       <div class="knowledge-guide-layout">
         <article class="knowledge-guide-feature">
-          <span>实用指南</span>
+          <span class="guide-kicker"><Icon name="book" /> 实用指南</span>
           <h2>{{ rows[0]?.title || '从具体问题开始，找到可用的资料。' }}</h2>
           <p>{{ rows[0]?.summary || '查找项目实践、文档写作与问题排查资料。' }}</p>
           <button
@@ -683,8 +722,13 @@ const hasStatusTabs = computed(
             class="button primary"
             @click="inspect(rows[0]!)"
           >
-            开始阅读
+            开始阅读 <Icon name="right" />
           </button>
+          <div class="guide-visual" aria-hidden="true">
+            <div class="guide-sheet sheet-back"></div>
+            <div class="guide-sheet sheet-front"><Icon name="file" /><i></i><i></i><i></i></div>
+            <Icon name="sparkles" /><span><Icon name="check" /></span>
+          </div>
         </article>
         <aside class="knowledge-guide-helper">
           <Icon name="sparkles" />
@@ -693,15 +737,25 @@ const hasStatusTabs = computed(
           <RouterLink class="text-button" to="/student/chat">问问项目助手 →</RouterLink>
         </aside>
       </div>
-      <form class="knowledge-library-search" @submit.prevent="search">
-        <Icon name="search" /><input
-          v-model="q"
-          type="search"
-          maxlength="100"
-          aria-label="搜索知识库内容"
-          placeholder="搜索知识、问题或关键词"
-        /><button class="button" :disabled="loading">搜索</button>
-      </form>
+      <div class="knowledge-browse-toolbar">
+        <KnowledgeCategoryNav
+          horizontal
+          :model-value="extraFilters.categoryId"
+          @update:model-value="
+            extraFilters.categoryId = $event;
+            search();
+          "
+        />
+        <form class="knowledge-library-search" @submit.prevent="search">
+          <Icon name="search" /><input
+            v-model="q"
+            type="search"
+            maxlength="100"
+            aria-label="搜索知识库内容"
+            placeholder="搜索知识、问题或关键词"
+          /><button class="button" :disabled="loading">搜索</button>
+        </form>
+      </div>
     </section>
     <div v-else-if="!(detail && studentCards && resource.key === 'projects')" class="page-heading">
       <div>
@@ -712,12 +766,30 @@ const hasStatusTabs = computed(
         <h1 v-else-if="studentCards && resource.key === 'posts'">
           有人一起，<br />问题就没那么难。
         </h1>
-        <h1 v-else>{{ resource.title }}</h1>
-        <p class="muted">{{ resource.subtitle }}</p>
+        <h1 v-else>
+          {{
+            auth.platform === 'admin' ? adminTitles[resource.key] || resource.title : resource.title
+          }}
+        </h1>
+        <p class="muted">
+          {{
+            auth.platform === 'admin'
+              ? adminDescriptions[resource.key] || resource.subtitle
+              : resource.subtitle
+          }}
+        </p>
       </div>
       <button v-if="canCreate" class="button primary" @click="beginCreate">
         <Icon name="plus" />{{
-          resource.key === 'posts' ? '发布帖子' : '新增' + resource.title.replace('管理', '')
+          resource.key === 'posts'
+            ? '发布帖子'
+            : resource.key === 'orders'
+              ? '新建订单'
+              : resource.key === 'projects'
+                ? '新建项目'
+                : resource.key === 'contents'
+                  ? '新增内容'
+                  : '新增' + resource.title.replace('管理', '')
         }}
       </button>
     </div>
@@ -745,10 +817,34 @@ const hasStatusTabs = computed(
         {{ tab.title }} <span class="tab-count">{{ knowledgeCounts[tab.value] ?? '—' }}</span>
       </button>
     </nav>
-    <PartnerInvitation
-      v-if="resource.key === 'users' && auth.platform === 'admin'"
-      @changed="load"
-    />
+    <div
+      v-if="auth.platform === 'admin' && resource.key === 'users'"
+      class="user-reference-summary"
+    >
+      <article>
+        <span>当前筛选用户</span><strong>{{ loading || listFailed ? '—' : total }}</strong
+        ><small>查询结果总数</small>
+      </article>
+      <article>
+        <span>本页学生</span
+        ><strong>{{
+          rows.filter((row) => row.platform === 'STUDENT' || row.platform === 'student').length
+        }}</strong
+        ><small>当前页用户分布</small>
+      </article>
+      <article>
+        <span>本页项目中介</span
+        ><strong>{{
+          rows.filter((row) => row.platform === 'PARTNER' || row.platform === 'partner').length
+        }}</strong
+        ><small>当前页用户分布</small>
+      </article>
+      <article>
+        <span>本页停用账户</span
+        ><strong>{{ rows.filter((row) => row.status === 'DISABLED').length }}</strong
+        ><small>当前页账户状态</small>
+      </article>
+    </div>
     <p v-if="notice" role="status" class="notice">{{ notice }}</p>
     <p v-if="error" class="error" role="alert">{{ error }}</p>
     <div
@@ -757,15 +853,13 @@ const hasStatusTabs = computed(
         'student-forum-layout': studentCards && resource.key === 'posts',
       }"
     >
-      <KnowledgeCategoryNav
-        v-if="studentCards && resource.key === 'knowledge'"
-        :model-value="extraFilters.categoryId"
-        @update:model-value="
-          extraFilters.categoryId = $event;
-          search();
-        "
-      />
       <div v-if="!(detail && studentCards && resource.key === 'projects')" class="data-card">
+        <div
+          v-if="resource.key === 'users' && auth.platform === 'admin'"
+          class="user-invite-action"
+        >
+          <PartnerInvitation @changed="load" />
+        </div>
         <div
           v-if="hasStatusTabs"
           class="resource-status-tabs"
@@ -798,66 +892,69 @@ const hasStatusTabs = computed(
             {{ display(value) }}
           </button>
         </div>
-        <div v-if="isStudentKnowledge" class="knowledge-type-toolbar" aria-label="知识内容类型">
-          <button
-            :class="{ active: !extraFilters.contentType }"
-            :aria-pressed="!extraFilters.contentType"
-            :disabled="loading"
-            @click="
-              extraFilters.contentType = '';
-              search();
-            "
-          >
-            全部内容</button
-          ><button
-            v-for="type in knowledgeTypes"
-            :key="String(type)"
-            :class="{ active: extraFilters.contentType === type }"
-            :aria-pressed="extraFilters.contentType === type"
-            :disabled="loading"
-            @click="
-              extraFilters.contentType = type;
-              search();
-            "
-          >
-            {{ type === 'MARKDOWN' ? 'Markdown' : display(type) }}
-          </button>
-          <AppSelect v-model="sort" aria-label="知识内容排序" @change="search">
-            <option v-for="s in sorts" :key="s" :value="s">
-              {{
-                s === 'createdAt:asc'
-                  ? '创建时间从早到晚'
-                  : s === 'updatedAt:desc'
-                    ? '最近更新优先'
-                    : '最近创建优先'
-              }}
-            </option>
-          </AppSelect>
-          <button
-            class="knowledge-reset"
-            :disabled="loading"
-            @click="
-              q = '';
-              status = '';
-              extraFilters = {};
-              sort = sorts[0] || '';
-              search();
-            "
-          >
-            重置筛选
-          </button>
-        </div>
-        <details v-if="isStudentKnowledge && extraFields.length" class="knowledge-extra-filters">
-          <summary>按标签进一步筛选</summary>
-          <form @submit.prevent="search">
-            <label v-for="field in extraFields" :key="field.key"
-              >{{ label(field.key)
-              }}<SchemaField
-                v-model="extraFilters[field.key]"
-                :field="field"
-                :context="resource.key" /></label
-            ><button class="button" :disabled="loading">应用筛选</button>
-          </form>
+        <details v-if="isStudentKnowledge" class="knowledge-refine">
+          <summary>类型、排序与标签筛选</summary>
+          <div class="knowledge-type-toolbar" aria-label="知识内容类型">
+            <button
+              :class="{ active: !extraFilters.contentType }"
+              :aria-pressed="!extraFilters.contentType"
+              :disabled="loading"
+              @click="
+                extraFilters.contentType = '';
+                search();
+              "
+            >
+              全部内容</button
+            ><button
+              v-for="type in knowledgeTypes"
+              :key="String(type)"
+              :class="{ active: extraFilters.contentType === type }"
+              :aria-pressed="extraFilters.contentType === type"
+              :disabled="loading"
+              @click="
+                extraFilters.contentType = type;
+                search();
+              "
+            >
+              {{ type === 'MARKDOWN' ? 'Markdown' : display(type) }}
+            </button>
+            <AppSelect v-model="sort" aria-label="知识内容排序" @change="search">
+              <option v-for="s in sorts" :key="s" :value="s">
+                {{
+                  s === 'createdAt:asc'
+                    ? '创建时间从早到晚'
+                    : s === 'updatedAt:desc'
+                      ? '最近更新优先'
+                      : '最近创建优先'
+                }}
+              </option>
+            </AppSelect>
+            <button
+              class="knowledge-reset"
+              :disabled="loading"
+              @click="
+                q = '';
+                status = '';
+                extraFilters = {};
+                sort = sorts[0] || '';
+                search();
+              "
+            >
+              重置筛选
+            </button>
+          </div>
+          <details v-if="isStudentKnowledge && extraFields.length" class="knowledge-extra-filters">
+            <summary>按标签进一步筛选</summary>
+            <form @submit.prevent="search">
+              <label v-for="field in extraFields" :key="field.key"
+                >{{ label(field.key)
+                }}<SchemaField
+                  v-model="extraFilters[field.key]"
+                  :field="field"
+                  :context="resource.key" /></label
+              ><button class="button" :disabled="loading">应用筛选</button>
+            </form>
+          </details>
         </details>
         <form v-if="!isStudentKnowledge" class="filters" @submit.prevent="search">
           <input
@@ -960,6 +1057,10 @@ const hasStatusTabs = computed(
             列表与操作
           </button>
         </div>
+        <div v-if="isStudentKnowledge" class="knowledge-list-heading">
+          <h2>实用指南</h2>
+          <span>{{ total }} 篇内容</span>
+        </div>
         <div v-if="studentCards" class="student-resource-grid" :aria-busy="loading">
           <article
             v-for="(row, index) in rows"
@@ -970,12 +1071,18 @@ const hasStatusTabs = computed(
               {{ row.authorId === auth.user?.id ? '我' : '问' }}
             </div>
             <div v-if="resource.key === 'knowledge'" class="knowledge-card-symbol">
-              <Icon :name="row.type === 'VIDEO' ? 'right' : 'book'" /><span>{{
-                display(row.type || row.contentType)
-              }}</span>
+              <Icon :name="row.type === 'VIDEO' ? 'play' : 'book'" /><span
+                ><ReferenceName
+                  v-if="row.categoryId"
+                  field="categoryId"
+                  :value="row.categoryId"
+                /><template v-else>{{ display(row.type || row.contentType) }}</template></span
+              ><small class="knowledge-card-number">{{
+                String((page - 1) * size + index + 1).padStart(2, '0')
+              }}</small>
             </div>
             <div class="student-resource-card-body">
-              <div class="student-resource-meta">
+              <div v-if="!isStudentKnowledge" class="student-resource-meta">
                 <Icon :name="resource.icon" /><StatusBadge
                   v-if="row.stage || row.state"
                   :value="String(row.stage || row.state)"
@@ -997,7 +1104,7 @@ const hasStatusTabs = computed(
               </div>
               <div class="student-resource-meta">
                 <ReferenceName
-                  v-if="row.categoryId"
+                  v-if="row.categoryId && !isStudentKnowledge"
                   field="categoryId"
                   :value="row.categoryId"
                 /><ReferenceName v-if="row.boardId" field="boardId" :value="row.boardId" /><span
@@ -1011,7 +1118,7 @@ const hasStatusTabs = computed(
                     resource.key === 'projects'
                       ? '查看项目与交付'
                       : resource.key === 'knowledge'
-                        ? '阅读资料'
+                        ? '阅读指南'
                         : '查看讨论'
                   }}
                   <Icon name="right" /></button
@@ -1040,6 +1147,79 @@ const hasStatusTabs = computed(
         <div v-else-if="adminProjects && projectView === 'board'">
           <p class="muted project-board-scope">看板按当前筛选的本页项目分组，翻页查看其他项目。</p>
           <ProjectBoard :rows="rows" :loading="loading" :failed="listFailed" @inspect="inspect" />
+        </div>
+        <div
+          v-else-if="adminVisualCards"
+          :class="resource.key === 'contents' ? 'admin-content-grid' : 'admin-forum-stack'"
+          :aria-busy="loading"
+        >
+          <article
+            v-for="(row, index) in rows"
+            :key="String(row.id)"
+            class="admin-reference-card"
+            :class="'tint-' + (index % 3)"
+          >
+            <div v-if="resource.key === 'contents'" class="admin-content-cover">
+              <small>ZHIXIANG · KNOWLEDGE</small>
+              <h2>
+                {{ display(row.type || row.contentType || '知识') }}资料<br />让成长，有迹可循。
+              </h2>
+              <Icon :name="(row.type || row.contentType) === 'VIDEO' ? 'play' : 'book'" />
+            </div>
+            <div class="admin-card-body">
+              <div class="admin-card-meta">
+                <span
+                  ><Icon :name="resource.key === 'posts' ? 'message' : 'book'" /><ReferenceName
+                    v-if="row.categoryId || row.boardId"
+                    :field="resource.key === 'posts' ? 'boardId' : 'categoryId'"
+                    :value="row.categoryId || row.boardId"
+                  /><span v-else>{{
+                    display(row.type || row.contentType || '社区讨论')
+                  }}</span></span
+                ><StatusBadge :value="row.status || row.state" />
+              </div>
+              <h3>
+                <button class="text-button" @click="inspect(row)">{{ row.title }}</button>
+              </h3>
+              <p>
+                {{
+                  excerpt(row.summary || row.description || row.body) ||
+                  (resource.key === 'contents'
+                    ? '查看完整内容与素材，管理审核及发布状态。'
+                    : '打开讨论查看正文和回复。')
+                }}
+              </p>
+              <small class="admin-card-date">{{ display(row.updatedAt || row.createdAt) }}</small>
+              <footer>
+                <button class="text-button" @click="inspect(row)">查看详情</button
+                ><button
+                  v-if="canEdit && rowActions(row).edit"
+                  class="text-button"
+                  @click="open(row)"
+                >
+                  编辑内容</button
+                ><button
+                  v-for="action in recordActions(resource.key, row)"
+                  :key="action.path"
+                  class="text-button"
+                  @click="processRecord(row, action.path)"
+                >
+                  {{ action.title }}</button
+                ><button
+                  v-if="canDelete && rowActions(row).remove"
+                  class="text-button danger"
+                  @click="askDelete(row)"
+                >
+                  删除
+                </button>
+              </footer>
+            </div>
+          </article>
+          <p v-if="!rows.length" class="empty">
+            {{
+              loading ? '正在读取数据…' : listFailed ? '读取失败，请重新查询' : '暂无符合条件的数据'
+            }}
+          </p>
         </div>
         <div v-else class="table-scroll" :aria-busy="loading">
           <table>
@@ -1074,7 +1254,7 @@ const hasStatusTabs = computed(
                     }}</span
                   >
                   <StatusBadge
-                    v-else-if="['state', 'status', 'stage'].includes(column)"
+                    v-else-if="['state', 'status', 'stage', 'receiptStatus'].includes(column)"
                     :value="String(row[column] || '')"
                   /><ReferenceName
                     v-else-if="column.endsWith('Id')"
@@ -1087,6 +1267,13 @@ const hasStatusTabs = computed(
                       aria-label="完成进度"
                     ></progress
                     >{{ row[column] }}%</span
+                  ><span
+                    v-else-if="resource.key === 'users' && column === 'displayName'"
+                    class="admin-user-cell"
+                    ><span class="admin-user-avatar">{{
+                      String(row.displayName || '用').slice(0, 1)
+                    }}</span
+                    ><strong>{{ row.displayName }}</strong></span
                   ><template v-else>{{ display(row[column]) }}</template>
                 </td>
                 <td class="actions">

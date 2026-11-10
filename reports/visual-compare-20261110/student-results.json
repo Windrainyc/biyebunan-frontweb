@@ -1,0 +1,66 @@
+[
+  {
+    "role": "student",
+    "route": "dashboard",
+    "width": 1440,
+    "overflow": false
+  },
+  {
+    "role": "student",
+    "route": "dashboard",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "role": "student",
+    "route": "knowledge",
+    "width": 1440,
+    "overflow": false
+  },
+  {
+    "role": "student",
+    "route": "knowledge",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "role": "student",
+    "route": "chat",
+    "width": 1440,
+    "overflow": false
+  },
+  {
+    "role": "student",
+    "route": "chat",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "role": "student",
+    "route": "projects",
+    "width": 1440,
+    "overflow": false
+  },
+  {
+    "role": "student",
+    "route": "projects",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "role": "student",
+    "route": "posts",
+    "width": 1440,
+    "overflow": false
+  },
+  {
+    "role": "student",
+    "route": "posts",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "role": "student",
+    "errors": []
+  }
+]

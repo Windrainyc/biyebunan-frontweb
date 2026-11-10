@@ -3,7 +3,7 @@ import { onMounted, onBeforeUnmount, ref } from 'vue';
 import { request, errorText } from '../api/client';
 import type { Page, Row } from '../types/api';
 import Icon from './Icon.vue';
-defineProps<{ modelValue: unknown }>();
+defineProps<{ modelValue: unknown; horizontal?: boolean }>();
 const emit = defineEmits<{ 'update:modelValue': [string] }>();
 const rows = ref<Row[]>([]),
   page = ref(0),
@@ -38,7 +38,7 @@ onBeforeUnmount(() => {
 });
 </script>
 <template>
-  <aside class="knowledge-category-nav" aria-label="知识分类">
+  <aside class="knowledge-category-nav" :class="{ horizontal }" aria-label="知识分类">
     <h2>按分类浏览</h2>
     <button
       :class="{ active: !modelValue }"
@@ -72,6 +72,35 @@ onBeforeUnmount(() => {
   </aside>
 </template>
 <style scoped>
+.knowledge-category-nav.horizontal {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+.horizontal h2,
+.horizontal .knowledge-category-help,
+.horizontal button .ali-icon {
+  display: none;
+}
+.horizontal button {
+  width: auto;
+  padding: 10px 14px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.horizontal button.active {
+  background: #ede8fc;
+  color: #7b61af;
+  font-weight: 600;
+}
+.horizontal p {
+  margin: 0;
+}
+
 .knowledge-category-help {
   border-top: 1px solid #e8ecf4;
   margin: 20px 12px 0;

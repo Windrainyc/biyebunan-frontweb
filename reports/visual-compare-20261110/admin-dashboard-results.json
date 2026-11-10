@@ -1,0 +1,18 @@
+[
+  {
+    "role": "admin",
+    "route": "dashboard",
+    "width": 1440,
+    "overflow": false
+  },
+  {
+    "role": "admin",
+    "route": "dashboard",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "role": "admin",
+    "errors": []
+  }
+]

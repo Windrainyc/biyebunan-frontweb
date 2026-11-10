@@ -1961,3 +1961,807 @@ body:has(.admin-workspace) .material-dialog {
   padding: 16px 0;
   border-bottom: 1px solid #eaecf4;
 }
+
+/* 最新管理端原型逐页映射：真实功能保留在相应卡片与操作入口。 */
+body .workspace.admin-workspace .page-heading > .eyebrow,
+body .workspace.admin-workspace .page-heading > div > .eyebrow,
+body .workspace.admin-workspace .dash-heading .eyebrow {
+  display: none;
+}
+body .workspace.admin-workspace.has-section-nav:not(.has-settings-nav) .page {
+  padding-top: 30px;
+}
+body .admin-section-navigation:not(.is-settings) {
+  position: fixed;
+  top: 20px;
+  left: 470px;
+  width: 116px;
+  display: block;
+  padding: 0;
+  border: 0;
+  z-index: 60;
+  background: white;
+  border-radius: 9px;
+  font-size: 11px;
+}
+.admin-section-navigation:not(.is-settings) > summary {
+  padding: 8px 12px;
+  cursor: pointer;
+  list-style: none;
+  color: #8e7fa3;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid #eaecf4;
+  border-radius: 9px;
+}
+body .admin-section-navigation:not(.is-settings)[open] {
+  width: 190px;
+  box-shadow: 0 12px 35px #24233d18;
+  border: 1px solid #eaecf4;
+}
+body .admin-section-navigation:not(.is-settings) a {
+  padding: 13px;
+  display: flex;
+  border: 0;
+  font-size: 11px;
+}
+.admin-sidebar-note {
+  margin: 20px 17px 0;
+  border: 1px solid #eee8fb;
+  background: #faf8ff;
+  border-radius: 10px;
+  padding: 17px 14px;
+  display: flex;
+  align-items: start;
+  gap: 10px;
+  color: #a08cc0;
+  font-size: 10px;
+}
+.admin-sidebar-note small {
+  display: block;
+  font-size: 8px;
+  margin-top: 10px;
+  color: #aca0be;
+}
+body .admin-sidebar nav {
+  flex: 1;
+}
+.admin-sidebar-note + .admin-sidebar-footer {
+  margin-top: 18px;
+}
+body .workspace.admin-workspace .button.primary > .ali-icon {
+  color: inherit;
+}
+body .workspace.admin-workspace .page-heading {
+  margin-bottom: 24px;
+}
+body .workspace.admin-workspace .page-heading h1 {
+  margin: 0 0 10px;
+  font-size: 28px;
+}
+body .workspace.admin-workspace .admin-recent-orders {
+  grid-column: 1/-1;
+}
+.admin-token-details {
+  grid-column: 1/-1;
+}
+.admin-token-details > summary {
+  cursor: pointer;
+  padding: 22px;
+  font-size: 13px;
+  font-weight: 600;
+  list-style: none;
+}
+.admin-token-details > summary > span {
+  float: right;
+  font-size: 11px;
+  color: #9c85bd;
+  font-weight: 400;
+}
+body .workspace.admin-workspace .badge {
+  font-size: 10px;
+  padding: 4px 8px;
+  border-radius: 5px;
+}
+.admin-workspace .badge:before {
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+body .workspace.admin-workspace .pagination {
+  min-height: 58px;
+}
+.admin-workspace .pagination > .app-select {
+  max-width: 112px;
+}
+body .workspace.admin-workspace .pagination :is(.button, input, .app-select-trigger) {
+  min-height: 32px;
+  height: 32px;
+}
+.admin-workspace .page-jump input {
+  width: 48px;
+}
+body .workspace.admin-workspace .admin-resource-projects > .data-card {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+body .workspace.admin-workspace .admin-resource-projects .data-card {
+  background: transparent;
+  border: 0;
+}
+body .workspace.admin-workspace .admin-resource-projects .filters {
+  padding: 14px 0;
+}
+body .workspace.admin-workspace .admin-resource-projects .resource-status-tabs {
+  padding: 0;
+  background: transparent;
+  border-color: #e5e1f0;
+}
+body .workspace.admin-workspace .project-view-toggle {
+  padding: 0;
+  justify-content: flex-end;
+  margin-top: -40px;
+  margin-bottom: 10px;
+  pointer-events: none;
+}
+.project-view-toggle > .button {
+  pointer-events: auto;
+  font-size: 10px;
+}
+body .workspace.admin-workspace .project-board-scope {
+  padding: 0;
+  font-size: 10px;
+  color: #91849f;
+  margin: 12px 0 16px;
+}
+body .workspace.admin-workspace .project-board {
+  padding: 0;
+  gap: 16px;
+  align-items: stretch;
+}
+body .workspace.admin-workspace .project-board-lane {
+  background: #f0f0f8;
+  border: 1px solid #e5e6f0;
+  border-radius: 15px;
+  padding: 13px;
+  min-height: 270px;
+}
+body .workspace.admin-workspace .project-board-lane h2 {
+  font-size: 11px;
+  margin: 3px 2px 17px;
+}
+.project-board-lane h2 > span {
+  border: 1px solid #ded7ef;
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-size: 9px;
+}
+body .workspace.admin-workspace .project-board-card {
+  padding: 19px 14px;
+  margin: 0 0 12px;
+  border-radius: 12px;
+  box-shadow: 0 2px 5px #26284003;
+}
+body .workspace.admin-workspace .project-board-card > button {
+  font-size: 12px;
+  font-weight: 600;
+  color: #27293f;
+  padding: 0;
+  margin: 10px 0 16px;
+}
+.project-board-number {
+  font-size: 8px;
+  letter-spacing: 0.6px;
+  color: #9a88ad;
+}
+.board-card-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.board-card-footer > span {
+  font-size: 9px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+body .workspace.admin-workspace .project-board-progress {
+  font-size: 9px;
+  color: #93859e;
+  margin-top: 17px;
+}
+body .workspace.admin-workspace .project-board-card progress {
+  accent-color: #b298dc;
+  height: 4px;
+}
+body .workspace.admin-workspace .admin-visual-cards .data-card {
+  background: transparent;
+  border: 0;
+  overflow: visible;
+}
+body .workspace.admin-workspace .admin-visual-cards .filters {
+  padding: 8px 0 18px;
+}
+body .workspace.admin-workspace .admin-visual-cards .resource-status-tabs {
+  padding: 0;
+  border: 0;
+  margin-bottom: 12px;
+}
+body .workspace.admin-workspace .admin-resource-contents .workflow-tabs {
+  margin: 0 0 14px;
+  gap: 10px;
+}
+.admin-resource-contents .workflow-tabs .button {
+  min-height: 32px;
+  font-size: 10px;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+.admin-resource-contents .workflow-tabs .button.primary {
+  background: #eee7fa;
+  color: #8e6abf;
+  border-color: #e7dcf8;
+}
+.admin-content-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+.admin-reference-card {
+  border: 1px solid #e5e7f0;
+  border-radius: 17px;
+  background: white;
+  overflow: hidden;
+  min-width: 0;
+}
+.admin-content-cover {
+  background: #ede7fa;
+  color: #a386c7;
+  padding: 24px 22px;
+  position: relative;
+  min-height: 123px;
+}
+.tint-1 .admin-content-cover {
+  background: #fff0e6;
+  color: #c59c80;
+}
+.tint-2 .admin-content-cover {
+  background: #e8eef9;
+  color: #92a9ce;
+}
+.admin-content-cover > small {
+  font-size: 8px;
+  letter-spacing: 1.4px;
+}
+.admin-content-cover h2 {
+  font-size: 18px;
+  line-height: 1.6;
+  margin: 14px 0 0;
+  color: inherit;
+}
+.admin-content-cover > .ali-icon {
+  position: absolute;
+  right: 25px;
+  bottom: 27px;
+  font-size: 30px;
+  color: inherit;
+}
+.admin-card-body {
+  padding: 18px;
+}
+.admin-card-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+  font-size: 10px;
+  color: #9479b3;
+}
+.admin-card-meta > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.admin-card-meta .badge {
+  white-space: nowrap;
+}
+.admin-card-body h3 {
+  font-size: 12px;
+  margin: 14px 0 10px;
+}
+.admin-card-body h3 > .text-button {
+  padding: 0;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: #27293f;
+}
+.admin-card-body > p {
+  font-size: 10px;
+  color: #897b99;
+  line-height: 1.9;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 36px;
+  margin: 0 0 14px;
+}
+.admin-card-date {
+  font-size: 9px;
+  color: #9a8ca9;
+}
+.admin-card-body footer {
+  border-top: 1px solid #ede7f5;
+  margin-top: 18px;
+  padding-top: 13px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.admin-card-body footer .text-button {
+  font-size: 10px;
+  padding: 0;
+  color: #9373bc;
+}
+.admin-card-body footer .danger {
+  color: #c26e83;
+}
+.admin-forum-stack {
+  display: grid;
+  gap: 16px;
+}
+.admin-forum-stack .admin-card-body {
+  padding: 24px;
+}
+.admin-forum-stack .admin-card-meta {
+  font-size: 11px;
+}
+.admin-forum-stack .admin-card-body h3 > .text-button {
+  font-size: 13px;
+}
+.admin-forum-stack .admin-card-body > p {
+  min-height: 18px;
+}
+.admin-forum-stack .admin-card-body footer {
+  justify-content: flex-end;
+}
+.user-reference-summary,
+.model-reference-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.user-reference-summary article,
+.model-reference-summary article {
+  border: 1px solid #e5e7f0;
+  background: white;
+  border-radius: 17px;
+  padding: 24px 20px;
+  min-height: 137px;
+}
+.user-reference-summary span,
+.model-reference-summary span {
+  font-size: 11px;
+  color: #897b99;
+}
+.user-reference-summary strong,
+.model-reference-summary strong {
+  display: block;
+  font-size: 28px;
+  margin: 17px 0;
+  color: #27293f;
+}
+.user-reference-summary small,
+.model-reference-summary small {
+  font-size: 9px;
+  color: #a08dac;
+}
+.admin-user-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.admin-user-cell strong {
+  font-size: 11px;
+}
+.admin-user-avatar {
+  display: grid;
+  place-items: center;
+  width: 29px;
+  height: 32px;
+  background: #eee7fb;
+  color: #a082c8;
+  border-radius: 9px;
+}
+body .workspace.admin-workspace .statistics-screen .metric-grid article,
+body .workspace.admin-workspace .statistics-screen .chart-grid article {
+  border-radius: 17px;
+  border-color: #e5e7f0;
+  background: white;
+}
+.admin-workspace .statistics-screen .chart-grid h2 {
+  font-size: 14px;
+}
+.admin-workspace .statistics-screen .metric-grid article {
+  min-height: 137px;
+  padding: 24px 20px;
+}
+.admin-workspace .statistics-screen > .muted {
+  padding: 12px 15px;
+  background: #f0ebfa;
+  border: 1px solid #e7def8;
+  border-radius: 8px;
+  color: #a08bbd;
+  font-size: 10px;
+}
+body .workspace.admin-workspace .work-heading h1 {
+  font-size: 28px;
+  margin: 0 0 12px;
+}
+.admin-workspace .work-heading p {
+  font-size: 12px;
+}
+.admin-workspace .work-tabs {
+  margin: 22px 0 14px;
+}
+.admin-workspace .work-tabs button {
+  font-size: 11px;
+  color: #8e7fa3;
+}
+.admin-workspace .work-tabs button.active {
+  background: #eee7fa;
+  color: #8e6abf;
+}
+body .workspace.admin-workspace .work-inbox:not(.reading) {
+  display: block;
+  height: auto;
+  min-height: 450px;
+  border-radius: 17px;
+  border-color: #e5e7f0;
+}
+.admin-workspace .work-inbox:not(.reading) > .work-detail {
+  display: none;
+}
+.admin-workspace .work-inbox:not(.reading) .work-list {
+  border: 0;
+  overflow: visible;
+}
+.admin-workspace .work-inbox:not(.reading) .work-row {
+  position: relative;
+  padding: 23px 130px 23px 73px;
+  min-height: 110px;
+}
+.notification-row-icon {
+  position: absolute;
+  left: 23px;
+  top: 25px;
+  background: #f2edfa;
+  border-radius: 11px;
+  padding: 9px;
+  color: #b39bcf;
+  width: 35px;
+  height: 35px;
+}
+.notification-row-state {
+  font-size: 10px;
+  color: #ae9cbe;
+}
+.admin-workspace .work-inbox:not(.reading) .notification-row-state {
+  position: absolute;
+  right: 25px;
+  top: 28px;
+}
+.admin-workspace .work-row strong {
+  font-size: 12px;
+}
+.admin-workspace .work-row p {
+  font-size: 11px;
+  color: #9a8ca9;
+}
+.admin-workspace .work-row small {
+  font-size: 10px;
+  color: #a79ab3;
+}
+.admin-workspace .work-inbox.reading .notification-row-icon {
+  display: none;
+}
+.admin-workspace .work-back {
+  display: inline-flex;
+}
+.admin-workspace .work-detail {
+  background: #fff;
+}
+.admin-workspace .work-inbox {
+  border-radius: 17px;
+  border-color: #e5e7f0;
+}
+.model-reference-note {
+  background: #f0ebfa;
+  border: 1px solid #e7def8;
+  border-radius: 8px;
+  color: #a08bbd;
+  font-size: 10px;
+  padding: 12px 15px;
+  margin: 0 0 20px;
+}
+body .workspace.admin-workspace .managed-models {
+  color: #27293f;
+}
+.admin-workspace .managed-models .card {
+  border-radius: 17px;
+  border-color: #e5e7f0;
+}
+.admin-workspace .managed-models .model-reference-summary strong {
+  font-size: 26px;
+}
+.admin-workspace .managed-models .head h1 {
+  font-size: 28px;
+}
+.admin-workspace .managed-models .mark {
+  background: #eee7fa;
+  color: #9b7bc2;
+}
+.admin-workspace .managed-models .num {
+  border-color: #e3d7f4;
+  color: #9b7bc2;
+}
+.admin-workspace .managed-models .checks b {
+  color: #9b7bc2;
+}
+.admin-workspace .managed-models button.primary {
+  background: #6d5ce8;
+  border-color: #6d5ce8;
+}
+.admin-workspace .managed-models .text {
+  color: #9271bb;
+}
+.model-reference-table {
+  overflow: auto;
+}
+.model-reference-table table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 540px;
+}
+.model-reference-table td {
+  font-size: 11px;
+}
+.model-reference-table td:first-child small {
+  display: block;
+  color: #a08dac;
+  font-size: 9px;
+  margin-top: 7px;
+}
+.model-switch {
+  display: inline-flex;
+  position: relative;
+  cursor: pointer;
+}
+.model-switch input {
+  position: absolute;
+  opacity: 0;
+  width: 32px;
+  height: 18px;
+  margin: 0;
+}
+.model-switch span {
+  display: block;
+  width: 32px;
+  height: 18px;
+  background: #dcd5e7;
+  border-radius: 12px;
+  padding: 3px;
+  pointer-events: none;
+}
+.model-switch span:before {
+  content: '';
+  display: block;
+  background: white;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  transition: transform 0.15s;
+}
+.model-switch input:checked + span {
+  background: #b298dc;
+}
+.model-switch input:checked + span:before {
+  transform: translateX(14px);
+}
+.model-switch input:focus-visible + span {
+  outline: 2px solid #6d5ce8;
+  outline-offset: 3px;
+}
+.model-switch input:disabled + span {
+  opacity: 0.5;
+}
+@media (max-width: 1100px) {
+  .admin-content-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .admin-sidebar-note {
+    display: none;
+  }
+}
+@media (max-width: 900px) {
+  body .admin-section-navigation:not(.is-settings) {
+    left: 220px;
+  }
+  .admin-workspace .management-search {
+    display: none;
+  }
+}
+@media (max-width: 650px) {
+  body .admin-section-navigation:not(.is-settings) {
+    position: absolute;
+    top: 70px;
+    left: 16px;
+    width: 120px;
+    right: auto;
+  }
+  body .workspace.admin-workspace.has-section-nav:not(.has-settings-nav) .page {
+    padding-top: 65px;
+  }
+  .admin-content-grid {
+    grid-template-columns: 1fr;
+  }
+  .user-reference-summary,
+  .model-reference-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .user-reference-summary article,
+  .model-reference-summary article {
+    padding: 17px;
+    min-height: 123px;
+  }
+  .user-reference-summary strong,
+  .model-reference-summary strong {
+    font-size: 23px;
+  }
+  body .workspace.admin-workspace .project-view-toggle {
+    margin-top: 10px;
+    justify-content: flex-start;
+  }
+  .admin-workspace .work-inbox:not(.reading) .work-row {
+    padding: 20px 20px 20px 65px;
+  }
+  .admin-workspace .work-inbox:not(.reading) .notification-row-state {
+    position: static;
+    display: block;
+    margin-top: 6px;
+  }
+  .notification-row-icon {
+    left: 18px;
+  }
+  .admin-workspace .work-inbox.reading .work-list {
+    display: none;
+  }
+  .admin-workspace .work-inbox.reading .work-detail {
+    display: flex;
+  }
+  .admin-workspace .work-inbox.reading {
+    display: block;
+  }
+  .admin-workspace .work-heading h1 {
+    font-size: 24px;
+  }
+}
+
+body .admin-section-navigation:not(.is-settings) {
+  min-height: 0;
+  bottom: auto;
+}
+body .admin-section-navigation:not(.is-settings):not([open]) {
+  height: 36px;
+  overflow: hidden;
+}
+body .workspace.admin-workspace .user-reference-summary article,
+body .workspace.admin-workspace .model-reference-summary article {
+  height: 137px;
+  min-height: 137px;
+  box-sizing: border-box;
+  display: block;
+}
+body .workspace.admin-workspace .user-reference-summary strong,
+body .workspace.admin-workspace .model-reference-summary strong {
+  margin: 14px 0;
+  line-height: 1.2;
+}
+body .workspace.admin-workspace .admin-resource-users .data-card {
+  position: relative;
+}
+.user-invite-action {
+  position: absolute;
+  right: 20px;
+  top: 8px;
+  z-index: 1;
+}
+.user-invite-action > section {
+  padding: 0;
+  margin: 0;
+}
+.user-invite-action .button {
+  font-size: 10px;
+}
+body .workspace.admin-workspace .admin-resource-contents .workflow-tabs .button {
+  min-height: 32px;
+  font-size: 10px;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+body .workspace.admin-workspace .admin-resource-contents .workflow-tabs .button.primary {
+  background: #eee7fa;
+  color: #8e6abf;
+  border-color: #e7dcf8;
+}
+body .workspace.admin-workspace .project-board-card progress {
+  -webkit-appearance: none;
+  appearance: none;
+  border: 0;
+  border-radius: 3px;
+}
+.project-board-card progress::-webkit-progress-bar {
+  background: #eeeaf4;
+  border-radius: 3px;
+}
+.project-board-card progress::-webkit-progress-value {
+  background: #b298dc;
+  border-radius: 3px;
+}
+.project-board-card progress::-moz-progress-bar {
+  background: #b298dc;
+  border-radius: 3px;
+}
+body .workspace.admin-workspace .admin-card-meta .ali-icon,
+body .workspace.admin-workspace .admin-content-cover .ali-icon {
+  color: inherit;
+}
+@media (max-width: 650px) {
+  .user-invite-action {
+    position: static;
+    padding: 12px 15px 0;
+  }
+  .user-invite-action > section {
+    margin: 0;
+  }
+  .user-reference-summary article,
+  .model-reference-summary article {
+    height: 130px;
+  }
+}
+
+.admin-section-navigation.is-settings > .settings-navigation-title {
+  display: none;
+}
+@media (max-width: 650px) {
+  body .workspace.admin-workspace .project-board-lane:not(:has(.project-board-card)) {
+    min-height: 110px;
+  }
+}
+
+/* 手机表格在卡片内横向滚动，姓名与金额不挤成竖排。 */
+body .workspace.admin-workspace .admin-resource-orders table {
+  min-width: 940px;
+}
+body .workspace.admin-workspace .admin-resource-users table {
+  min-width: 760px;
+}
+body .workspace.admin-workspace .admin-resource-orders td:not(:first-child),
+body .workspace.admin-workspace .admin-resource-users td {
+  white-space: nowrap;
+}

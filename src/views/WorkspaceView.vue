@@ -164,33 +164,32 @@ async function exit() {
           <Icon name="menu" />
         </button>
         <RouterLink to="/student" class="student-brand"
-          ><span>知</span><strong>知项<small>让想法发生</small></strong></RouterLink
+          ><span><Icon name="sparkles" /></span
+          ><strong>知项<small>让想法发生</small></strong></RouterLink
         >
         <nav class="student-nav" :class="{ open: studentMenuOpen }" aria-label="学生端主导航">
-          <RouterLink to="/student" exact-active-class="is-active"
-            ><Icon name="grid" />工作台</RouterLink
+          <RouterLink
+            to="/student"
+            :class="{ 'is-active': ['/student', '/student/dashboard'].includes(route.path) }"
+            >工作台</RouterLink
           >
           <RouterLink
             v-for="entry in studentPrimary"
             :key="entry.key"
             :to="`/student/${entry.key}`"
             active-class="is-active"
-            ><Icon :name="entry.icon" />{{ entry.title }}</RouterLink
+            >{{
+              entry.key === 'chat' ? 'AI 答疑' : entry.key === 'posts' ? '交流广场' : entry.title
+            }}</RouterLink
           >
         </nav>
         <div class="student-header-actions">
-          <RouterLink v-if="studentAllowed('search')" to="/student/search" aria-label="搜索知识库"
-            ><Icon name="search"
-          /></RouterLink>
           <RouterLink
             v-if="studentAllowed('notifications')"
             to="/student/notifications"
             aria-label="消息通知"
             ><NotificationBell
           /></RouterLink>
-          <RouterLink v-if="studentAllowed('bind-order')" to="/student/bind-order" class="button"
-            >绑定订单</RouterLink
-          >
           <button
             class="student-profile"
             :aria-expanded="accountOpen"

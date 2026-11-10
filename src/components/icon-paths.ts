@@ -1,5 +1,6 @@
 /** 知项独立图标：24单位网格；主体轮廓与彩色面分离，供线面D和棱镜A共用。 */
 export const iconPaths: Record<string, string> = {
+  play: 'M9 5 20 12 9 19Z',
   search: 'M10.5 18a7.5 7.5 0 1 0 0-15 7.5 7.5 0 0 0 0 15Z M16 16l5 5',
   bell: 'M5 16h14l-2-3V9a5 5 0 0 0-10 0v4Z M10 20h4 M12 2v2',
   plus: 'M12 5v14 M5 12h14',

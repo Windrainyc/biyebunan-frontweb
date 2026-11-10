@@ -1,0 +1,67 @@
+[
+  {
+    "role": "admin",
+    "check": "手机看板详情关闭可见",
+    "passed": true
+  },
+  {
+    "role": "admin",
+    "check": "看板详情Escape关闭",
+    "passed": true
+  },
+  {
+    "role": "admin",
+    "check": "看板切列表操作",
+    "passed": true
+  },
+  {
+    "role": "admin",
+    "check": "知识管理卡片",
+    "passed": true
+  },
+  {
+    "role": "admin",
+    "check": "知识卡片编辑入口",
+    "passed": true
+  },
+  {
+    "role": "admin",
+    "check": "论坛审核入口",
+    "passed": true
+  },
+  {
+    "role": "admin",
+    "check": "通知列表布局",
+    "passed": true
+  },
+  {
+    "role": "admin",
+    "check": "通知全文阅读",
+    "passed": true
+  },
+  {
+    "role": "admin",
+    "check": "手机通知返回",
+    "passed": true
+  },
+  {
+    "role": "admin",
+    "check": "授权会员入口保留",
+    "passed": true
+  },
+  {
+    "role": "admin",
+    "check": "真实模型价格弹窗",
+    "passed": true
+  },
+  {
+    "role": "admin",
+    "check": "真实基础配置手机不溢出",
+    "passed": true
+  },
+  {
+    "role": "admin",
+    "check": "所有已操作页面无脚本异常",
+    "passed": true
+  }
+]

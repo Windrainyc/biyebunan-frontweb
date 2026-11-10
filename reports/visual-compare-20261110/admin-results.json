@@ -1,0 +1,126 @@
+[
+  {
+    "role": "admin",
+    "route": "dashboard",
+    "width": 1440,
+    "overflow": false
+  },
+  {
+    "role": "admin",
+    "route": "dashboard",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "role": "admin",
+    "route": "projects",
+    "width": 1440,
+    "overflow": false
+  },
+  {
+    "role": "admin",
+    "route": "projects",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "role": "admin",
+    "route": "orders",
+    "width": 1440,
+    "overflow": false
+  },
+  {
+    "role": "admin",
+    "route": "orders",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "role": "admin",
+    "route": "contents",
+    "width": 1440,
+    "overflow": false
+  },
+  {
+    "role": "admin",
+    "route": "contents",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "role": "admin",
+    "route": "users",
+    "width": 1440,
+    "overflow": false
+  },
+  {
+    "role": "admin",
+    "route": "users",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "role": "admin",
+    "route": "posts",
+    "width": 1440,
+    "overflow": false
+  },
+  {
+    "role": "admin",
+    "route": "posts",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "role": "admin",
+    "route": "statistics",
+    "width": 1440,
+    "overflow": false
+  },
+  {
+    "role": "admin",
+    "route": "statistics",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "role": "admin",
+    "route": "models",
+    "width": 1440,
+    "overflow": false
+  },
+  {
+    "role": "admin",
+    "route": "models",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "role": "admin",
+    "route": "notifications",
+    "width": 1440,
+    "overflow": false
+  },
+  {
+    "role": "admin",
+    "route": "notifications",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "role": "admin",
+    "route": "storage-configs",
+    "width": 1440,
+    "overflow": false
+  },
+  {
+    "role": "admin",
+    "route": "storage-configs",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "role": "admin",
+    "errors": []
+  }
+]

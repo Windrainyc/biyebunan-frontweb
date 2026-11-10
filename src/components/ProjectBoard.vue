@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { Row } from '../types/api';
+import ReferenceName from './ReferenceName.vue';
+import Icon from './Icon.vue';
 import StatusBadge from './StatusBadge.vue';
 import { display } from '../config/labels';
 const props = defineProps<{ rows: Row[]; loading: boolean; failed: boolean }>();
@@ -40,13 +42,18 @@ const progress = (row: Row) => Math.max(0, Math.min(100, Number(row.progress) ||
         {{ lane.title }} <span>{{ lane.rows.length }}</span>
       </h2>
       <article v-for="row in lane.rows" :key="String(row.id)" class="project-board-card">
-        <button class="text-button" @click="emit('inspect', row)">{{ row.title }}</button
+        <small class="project-board-number">{{ row.projectNo || row.orderNo || 'PROJECT' }}</small
+        ><button class="text-button" @click="emit('inspect', row)">{{ row.title }}</button
         ><StatusBadge :value="row.stage" />
         <div class="project-board-progress">
           <span>项目阶段进度</span><strong>{{ progress(row) }}%</strong>
         </div>
         <progress :value="progress(row)" max="100" aria-label="项目阶段进度" />
-        <p>计划交付 {{ display(row.deliveryDate) }}</p>
+        <p class="board-card-footer">
+          <ReferenceName v-if="row.studentId" field="studentId" :value="row.studentId" /><span
+            ><Icon name="calendar" />{{ display(row.deliveryDate) }}</span
+          >
+        </p>
       </article>
       <p v-if="!lane.rows.length" class="muted">
         {{ loading ? '正在加载…' : failed ? '读取失败，请重试' : '本页暂无此阶段项目' }}

@@ -6,6 +6,7 @@ import { display } from '../config/labels';
 import type { Resource } from '../config/resources';
 import type { Page, Row } from '../types/api';
 import Icon from '../components/Icon.vue';
+import StudentDashboard from '../components/StudentDashboard.vue';
 const props = defineProps<{ entries: Resource[]; visiblePaths: string[] }>();
 interface Metric {
   metric: string;
@@ -160,25 +161,26 @@ onMounted(load);
 onBeforeUnmount(() => generation++);
 </script>
 <template>
-  <section class="dashboard">
+  <StudentDashboard
+    v-if="auth.platform === 'student'"
+    :project="project"
+    :milestones="milestones"
+    :deliveries="deliveries"
+    :learning="learning"
+    :loading="loading"
+    :error="error"
+    :visible-paths="visiblePaths"
+    @refresh="load"
+  />
+  <section v-else class="dashboard">
     <header class="dash-heading">
       <div>
         <p class="eyebrow">
-          {{
-            auth.platform === 'student'
-              ? '让想法发生 · YOUR CREATIVE SPACE'
-              : auth.platform === 'partner'
-                ? '项目协作概览'
-                : '运营总览'
-          }}
+          {{ auth.platform === 'partner' ? '项目协作概览' : '运营总览' }}
         </p>
         <h1>欢迎回来，{{ auth.user?.displayName }}。</h1>
         <p class="muted">
-          {{
-            auth.platform === 'student'
-              ? '新的一天，从一个好想法开始。一起让项目更进一步。'
-              : '跟进订单、项目与交付进展。'
-          }}
+          {{ '跟进订单、项目与交付进展。' }}
         </p>
       </div>
       <div class="date">
@@ -191,106 +193,15 @@ onBeforeUnmount(() => generation++);
     <p v-if="error" class="error" role="alert">
       {{ error }} <button class="button" @click="load">重试</button>
     </p>
-    <div v-if="auth.platform !== 'student'" class="summary-grid">
+    <div class="summary-grid">
       <article v-for="card in cards" :key="card.key" class="summary-card">
         <span>{{ card.title }}</span
         ><Icon :name="card.icon" variant="prism" /><strong>{{ total(card.key) }}</strong
         ><small>{{ card.unit }}</small>
       </article>
     </div>
-    <article v-if="auth.platform === 'student' && project" class="project-hero">
-      <div class="hero-top">
-        <span>最近项目</span><span class="stage-pill">{{ display(project.stage) }}</span>
-      </div>
-      <h2>{{ project.title }}</h2>
-      <div class="student-hero-art" aria-hidden="true">
-        <span class="orbit orbit-one"></span><span class="orbit orbit-two"></span
-        ><Icon name="folder" /><span class="orbit-spark">✦</span>
-      </div>
-      <p class="hero-date"><Icon name="calendar" />计划交付 {{ display(project.deliveryDate) }}</p>
-      <ol class="stages">
-        <li
-          v-for="(stage, index) in stages"
-          :key="stage"
-          :class="{ reached: index <= stageIndex, current: index === stageIndex }"
-        >
-          <span></span>{{ display(stage) }}
-        </li>
-      </ol>
-      <div class="hero-actions">
-        <RouterLink v-if="visible('projects')" class="button" :to="projectLink()"
-          >查看项目<Icon name="right" /></RouterLink
-        ><RouterLink v-if="visible('chat')" class="button ghost" to="/student/chat"
-          ><Icon name="sparkles" />打开智能答疑</RouterLink
-        >
-      </div>
-      <div class="progress-line">
-        <span>项目阶段进度</span
-        ><progress :value="progress" max="100" :aria-label="`项目阶段进度${progress}%`"></progress
-        ><span>{{ progress }}%</span>
-      </div>
-    </article>
-    <article v-else-if="auth.platform === 'student' && !loading" class="empty-project card">
-      <Icon name="folder" />
-      <h2>暂无可展示的项目</h2>
-      <p>绑定订单后，可在这里查看项目进度和交付资料。</p>
-      <RouterLink v-if="visible('bind-order')" class="button primary" to="/student/bind-order"
-        >绑定订单</RouterLink
-      >
-    </article>
-    <p v-if="loading" class="muted" role="status">正在读取工作台数据…</p>
-    <section v-if="auth.platform === 'student'" class="student-overview-panel student-task-panel">
-      <header>
-        <h2>接下来要做</h2>
-        <RouterLink :to="projectLink('milestones')">项目里程碑 <Icon name="right" /></RouterLink>
-      </header>
-      <div v-for="item in pendingMilestones" :key="String(item.id)" class="student-overview-row">
-        <Icon :name="item.completed ? 'check' : 'clock'" />
-        <div>
-          <strong>{{ item.name }}</strong
-          ><small>{{ item.completed ? '已完成' : '待完成' }} · {{ display(item.dueDate) }}</small>
-        </div>
-      </div>
-      <p v-if="!pendingMilestones.length" class="muted">
-        {{ loading ? '正在读取里程碑…' : '当前已加载里程碑中没有待办' }}
-      </p>
-    </section>
     <div class="dashboard-columns">
-      <section v-if="auth.platform === 'student'" class="student-tools-section">
-        <div class="section-heading">
-          <h2>让每一步，都更轻松</h2>
-          <span>你的项目学习工具箱</span>
-        </div>
-        <div class="student-tools-grid">
-          <RouterLink v-if="visible('chat')" to="/student/chat" class="student-tool-card tool-ai">
-            <Icon name="sparkles" />
-            <h3>智能答疑</h3>
-            <p>遇到问题不用停下来，让灵感继续。</p>
-            <span>开始一段对话 <Icon name="right" /></span>
-          </RouterLink>
-          <RouterLink
-            v-if="visible('knowledge')"
-            to="/student/knowledge"
-            class="student-tool-card tool-knowledge"
-          >
-            <Icon name="file" />
-            <h3>知识资料</h3>
-            <p>从概念到实践，找到你需要的参考。</p>
-            <span>探索知识库 <Icon name="right" /></span>
-          </RouterLink>
-          <RouterLink
-            v-if="visible('posts')"
-            to="/student/posts"
-            class="student-tool-card tool-community"
-          >
-            <Icon name="message" />
-            <h3>交流广场</h3>
-            <p>分享经验，也听听其他人的想法。</p>
-            <span>看看大家在聊什么 <Icon name="right" /></span>
-          </RouterLink>
-        </div>
-      </section>
-      <section v-else class="chart-card card">
+      <section class="chart-card card">
         <div class="section-heading">
           <h2>订单新增趋势</h2>
           <span>近7日 · 笔</span>
@@ -321,7 +232,7 @@ onBeforeUnmount(() => generation++);
         >
         <p v-else class="muted">{{ loading ? '正在加载统计…' : '当前未取得统计数据' }}</p>
       </section>
-      <section v-if="auth.platform !== 'student'" class="quick-card card">
+      <section class="quick-card card">
         <div class="section-heading"><h2>常用功能</h2></div>
         <RouterLink
           v-for="entry in availableEntries"
@@ -333,66 +244,6 @@ onBeforeUnmount(() => generation++);
         <p v-if="!availableEntries.length" class="muted">暂无可用导航，请联系管理员配置。</p>
       </section>
     </div>
-    <template v-if="auth.platform === 'student'">
-      <section class="student-overview-panel">
-        <header>
-          <h2>项目交付物</h2>
-          <RouterLink :to="projectLink('deliveries')">全部 <Icon name="right" /></RouterLink>
-        </header>
-        <RouterLink
-          v-for="item in deliveries"
-          :key="String(item.id)"
-          :to="projectLink('deliveries')"
-          class="student-overview-row"
-          ><Icon name="file" />
-          <div>
-            <strong>{{ item.title || item.name || display(item.kind) }}</strong
-            ><small>{{ display(item.updatedAt || item.createdAt) }}</small>
-          </div></RouterLink
-        >
-        <p v-if="!deliveries.length" class="muted">
-          {{ loading ? '正在读取交付物…' : '当前项目暂无已发布交付物' }}
-        </p>
-      </section>
-      <section class="student-overview-panel">
-        <header>
-          <h2>答疑动态</h2>
-          <RouterLink to="/student/posts">去广场 <Icon name="right" /></RouterLink>
-        </header>
-        <RouterLink
-          v-for="item in community"
-          :key="String(item.id)"
-          :to="{ path: '/student/posts', query: { view: String(item.id) } }"
-          class="student-overview-row"
-          ><Icon name="message" />
-          <div>
-            <strong>{{ item.title }}</strong
-            ><small>{{ display(item.createdAt) }}</small>
-          </div></RouterLink
-        >
-        <p v-if="!community.length" class="muted">
-          {{ loading ? '正在读取讨论…' : '暂无可访问的讨论' }}
-        </p>
-      </section>
-      <section class="student-learning">
-        <div>
-          <p class="eyebrow">学习内容</p>
-          <h2>继续探索，<br />让项目更进一步。</h2>
-          <p class="muted">浏览当前可访问的知识资料</p>
-        </div>
-        <RouterLink
-          v-for="item in learning"
-          :key="String(item.id)"
-          :to="{ path: '/student/knowledge', query: { view: String(item.id) } }"
-          ><small>{{ display(item.type) }}</small>
-          <h3>{{ item.title }}</h3>
-          <span>阅读资料 <Icon name="right" /></span
-        ></RouterLink>
-        <p v-if="!learning.length" class="muted">
-          {{ loading ? '正在读取资料…' : '暂无可访问的知识资料' }}
-        </p>
-      </section>
-    </template>
   </section>
 </template>
 <style scoped>

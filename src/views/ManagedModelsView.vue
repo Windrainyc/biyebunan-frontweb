@@ -138,8 +138,8 @@ onBeforeRouteLeave(() => !dirty.value || confirm('配置尚未保存，确定离
   <div class="managed-models">
     <div class="head">
       <div>
-        <h1>模型服务</h1>
-        <p class="muted">接入官方模型，统一管理学生可用范围。</p>
+        <h1>模型与计费</h1>
+        <p class="muted">让 AI 能力清晰可控，让每一份用量都有依据。</p>
       </div>
       <button :disabled="busy" @click="load">刷新状态</button>
     </div>
@@ -148,6 +148,27 @@ onBeforeRouteLeave(() => !dirty.value || confirm('配置尚未保存，确定离
     <p v-if="!state" class="muted">
       {{ busy ? '正在加载服务配置…' : '配置未能加载，请刷新重试。' }}
     </p>
+    <div v-if="state" class="model-reference-note">
+      价格单位为人民币 / 百万 tokens，当前显示平台核对的成本参考价，实际费用以供应商账单为准。
+    </div>
+    <div v-if="state" class="model-reference-summary">
+      <article>
+        <span>已接入模型</span><strong>{{ state.models.length }}</strong
+        ><small>官方模型模板</small>
+      </article>
+      <article>
+        <span>已选模型</span><strong>{{ codes.length }}</strong
+        ><small>{{ dirty ? '有待保存修改' : '已保存配置' }}</small>
+      </article>
+      <article>
+        <span>连接检查</span><strong>{{ connected ? '已通过' : '待检查' }}</strong
+        ><small>保存配置后检查</small>
+      </article>
+      <article>
+        <span>学生调用</span><strong>{{ state.enabled ? '已启用' : '未启用' }}</strong
+        ><small>以服务开关为准</small>
+      </article>
+    </div>
     <div v-if="state" class="layout">
       <div class="card">
         <div class="cardtop">
@@ -200,18 +221,39 @@ onBeforeRouteLeave(() => !dirty.value || confirm('配置尚未保存，确定离
             <h3>选择学生可用模型</h3>
             <small>模型代码自动匹配</small>
           </div>
-          <div class="models">
-            <label v-for="m in state.models" :key="m.code" class="model"
-              ><input
-                v-model="codes"
-                type="checkbox"
-                :value="m.code"
-                :disabled="busy || !canWrite"
-              />
-              <h3>{{ m.name }}</h3>
-              <p>{{ m.code === 'deepseek-flash' ? '日常答疑与通用任务' : '复杂任务的备选模型' }}</p>
-              <div class="code">{{ m.code }}</div></label
-            >
+          <div class="model-reference-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>模型</th>
+                  <th>输入单价</th>
+                  <th>输出单价</th>
+                  <th>缓存命中</th>
+                  <th>学生可选</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="m in state.models" :key="m.code">
+                  <td>
+                    <strong>{{ m.name }}</strong
+                    ><small>{{ m.code }}</small>
+                  </td>
+                  <td>¥{{ m.input }}</td>
+                  <td>¥{{ m.output }}</td>
+                  <td>¥{{ m.cached }}</td>
+                  <td>
+                    <label class="model-switch"
+                      ><input
+                        v-model="codes"
+                        type="checkbox"
+                        :value="m.code"
+                        :disabled="busy || !canWrite"
+                        :aria-label="'学生可选 ' + m.name" /><span></span
+                    ></label>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
           <div class="pricing">
             <div>

@@ -1,0 +1,57 @@
+[
+  {
+    "role": "student",
+    "check": "知识真实数据可见",
+    "passed": true
+  },
+  {
+    "role": "student",
+    "check": "知识空搜索",
+    "passed": true
+  },
+  {
+    "role": "student",
+    "check": "折叠筛选重置",
+    "passed": true
+  },
+  {
+    "role": "student",
+    "check": "知识阅读入口",
+    "passed": true
+  },
+  {
+    "role": "student",
+    "check": "项目概览",
+    "passed": true
+  },
+  {
+    "role": "student",
+    "check": "项目标签唯一",
+    "passed": true
+  },
+  {
+    "role": "student",
+    "check": "建议问题填入草稿",
+    "passed": true
+  },
+  {
+    "role": "student",
+    "check": "手机知识抽屉",
+    "passed": true
+  },
+  {
+    "role": "student",
+    "check": "手机抽屉Escape关闭",
+    "passed": true
+  },
+  {
+    "role": "student",
+    "check": "广场板块筛选",
+    "passed": true
+  },
+  {
+    "role": "student",
+    "check": "所有已操作页面无脚本异常",
+    "passed": true
+  }
+]

@@ -1,0 +1,10 @@
+{
+  "release": "visual-compare-20261110",
+  "sha256": "41c628a74e3bf523df00096b19834f1150fcce6aaba50e14578cda58b54acc46",
+  "bytes": 3580169,
+  "files": {
+    "student": 95,
+    "admin": 95,
+    "partner": 95
+  }
+}

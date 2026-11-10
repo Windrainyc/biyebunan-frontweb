@@ -120,11 +120,11 @@ onBeforeUnmount(() => {
   <section class="work-notifications">
     <header class="work-heading">
       <div>
-        <h1>{{ auth.platform === 'admin' ? '工作通知' : '消息通知' }}</h1>
+        <h1>{{ auth.platform === 'admin' ? '通知中心' : '消息通知' }}</h1>
         <p class="muted">
           {{
             auth.platform === 'admin'
-              ? '关注学生提交、验收反馈与需要跟进的事项。'
+              ? '把重要的信息，送到恰当的人面前。'
               : '查看与你相关的项目与服务消息。'
           }}
         </p>
@@ -186,9 +186,12 @@ onBeforeUnmount(() => {
               :class="{ selected: selected?.id === item.id, unread: !item.read }"
               @click="select(item)"
             >
-              <strong>{{ item.title }}</strong>
+              <Icon class="notification-row-icon" name="bell" /><strong>{{ item.title }}</strong>
               <p>{{ item.body }}</p>
-              <small>{{ display(item.createdAt) }} · {{ item.read ? '已读' : '未读' }}</small>
+              <small>{{ display(item.createdAt) }}</small
+              ><span class="notification-row-state"
+                >{{ item.read ? '已读' : '未读' }} · 查看详情</span
+              >
             </button>
             <p v-if="!items.length" class="work-empty" role="status">
               {{ busy ? '正在加载…' : failed ? '加载失败，请重试' : '暂无符合条件的通知' }}

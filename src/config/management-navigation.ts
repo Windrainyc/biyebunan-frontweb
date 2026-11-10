@@ -6,52 +6,57 @@ export interface ManagementLink {
   icon: string;
 }
 const sections = [
-  { key: 'orders', title: '软件订单', icon: 'bag', group: '业务管理', keys: ['orders'] },
-  { key: 'projects', title: '软件项目', icon: 'folder', group: '业务管理', keys: ['projects'] },
+  { key: 'orders', title: '订单管理', icon: 'bag', group: '工作空间', keys: ['orders'] },
+  { key: 'projects', title: '项目交付', icon: 'folder', group: '工作空间', keys: ['projects'] },
   {
     key: 'users',
-    title: '用户与角色',
+    title: '用户与会员',
     icon: 'users',
-    group: '业务管理',
+    group: '内容与用户',
     keys: ['users', 'roles', 'membership-plans'],
   },
   {
     key: 'community',
     title: '论坛管理',
     icon: 'message',
-    group: '业务管理',
+    group: '内容与用户',
     keys: ['posts', 'reports', 'boards'],
   },
   {
     key: 'content',
-    title: '知识库内容',
+    title: '知识与素材',
     icon: 'book',
-    group: '内容与智能',
-    keys: ['contents', 'categories', 'tags'],
+    group: '内容与用户',
+    keys: ['contents', 'materials', 'categories', 'tags', 'material-categories'],
   },
   {
     key: 'ai',
-    title: '智能与词元计费',
+    title: '模型与计费',
     icon: 'sparkles',
-    group: '内容与智能',
+    group: '运营与系统',
     keys: ['models', 'model-prices', 'model-keys', 'usage', 'adjudications', 'chat-audit'],
   },
   {
     key: 'analytics',
-    title: '数据统计',
+    title: '统计分析',
     icon: 'activity',
-    group: '内容与智能',
+    group: '运营与系统',
     keys: ['statistics', 'exports'],
   },
-  { key: 'activity', title: '用户活动', icon: 'activity', group: '内容与智能', keys: ['activity'] },
+  {
+    key: 'notifications',
+    title: '通知中心',
+    icon: 'bell',
+    group: '运营与系统',
+    keys: ['notifications'],
+  },
+  { key: 'activity', title: '用户活动', icon: 'activity', group: '运营与系统', keys: ['activity'] },
   {
     key: 'settings',
-    title: '基础数据配置',
+    title: '基础配置',
     icon: 'settings',
-    group: '系统',
+    group: '运营与系统',
     keys: [
-      'materials',
-      'material-categories',
       'service-packages',
       'schools',
       'majors',
@@ -61,12 +66,38 @@ const sections = [
       'notification-templates',
       'jobs',
       'audit-events',
-      'notifications',
     ],
   },
 ];
 export function managementSections(links: readonly ManagementLink[]) {
-  return sections
+  return [...sections]
+    .sort(
+      (a, b) =>
+        [
+          'orders',
+          'projects',
+          'content',
+          'users',
+          'community',
+          'analytics',
+          'ai',
+          'notifications',
+          'activity',
+          'settings',
+        ].indexOf(a.key) -
+        [
+          'orders',
+          'projects',
+          'content',
+          'users',
+          'community',
+          'analytics',
+          'ai',
+          'notifications',
+          'activity',
+          'settings',
+        ].indexOf(b.key),
+    )
     .map((section) => ({
       ...section,
       links: section.keys.flatMap((key) => links.filter((link) => link.key === key)),
