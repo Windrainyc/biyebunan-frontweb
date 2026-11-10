@@ -1,0 +1,22 @@
+{
+  "release": "visual-compare-20261110",
+  "sourceCommit": "e42a28a48dd338649b3023b6f751fdec082b3be6",
+  "sha256": "41c628a74e3bf523df00096b19834f1150fcce6aaba50e14578cda58b54acc46",
+  "browserTransport": "Temporary SSH SOCKS; original cloud HTTPS URLs and real cloud API. Tunnel closed after verification.",
+  "directNetworkObservation": {
+    "elapsedSeconds": 35,
+    "receivedBytes": 139264,
+    "expectedBytes": 536987,
+    "status": 200,
+    "result": "timeout; public-path performance remains unverified"
+  },
+  "knownApiFailures": [
+    "/api/v1/student/activity:400",
+    "/api/v1/admin/activity:400"
+  ],
+  "notVerified": [
+    "Cloud delivery download: selected project has 0 deliveries",
+    "All write operations",
+    "Full-platform pixel-level match"
+  ]
+}

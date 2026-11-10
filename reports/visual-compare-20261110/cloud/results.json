@@ -1,0 +1,287 @@
+[
+  {
+    "platform": "student",
+    "route": "dashboard",
+    "width": 1440,
+    "overflow": false,
+    "title": "知项 · 项目答疑平台"
+  },
+  {
+    "platform": "student",
+    "route": "dashboard",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "platform": "student",
+    "route": "knowledge",
+    "width": 1440,
+    "overflow": false,
+    "title": "知项 · 项目答疑平台"
+  },
+  {
+    "platform": "student",
+    "route": "knowledge",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "platform": "student",
+    "route": "chat",
+    "width": 1440,
+    "overflow": false,
+    "title": "知项 · 项目答疑平台"
+  },
+  {
+    "platform": "student",
+    "route": "chat",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "mobileKnowledgeDialog": 1
+  },
+  {
+    "platform": "student",
+    "route": "projects",
+    "width": 1440,
+    "overflow": false,
+    "title": "知项 · 项目答疑平台"
+  },
+  {
+    "platform": "student",
+    "detail": true,
+    "versions": 0,
+    "drawer": 0
+  },
+  {
+    "platform": "student",
+    "route": "projects",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "platform": "student",
+    "route": "posts",
+    "width": 1440,
+    "overflow": false,
+    "title": "知项 · 项目答疑平台"
+  },
+  {
+    "platform": "student",
+    "route": "posts",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "platform": "student",
+    "errors": [],
+    "failedRequests": [
+      {
+        "path": "/api/v1/student/activity",
+        "status": 400
+      },
+      {
+        "path": "/api/v1/student/activity",
+        "status": 400
+      },
+      {
+        "path": "/api/v1/student/activity",
+        "status": 400
+      },
+      {
+        "path": "/api/v1/student/activity",
+        "status": 400
+      },
+      {
+        "path": "/api/v1/student/activity",
+        "status": 400
+      }
+    ]
+  },
+  {
+    "platform": "admin",
+    "route": "dashboard",
+    "width": 1440,
+    "overflow": false,
+    "title": "知项 · 项目答疑平台"
+  },
+  {
+    "platform": "admin",
+    "route": "dashboard",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "platform": "admin",
+    "route": "projects",
+    "width": 1440,
+    "overflow": false,
+    "title": "知项 · 项目答疑平台"
+  },
+  {
+    "platform": "admin",
+    "detail": true,
+    "versions": 0,
+    "drawer": 1
+  },
+  {
+    "escapeClosed": true
+  },
+  {
+    "platform": "admin",
+    "route": "projects",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "platform": "admin",
+    "route": "orders",
+    "width": 1440,
+    "overflow": false,
+    "title": "知项 · 项目答疑平台"
+  },
+  {
+    "platform": "admin",
+    "route": "orders",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "platform": "admin",
+    "route": "contents",
+    "width": 1440,
+    "overflow": false,
+    "title": "知项 · 项目答疑平台"
+  },
+  {
+    "platform": "admin",
+    "route": "contents",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "platform": "admin",
+    "route": "users",
+    "width": 1440,
+    "overflow": false,
+    "title": "知项 · 项目答疑平台"
+  },
+  {
+    "platform": "admin",
+    "route": "users",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "platform": "admin",
+    "route": "posts",
+    "width": 1440,
+    "overflow": false,
+    "title": "知项 · 项目答疑平台"
+  },
+  {
+    "platform": "admin",
+    "route": "posts",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "platform": "admin",
+    "route": "statistics",
+    "width": 1440,
+    "overflow": false,
+    "title": "知项 · 项目答疑平台"
+  },
+  {
+    "platform": "admin",
+    "route": "statistics",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "platform": "admin",
+    "route": "models",
+    "width": 1440,
+    "overflow": false,
+    "title": "知项 · 项目答疑平台"
+  },
+  {
+    "platform": "admin",
+    "route": "models",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "platform": "admin",
+    "route": "notifications",
+    "width": 1440,
+    "overflow": false,
+    "title": "知项 · 项目答疑平台"
+  },
+  {
+    "platform": "admin",
+    "route": "notifications",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "platform": "admin",
+    "route": "storage-configs",
+    "width": 1440,
+    "overflow": false,
+    "title": "知项 · 项目答疑平台"
+  },
+  {
+    "platform": "admin",
+    "route": "storage-configs",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "platform": "admin",
+    "errors": [],
+    "failedRequests": [
+      {
+        "path": "/api/v1/admin/activity",
+        "status": 400
+      },
+      {
+        "path": "/api/v1/admin/activity",
+        "status": 400
+      },
+      {
+        "path": "/api/v1/admin/activity",
+        "status": 400
+      },
+      {
+        "path": "/api/v1/admin/activity",
+        "status": 400
+      },
+      {
+        "path": "/api/v1/admin/activity",
+        "status": 400
+      },
+      {
+        "path": "/api/v1/admin/activity",
+        "status": 400
+      },
+      {
+        "path": "/api/v1/admin/activity",
+        "status": 400
+      },
+      {
+        "path": "/api/v1/admin/activity",
+        "status": 400
+      },
+      {
+        "path": "/api/v1/admin/activity",
+        "status": 400
+      },
+      {
+        "path": "/api/v1/admin/activity",
+        "status": 400
+      }
+    ]
+  }
+]
