@@ -658,6 +658,9 @@ body .student-workspace .page:has(.qa-chat-layout) {
   border-radius: 14px;
   margin: 24px 0;
 }
+.project-progress-overview > div {
+  min-width: 0;
+}
 .project-progress-caption {
   display: flex;
   align-items: center;
@@ -897,7 +900,7 @@ body .student-project-space .milestone {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .project-progress-overview {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 20px;
     padding: 22px;
   }
