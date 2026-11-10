@@ -30,6 +30,16 @@ const source = ref(
 );
 const sourceTitle = String(route.query.title || '已选知识资料').slice(0, 200);
 const materialsOpen = ref(false);
+const wideContext = ref(false);
+const contextMedia = window.matchMedia('(min-width: 1180px)');
+function syncContextLayout() {
+  wideContext.value = contextMedia.matches;
+}
+onMounted(() => {
+  syncContextLayout();
+  contextMedia.addEventListener('change', syncContextLayout);
+});
+onBeforeUnmount(() => contextMedia.removeEventListener('change', syncContextLayout));
 const selectedSources = ref<{ versionId: string; title: string }[]>(
   source.value ? [{ versionId: source.value, title: sourceTitle }] : [],
 );
@@ -560,18 +570,26 @@ onBeforeUnmount(() => {
         </p>
       </div>
     </main>
-    <Teleport to="body"
-      ><div v-if="materialsOpen" class="qa-drawer-mask" @click.self="materialsOpen = false">
+    <Teleport to="body" :disabled="wideContext"
+      ><div
+        v-if="materialsOpen || wideContext"
+        class="qa-drawer-mask"
+        :class="{ 'qa-context-inline': wideContext }"
+        @click.self="materialsOpen = false"
+      >
         <aside
-          v-dialog="() => (materialsOpen = false)"
-          role="dialog"
-          aria-modal="true"
+          :key="wideContext ? 'inline-context' : 'mobile-context'"
+          v-dialog="wideContext ? undefined : () => (materialsOpen = false)"
+          :role="wideContext ? 'complementary' : 'dialog'"
+          :aria-modal="wideContext ? undefined : true"
           aria-label="项目与知识资料"
           class="qa-drawer"
         >
           <header>
             <h2>项目与知识资料</h2>
-            <button class="text-button" @click="materialsOpen = false">关闭</button>
+            <button v-if="!wideContext" class="text-button" @click="materialsOpen = false">
+              关闭
+            </button>
           </header>
           <h3>当前项目</h3>
           <p v-if="conversation">{{ contextProject?.title || '当前会话关联项目' }}</p>
@@ -954,5 +972,22 @@ onBeforeUnmount(() => {
   .qa-empty h2 {
     font-size: 22px;
   }
+}
+.qa-context-inline {
+  position: static;
+  z-index: auto;
+  min-width: 0;
+  min-height: 0;
+  background: white;
+  border-left: 1px solid #e6e8f2;
+}
+.qa-context-inline .qa-drawer {
+  width: 100%;
+  height: 100%;
+  padding: 22px 18px;
+  box-shadow: none;
+}
+.qa-context-inline h2 {
+  font-size: 16px;
 }
 </style>

@@ -1,7 +1,14 @@
-/* 学生端独立外观：尺寸和布局取自确认的第二版原型，保留真实接口与状态。 */
+/* 学生端：2026-11-10 已确认 student-v4 原型。真实接口、状态和权限保持不变。 */
 body .student-workspace.workspace {
   display: block;
-  background: #f4f5fa;
+  background: #f8f9ff;
+  color: #262840;
+  --control-radius: 10px;
+  --student-ink: #262840;
+  --student-muted: #687089;
+  --student-accent: #665bea;
+  --student-line: #e6e8f2;
+  --serif: Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   min-height: 100vh;
 }
 body .student-workspace .workspace-body {
@@ -9,27 +16,27 @@ body .student-workspace .workspace-body {
   width: 100%;
 }
 body .student-workspace .page {
-  max-width: 1400px;
+  max-width: 1392px;
   margin: auto;
-  padding: 32px 32px 68px;
+  padding: 34px 36px 46px;
 }
 .student-header {
   position: sticky;
   top: 0;
   z-index: 50;
-  height: 72px;
-  border-bottom: 1px solid #e5e8ef;
+  height: 88px;
+  border-bottom: 1px solid #e6e8f2;
   background: #ffffffef;
   backdrop-filter: blur(18px);
 }
 .student-header-inner {
   display: flex;
   align-items: center;
-  gap: 34px;
-  max-width: 1400px;
+  gap: 25px;
+  max-width: 1392px;
   height: 100%;
   margin: auto;
-  padding: 0 32px;
+  padding: 0 36px;
 }
 .student-brand {
   display: flex;
@@ -121,7 +128,7 @@ body .student-workspace .student-nav a.is-active {
   right: 0;
   width: 200px;
   background: white;
-  border: 1px solid #e5e8ef;
+  border: 1px solid #e6e8f2;
   border-radius: 12px;
   padding: 8px;
   box-shadow: 0 12px 35px #15213b18;
@@ -151,13 +158,14 @@ body .student-workspace .student-nav a.is-active {
   color: #69758a;
 }
 body .student-workspace h1 {
-  font-family: 'Songti SC', 'STSong', serif;
-  font-weight: 500;
+  font-family: var(--serif);
+  font-weight: 750;
+  letter-spacing: -1px;
 }
 body .student-workspace .dashboard {
   display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 20px;
 }
 body .student-workspace .dash-heading,
 body .student-workspace .dashboard > .error,
@@ -169,19 +177,20 @@ body .student-workspace .dash-heading {
 }
 body .student-workspace .project-hero,
 body .student-workspace .empty-project {
-  grid-column: span 8;
+  grid-column: 1;
   margin: 0;
-  min-height: 310px;
+  min-height: 359px;
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  padding: 27px 30px;
+  padding: 29px 32px 25px;
 }
 body .student-workspace .project-hero {
-  background:
-    radial-gradient(circle at 88% 8%, #6682ff66, transparent 36%),
-    radial-gradient(circle at 70% 120%, #ef674738, transparent 38%),
-    linear-gradient(135deg, #111d3b, #182b59 60%, #1a326a);
+  background: #eeedff;
+  color: #2c2a50;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
 }
 body .student-workspace .project-hero:before {
   content: '';
@@ -201,8 +210,8 @@ body .student-workspace .dashboard-columns {
 body .student-workspace .assistant-card {
   grid-column: span 4;
   grid-column: 9 / -1;
-  border: 1px solid #e5e8ef;
-  border-radius: 20px;
+  border: 1px solid #e6e8f2;
+  border-radius: 22px;
   padding: 24px;
 }
 body .student-workspace .assistant-card h2 {
@@ -220,7 +229,7 @@ body .student-workspace .assistant-links .button {
   min-height: 42px;
 }
 body .student-workspace .quick-card {
-  grid-column: span 8;
+  grid-column: 1;
 }
 body .student-workspace .dashboard > .summary-grid {
   grid-column: span 4;
@@ -255,13 +264,13 @@ body .student-workspace .summary-card strong {
   body .student-workspace .student-nav {
     display: none;
     position: absolute;
-    top: 72px;
+    top: 88px;
     left: 0;
     right: 0;
     margin: 0;
     padding: 12px 24px;
     background: white;
-    border-bottom: 1px solid #e5e8ef;
+    border-bottom: 1px solid #e6e8f2;
     flex-wrap: wrap;
   }
   body .student-workspace .student-nav.open {
@@ -306,9 +315,9 @@ body .student-workspace .summary-card strong {
 }
 .student-resource .page-heading {
   padding: 28px 32px;
-  border: 1px solid #e5e8ef;
-  border-radius: 20px;
-  background: linear-gradient(110deg, #fff 45%, #eaedfb);
+  border: 1px solid #e6e8f2;
+  border-radius: 22px;
+  background: #eeedff;
   margin-bottom: 24px;
 }
 .student-resource .page-heading h1 {
@@ -322,7 +331,7 @@ body .student-workspace .summary-card strong {
   letter-spacing: 1px;
 }
 .student-posts .page-heading {
-  background: linear-gradient(110deg, #fff 45%, #f4eee9);
+  background: #eeedff;
 }
 .student-resource .data-card {
   background: transparent;
@@ -330,7 +339,7 @@ body .student-workspace .summary-card strong {
   overflow: visible;
 }
 .student-resource .filters {
-  border: 1px solid #e5e8ef;
+  border: 1px solid #e6e8f2;
   border-radius: 12px;
   background: white;
   margin-bottom: 20px;
@@ -342,7 +351,7 @@ body .student-workspace .summary-card strong {
 }
 .student-resource-card {
   overflow: hidden;
-  border: 1px solid #e5e8ef;
+  border: 1px solid #e6e8f2;
   background: white;
   border-radius: 14px;
 }
@@ -463,14 +472,14 @@ body .student-workspace .summary-card strong {
 
 body .student-workspace .project-hero,
 body .student-workspace .empty-project {
-  grid-column: 1 / 9;
+  grid-column: 1;
 }
 .student-overview-panel {
-  grid-column: span 4;
-  padding: 22px;
-  border: 1px solid #e5e8ef;
+  grid-column: auto;
+  padding: 24px;
+  border: 1px solid #e6e8f2;
   background: white;
-  border-radius: 20px;
+  border-radius: 22px;
 }
 .student-overview-panel header {
   display: flex;
@@ -516,7 +525,7 @@ body .student-workspace .empty-project {
   gap: 24px;
   background: #edeefa;
   border: 1px solid #e1e4f1;
-  border-radius: 20px;
+  border-radius: 22px;
   padding: 26px;
 }
 .student-learning h2 {
@@ -561,152 +570,10 @@ body .student-workspace .empty-project {
   }
 }
 body .student-workspace .page:has(.qa-chat-layout) {
-  max-width: none;
-  padding: 0;
+  max-width: 1392px;
+  padding: 34px 36px 46px;
 }
-.student-chat-layout {
-  display: grid;
-  grid-template-columns: 238px minmax(0, 1fr) 280px;
-  min-height: calc(100vh - 72px);
-  background: white;
-}
-.student-chat-sidebar,
-.student-chat-context {
-  padding: 18px 16px;
-  background: #fafbfe;
-}
-.student-chat-sidebar {
-  border-right: 1px solid #e5e8ef;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.student-chat-sidebar input {
-  width: 100%;
-  background: #f0f2f7;
-  border: 0;
-  border-radius: 9px;
-  padding: 12px;
-  font-size: 12px;
-}
-.student-conversation-list {
-  flex: 1;
-}
-.student-conversation-list button {
-  display: block;
-  width: 100%;
-  border: 0;
-  background: transparent;
-  text-align: left;
-  padding: 16px 12px;
-  border-radius: 8px;
-  color: #26334a;
-}
-.student-conversation-list button.selected {
-  background: #eeeefe;
-  color: #3944a5;
-}
-.student-conversation-list strong {
-  display: block;
-  font-size: 12px;
-  font-weight: 500;
-}
-.student-conversation-list small {
-  display: block;
-  color: #939bac;
-  font-size: 10px;
-  margin-top: 7px;
-}
-.student-chat-main {
-  min-width: 0;
-  padding: 22px;
-}
-.student-chat-main h1 {
-  font-size: 20px;
-  margin: 0 0 12px;
-}
-.student-chat-main > .muted {
-  font-size: 12px;
-}
-body .student-workspace .student-chat-main .messages {
-  min-height: 300px;
-  max-height: 52vh;
-  overflow: auto;
-  border: 0;
-  background: white;
-  padding: 16px 0;
-}
-body .student-workspace .student-chat-main .message {
-  background: #f6f7fb;
-  border-radius: 12px;
-  padding: 18px;
-  font-size: 14px;
-  line-height: 1.9;
-}
-body .student-workspace .student-chat-main .message.mine {
-  background: #eeefff;
-  margin-left: 36px;
-}
-body .student-workspace .student-chat-main .composer {
-  border: 1px solid #dce0e9;
-  border-radius: 16px;
-  padding: 14px;
-  box-shadow: 0 8px 24px #14213b08;
-}
-.student-chat-main .composer textarea {
-  min-height: 64px;
-  max-height: 160px;
-  border: 0;
-  resize: vertical;
-}
-.student-chat-context {
-  border-left: 1px solid #e5e8ef;
-}
-.student-chat-context h2 {
-  font-size: 14px;
-  margin-bottom: 20px;
-}
-.student-chat-context article {
-  padding: 16px;
-  background: white;
-  border: 1px solid #eceef4;
-  border-radius: 12px;
-  margin-bottom: 20px;
-}
-.student-chat-context h3 {
-  font-size: 13px;
-  line-height: 1.8;
-}
-.student-chat-context p,
-.student-chat-context small {
-  font-size: 12px;
-  color: #8791a4;
-  line-height: 1.8;
-}
-.student-chat-context progress {
-  width: 100%;
-  height: 5px;
-  accent-color: #4c50c9;
-  margin-bottom: 18px;
-}
-@media (max-width: 1000px) {
-  .student-chat-layout {
-    grid-template-columns: 200px minmax(0, 1fr);
-  }
-  .student-chat-context {
-    grid-column: 1/-1;
-  }
-}
-@media (max-width: 600px) {
-  .student-chat-layout {
-    grid-template-columns: 1fr;
-  }
-  .student-chat-sidebar {
-    max-height: 250px;
-    overflow: auto;
-    border-bottom: 1px solid #e5e8ef;
-  }
-}
+
 .student-project-space > header {
   display: flex;
   align-items: center;
@@ -724,7 +591,7 @@ body .student-workspace .student-chat-main .composer {
   align-items: center;
   gap: 18px;
   background: white;
-  border: 1px solid #e5e8ef;
+  border: 1px solid #e6e8f2;
   border-radius: 16px;
   padding: 28px;
   margin-bottom: 28px;
@@ -747,39 +614,8 @@ body .student-workspace .student-chat-main .composer {
 .student-project-space .project-detail {
   padding: 24px;
   background: white;
-  border: 1px solid #e5e8ef;
+  border: 1px solid #e6e8f2;
   border-radius: 16px;
-}
-@media (min-width: 1001px) {
-  .student-chat-layout {
-    height: calc(100vh - 72px);
-    min-height: 0;
-  }
-  .student-chat-main {
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-  }
-  body .student-workspace .student-chat-main .messages {
-    flex: 1;
-    min-height: 120px;
-    max-height: none;
-  }
-  .student-chat-main .composer {
-    flex-shrink: 0;
-  }
-  .student-chat-sidebar,
-  .student-chat-context {
-    overflow: auto;
-  }
-}
-body .student-workspace .student-chat-main .message.mine {
-  background: #4145ca;
-  color: white;
-}
-body .student-workspace .student-chat-main .message:not(.mine) {
-  background: white;
-  padding-left: 0;
 }
 
 .student-knowledge-layout {
@@ -863,11 +699,11 @@ body .student-workspace .student-chat-main .message:not(.mine) {
   color: #7284b1;
 }
 .project-stage-track li.current {
-  border-color: #3358d9;
-  color: #3151bd;
+  border-color: #665bea;
+  color: #5548d9;
 }
 .project-stage-track li.current > span {
-  background: #3358d9;
+  background: #665bea;
   box-shadow: 0 0 0 4px #ebeffc;
 }
 .project-deadline {
@@ -903,8 +739,8 @@ body .student-workspace .student-chat-main .message:not(.mine) {
   white-space: nowrap;
 }
 .project-tabs button.active {
-  color: #2e4dc3;
-  border-bottom-color: #2e4dc3;
+  color: #665bea;
+  border-bottom-color: #665bea;
 }
 .project-detail-layout {
   display: grid;
@@ -1094,11 +930,8 @@ body .student-project-space .milestone {
   padding: 34px;
   margin-bottom: 24px;
   border-radius: 18px;
-  color: white;
-  background:
-    radial-gradient(circle at 85% 0%, #5f7cff54, transparent 36%),
-    radial-gradient(circle at 5% 110%, #ef67472b, transparent 30%),
-    linear-gradient(135deg, #101b36, #172951 62%, #1f3466);
+  color: #262840;
+  background: #eeedff;
 }
 .student-knowledge-hero::before {
   content: '';
@@ -1119,7 +952,7 @@ body .student-project-space .milestone {
   gap: 20px;
 }
 .student-knowledge-hero .eyebrow {
-  color: #9eacd2;
+  color: #687089;
   margin: 0;
 }
 .student-knowledge-hero .eyebrow::before {
@@ -1131,7 +964,7 @@ body .student-project-space .milestone {
   margin: 13px 0 8px;
 }
 .knowledge-hero-top p:not(.eyebrow) {
-  color: #a5b2d1;
+  color: #687089;
   font-size: 12px;
   line-height: 1.7;
   margin: 8px 0;
@@ -1151,7 +984,7 @@ body .student-project-space .milestone {
 }
 .knowledge-result-count span {
   font-size: 11px;
-  color: #aab9d9;
+  color: #687089;
 }
 .knowledge-hero-search {
   display: flex;
@@ -1190,7 +1023,7 @@ body .student-knowledge .knowledge-hero-search input {
   border: 1px solid #ffffff26;
   border-radius: 99px;
   background: #ffffff0d;
-  color: #b5c0da;
+  color: #5548d9;
   font-size: 11px;
 }
 .knowledge-quick-search button:hover {
@@ -1219,9 +1052,9 @@ body .student-knowledge .data-card {
   color: #758199;
 }
 .knowledge-type-toolbar button.active {
-  background: #334bba;
+  background: #665bea;
   color: white;
-  border-color: #334bba;
+  border-color: #665bea;
 }
 body .knowledge-type-toolbar :is(select, .app-select) {
   margin-left: auto;
@@ -1420,28 +1253,654 @@ body .student-posts .filters {
 }
 
 /* 小尺寸先保证消息正文宽度，会话目录按需展开，桌面保持三栏。 */
+
+/* v4 组件层。限定学生根节点，避免影响共用页面和管理端。 */
+body .student-workspace {
+  --ink: #262840;
+  --muted: #687089;
+  --line: #e6e8f2;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'PingFang SC',
+    'Microsoft YaHei',
+    sans-serif;
+  font-size: 14px;
+  line-height: 1.65;
+}
+body .student-workspace :is(h1, h2, h3, strong) {
+  overflow-wrap: anywhere;
+}
+body .student-workspace .button {
+  border-radius: 10px;
+  font-size: 13px;
+  padding: 10px 17px;
+}
+body .student-workspace .button.primary {
+  background: #665bea;
+  border-color: #665bea;
+  color: #fff;
+}
+body .student-workspace .button.primary:hover:not(:disabled) {
+  background: #5548d9;
+}
+body .student-workspace :is(button, a, input, textarea):focus-visible {
+  outline: 3px solid #9e87f4;
+  outline-offset: 3px;
+}
+body .student-workspace .student-brand > span {
+  width: 35px;
+  height: 35px;
+  background: #262840;
+  color: #c4bbff;
+  transform: rotate(-8deg);
+}
+body .student-workspace .student-brand strong {
+  font: 800 25px/1.25 var(--serif);
+  letter-spacing: -1px;
+}
+.student-brand strong small {
+  display: block;
+  font: 500 10px/1.5 var(--serif);
+  letter-spacing: 1.5px;
+  color: #646583;
+}
+body .student-workspace .student-nav a {
+  padding: 10px 17px;
+  color: #666784;
+}
+body .student-workspace .student-nav a.is-active {
+  background: #dedff1;
+  color: #262840;
+  font-weight: 650;
+}
+body .student-workspace .dash-heading {
+  margin-bottom: 6px;
+}
+body .student-workspace .dash-heading h1 {
+  margin: 8px 0;
+  line-height: 1.4;
+}
+body .student-workspace .eyebrow {
+  color: #6a6c8a;
+  font-size: 11px;
+  letter-spacing: 2px;
+}
+body .student-workspace .eyebrow::before {
+  display: none;
+}
+body .student-workspace .dash-heading .muted {
+  font-size: 13px;
+}
+body .student-workspace .project-hero h2 {
+  font: 600 29px/1.55 var(--serif);
+  letter-spacing: -0.7px;
+  width: 64%;
+  margin: 25px 0 10px;
+  position: relative;
+  z-index: 1;
+}
+body .student-workspace .project-hero :is(.hero-top, .hero-date, .progress-line) {
+  color: #687089;
+}
+body .student-workspace .project-hero .hero-top {
+  align-items: center;
+}
+body .student-workspace .project-hero .stage-pill {
+  background: #e0dcfa;
+  border: 1px solid #d3ccef;
+  color: #5548d9;
+  padding: 4px 11px;
+}
+body .student-workspace .project-hero .hero-actions {
+  order: 1;
+  margin-top: 22px;
+}
+body .student-workspace .project-hero .hero-actions .button:first-child {
+  background: #665bea;
+  color: white;
+  border-color: #665bea;
+}
+body .student-workspace .project-hero .hero-actions .ghost {
+  color: #5548d9;
+  background: transparent;
+  border-color: transparent;
+}
+body .student-workspace .project-hero .stages {
+  order: 2;
+  margin: auto 0 0;
+  padding-top: 30px;
+}
+body .student-workspace .project-hero .stages li {
+  color: #687089;
+  border-color: #d5d2eb;
+}
+body .student-workspace .project-hero .stages li.reached {
+  color: #5548d9;
+  border-color: #a89de8;
+}
+body .student-workspace .project-hero .stages li.current span {
+  background: #665bea;
+  box-shadow: 0 0 0 5px #665bea20;
+}
+body .student-workspace .project-hero .progress-line {
+  order: 3;
+  margin-top: 15px;
+}
+body .student-workspace .project-hero progress {
+  accent-color: #665bea;
+}
+.student-hero-art {
+  position: absolute;
+  right: 32px;
+  top: 73px;
+  width: 205px;
+  height: 170px;
+  display: grid;
+  place-items: center;
+  color: #8d7edb;
+  pointer-events: none;
+}
+.student-hero-art > .ali-icon {
+  font-size: 76px;
+  transform: rotate(-12deg);
+  padding: 15px;
+  border: 1px solid #c3baed;
+  border-radius: 24px;
+  background: #e4dff9;
+  box-shadow: 10px 12px 0 #cfc6f438;
+}
+.student-hero-art .orbit {
+  position: absolute;
+  inset: 8px;
+  border: 1px solid #bbb1e5;
+  border-radius: 50%;
+  transform: rotate(-25deg);
+}
+.student-hero-art .orbit-two {
+  inset: -5px 23px;
+  transform: rotate(35deg);
+}
+.orbit-spark {
+  position: absolute;
+  top: -12px;
+  right: 4px;
+  font-size: 32px;
+}
+body .student-workspace .student-task-panel {
+  grid-column: 2;
+  grid-row: auto;
+  min-height: 359px;
+}
+.student-task-panel header {
+  gap: 12px;
+}
+.student-task-panel .student-overview-row {
+  padding: 13px 0;
+  align-items: start;
+}
+.student-task-panel .student-overview-row > .ali-icon {
+  padding: 5px;
+  background: #f2effb;
+}
+.student-task-panel .student-overview-row small {
+  margin-top: 3px;
+}
+.student-tools-section {
+  grid-column: 1/-1;
+  margin: 6px 0;
+}
+.student-tools-section .section-heading {
+  margin: 0 0 14px;
+}
+.student-tools-section .section-heading h2 {
+  font-size: 17px;
+}
+.student-tools-section .section-heading span {
+  font-size: 11px;
+  color: #687089;
+}
+.student-tools-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+.student-tool-card {
+  border: 1px solid #e6e8f2;
+  border-radius: 22px;
+  padding: 22px 24px;
+  min-height: 189px;
+  background: #fff;
+}
+.student-tool-card.tool-ai {
+  background: #e8e4fb;
+  border-color: #ded8f7;
+}
+.student-tool-card.tool-community {
+  background: #f7f7fb;
+}
+.student-tool-card > .ali-icon {
+  display: inline-grid;
+  place-items: center;
+  padding: 9px;
+  border: 1px solid #d0d0eb;
+  border-radius: 10px;
+  color: #7256db;
+}
+.student-tool-card h3 {
+  font-size: 16px;
+  margin: 13px 0 5px;
+}
+.student-tool-card p {
+  font-size: 11px;
+  color: #687089;
+  margin: 0;
+}
+.student-tool-card > span {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 19px;
+  font-size: 11px;
+  color: #687089;
+}
+.student-tool-card:hover {
+  border-color: #b9afea;
+}
+body .student-workspace .student-learning {
+  background: #eeebff;
+}
+body .student-workspace .student-learning h2 {
+  font: 650 22px/1.5 var(--serif);
+}
+body .student-workspace .student-overview-panel {
+  min-width: 0;
+}
+body .student-workspace .student-overview-row > div {
+  min-width: 0;
+}
+body .student-workspace .student-overview-row strong {
+  overflow-wrap: anywhere;
+}
+body .student-workspace .student-resource .page-heading {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0 0 26px;
+}
+body .student-workspace .student-resource-card {
+  border-radius: 18px;
+}
+body .student-workspace .student-knowledge-cover {
+  background: #e9e5fb;
+  color: #62558c;
+  height: 156px;
+}
+body .student-workspace .student-knowledge-cover.cover-1 {
+  background: #e4eafa;
+  color: #54678e;
+}
+body .student-workspace .student-knowledge-cover.cover-2 {
+  background: #e8ecdf;
+  color: #64744f;
+}
+body .student-workspace .student-knowledge-hero {
+  padding: 30px 32px;
+  border-radius: 22px;
+}
+body .student-workspace .student-knowledge-hero h1 {
+  font-size: 30px;
+}
+body .student-workspace .knowledge-result-count {
+  background: #fff8;
+  border-color: #d9d4f2;
+}
+body .student-workspace .knowledge-quick-search button {
+  border-color: #d4cdec;
+  background: #ffffff60;
+}
+body .student-workspace .knowledge-quick-search button:hover {
+  color: #5548d9;
+  background: #fff;
+}
+body .student-workspace .knowledge-type-toolbar button {
+  border-radius: 10px;
+}
+body .student-workspace .project-progress-overview {
+  background: #ecebff;
+  border-color: #dfddf8;
+  border-radius: 22px;
+}
+body .student-workspace :is(.project-main-panel, .project-side-card, .project-side-assistant) {
+  border-radius: 22px;
+  border-color: #e6e8f2;
+}
+body .student-workspace .project-progress-caption strong {
+  color: #5548d9;
+}
+body .student-workspace .project-tabs button.active {
+  color: #262840;
+  border-color: #262840;
+}
+body .student-workspace .student-search-page > h1 {
+  font-size: 30px;
+  margin: 8px 0;
+}
+body .student-workspace .student-search-page .search-form {
+  padding: 24px;
+  background: #eeedff;
+  border: 1px solid #dfddf8;
+  border-radius: 22px;
+}
+body .student-workspace .student-search-page .search-result {
+  border-color: #e6e8f2;
+  border-radius: 18px;
+}
+body .student-workspace .student-search-page .search-result h2 {
+  font-size: 18px;
+}
+/* 现行答疑使用 qa-*；旧 student-chat-* 不作为本轮实现依据。 */
+body .student-workspace .qa-chat-layout {
+  grid-template-columns: 215px minmax(0, 1fr);
+  height: calc(100dvh - 168px);
+  min-height: 600px;
+  border: 1px solid #e6e8f2;
+  border-radius: 22px;
+  overflow: hidden;
+}
+body .student-workspace .qa-chat-sidebar {
+  padding: 22px 16px;
+  background: #f5f5fb;
+  border-color: #e6e8f2;
+}
+body .student-workspace .qa-session-list > button.selected {
+  background: #dedff1;
+  color: #3c3d67;
+}
+body .student-workspace .qa-chat-bar {
+  padding: 20px 25px;
+  border-color: #e6e8f2;
+}
+body .student-workspace .qa-chat-bar h1 {
+  font-size: 18px;
+  letter-spacing: 0;
+}
+body .student-workspace .qa-messages {
+  padding: 30px 29px;
+}
+body .student-workspace .qa-message.mine {
+  background: #eeebff;
+  color: #343052;
+}
+body .student-workspace .qa-composer {
+  border-color: #d9d3ed;
+  border-radius: 14px;
+  box-shadow: none;
+}
+body .student-workspace .qa-empty h2 {
+  font: 650 26px/1.5 var(--serif);
+}
+body .student-workspace .qa-empty p {
+  color: #687089;
+}
+body .student-workspace .forum-page {
+  max-width: none;
+  color: #262840;
+}
+body .student-workspace .forum-grid {
+  grid-template-columns: 170px minmax(0, 1fr) 280px;
+  gap: 24px;
+}
+body .student-workspace .forum-intro h1 {
+  font-size: 30px;
+}
+body .student-workspace :is(.discussion-panel, .community-card, .forum-article) {
+  border-color: #e6e8f2;
+  border-radius: 22px;
+}
+body .student-workspace .community-card.welcome {
+  background: #eeebff;
+}
+body .student-workspace .topic-nav > button.selected {
+  background: #eeebff;
+  color: #5548d9;
+}
+body .student-workspace .forum-tabs button.selected {
+  color: #5548d9;
+  border-color: #665bea;
+}
+body .student-workspace .forum-search input {
+  background: #f8f9ff;
+  border-color: #e6e8f2;
+  border-radius: 10px;
+}
+@media (max-width: 1150px) {
+  body .student-workspace .student-nav a {
+    padding: 10px 9px;
+  }
+  body .student-workspace .forum-grid {
+    grid-template-columns: 150px minmax(0, 1fr);
+  }
+  body .student-workspace .community-column {
+    grid-column: 2;
+  }
+  .student-hero-art {
+    width: 150px;
+    right: 20px;
+    opacity: 0.75;
+  }
+}
+@media (max-width: 1000px) {
+  body .student-workspace .dashboard {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  body .student-workspace :is(.project-hero, .empty-project, .student-task-panel) {
+    grid-column: 1/-1;
+  }
+  body .student-workspace .student-task-panel {
+    min-height: auto;
+  }
+  body .student-workspace .student-overview-panel {
+    grid-column: auto;
+  }
+  body .student-workspace .student-task-panel {
+    grid-column: 1/-1;
+  }
+}
 @media (max-width: 800px) {
-  .student-chat-layout {
+  body .student-workspace .qa-chat-layout {
     grid-template-columns: minmax(0, 1fr);
+    height: calc(100dvh - 140px);
+    min-height: 480px;
   }
-  .student-chat-sidebar {
-    display: none;
+  body .student-workspace .qa-chat-sidebar.is-open {
+    top: 88px;
   }
-  .student-chat-sidebar.is-open {
-    display: flex;
-    max-height: 300px;
-    overflow: auto;
-    border-right: 0;
-    border-bottom: 1px solid #e5e8ef;
+  body .student-workspace .qa-chat-bar {
+    padding: 16px;
   }
-  .student-chat-main {
+  body .student-workspace .qa-messages {
     padding: 20px 16px;
   }
-  .student-chat-main .chat-controls :is(select, .app-select) {
-    max-width: 100%;
+  body .student-workspace .forum-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
-  body .student-workspace .student-chat-main .messages {
-    min-height: 180px;
-    max-height: 45vh;
+  body .student-workspace .community-column {
+    grid-column: 1;
+  }
+  .student-tools-grid {
+    gap: 12px;
+  }
+  .student-tool-card {
+    padding: 18px;
+  }
+}
+@media (max-width: 600px) {
+  .student-header {
+    height: 72px;
+  }
+  body .student-workspace .student-nav {
+    top: 72px;
+  }
+  body .student-workspace .page:has(.qa-chat-layout) {
+    padding: 16px 14px 24px;
+  }
+  body .student-workspace .dashboard {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  body .student-workspace .student-overview-panel {
+    grid-column: 1/-1;
+  }
+  body .student-workspace .dash-heading {
+    align-items: start;
+    gap: 14px;
+    flex-direction: column;
+  }
+  body .student-workspace .dash-heading h1 {
+    font-size: 27px;
+  }
+  body .student-workspace .project-hero {
+    padding: 24px 20px;
+  }
+  body .student-workspace .project-hero h2 {
+    width: 100%;
+    font-size: 25px;
+  }
+  .student-hero-art {
+    display: none;
+  }
+  body .student-workspace .project-hero .stages {
+    overflow-x: auto;
+  }
+  body .student-workspace .project-hero .stages li {
+    min-width: 65px;
+  }
+  body .student-workspace .hero-actions {
+    flex-wrap: wrap;
+  }
+  .student-tools-grid {
+    grid-template-columns: 1fr;
+  }
+  .student-tool-card {
+    min-height: 170px;
+  }
+  body .student-workspace .student-learning > a {
+    border-left: 0;
+    border-top: 1px solid #d9ddec;
+    padding: 14px 0;
+  }
+  body .student-workspace .student-project-space > header {
+    flex-wrap: wrap;
+  }
+  body .student-workspace .student-search-page .search-form {
+    padding: 18px;
+  }
+  body .student-workspace .student-search-page .search-form > * {
+    min-width: 0;
+    width: 100%;
+    flex-basis: 100%;
+  }
+  body .student-workspace .student-knowledge-hero {
+    padding: 24px 20px;
+  }
+  body .student-workspace .knowledge-extra-filters label {
+    min-width: 0;
+    width: 100%;
+  }
+  body .student-workspace .qa-chat-sidebar.is-open {
+    top: 72px;
+  }
+}
+
+@media (min-width: 1180px) {
+  body .student-workspace .qa-chat-layout {
+    grid-template-columns: 215px minmax(0, 1fr) 280px;
+  }
+}
+.student-workspace .knowledge-library-heading {
+  margin-bottom: 24px;
+}
+.student-workspace .knowledge-library-heading h1 {
+  font-size: 30px;
+  margin: 6px 0;
+}
+.student-workspace .knowledge-guide-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 290px;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+.student-workspace .knowledge-guide-feature {
+  background: #f0edfc;
+  border: 1px solid #e3ddf3;
+  border-radius: 22px;
+  padding: 28px;
+}
+.student-workspace .knowledge-guide-feature h2 {
+  font-size: 24px;
+  line-height: 1.5;
+  margin: 12px 0;
+}
+.student-workspace .knowledge-guide-helper {
+  border: 1px solid #e6e8f2;
+  background: white;
+  border-radius: 22px;
+  padding: 25px;
+}
+.student-workspace .knowledge-guide-helper h2 {
+  font-size: 17px;
+}
+.student-workspace .knowledge-library-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 20px;
+  padding: 12px 16px;
+  border: 1px solid #e3e4ef;
+  background: white;
+  border-radius: 12px;
+}
+.student-workspace .knowledge-library-search input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  background: transparent;
+}
+.student-workspace .student-knowledge .student-resource-card {
+  padding: 22px;
+  border-radius: 19px;
+}
+.student-workspace .student-knowledge .student-resource-card-body {
+  padding: 0;
+}
+.student-workspace .knowledge-card-symbol {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  color: #746c84;
+  font-size: 12px;
+}
+.student-workspace .knowledge-card-symbol > .ali-icon {
+  width: 37px;
+  height: 37px;
+  padding: 9px;
+  border-radius: 11px;
+  background: #eeebfc;
+  color: #9984cd;
+}
+.student-workspace .project-detail-layout:has(.student-release-layout) {
+  grid-template-columns: minmax(0, 1fr);
+}
+.student-workspace .project-detail-layout:has(.student-release-layout) > .project-side-panels {
+  display: none;
+}
+@media (max-width: 800px) {
+  .student-workspace .knowledge-guide-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .student-workspace .knowledge-library-search {
+    flex-wrap: wrap;
   }
 }

@@ -166,7 +166,7 @@ onBeforeUnmount(() => generation++);
         <p class="eyebrow">
           {{
             auth.platform === 'student'
-              ? '学生工作台'
+              ? '让想法发生 · YOUR CREATIVE SPACE'
               : auth.platform === 'partner'
                 ? '项目协作概览'
                 : '运营总览'
@@ -176,7 +176,7 @@ onBeforeUnmount(() => generation++);
         <p class="muted">
           {{
             auth.platform === 'student'
-              ? '查看项目交付，继续学习与答疑。'
+              ? '新的一天，从一个好想法开始。一起让项目更进一步。'
               : '跟进订单、项目与交付进展。'
           }}
         </p>
@@ -203,6 +203,10 @@ onBeforeUnmount(() => generation++);
         <span>最近项目</span><span class="stage-pill">{{ display(project.stage) }}</span>
       </div>
       <h2>{{ project.title }}</h2>
+      <div class="student-hero-art" aria-hidden="true">
+        <span class="orbit orbit-one"></span><span class="orbit orbit-two"></span
+        ><Icon name="folder" /><span class="orbit-spark">✦</span>
+      </div>
       <p class="hero-date"><Icon name="calendar" />计划交付 {{ display(project.deliveryDate) }}</p>
       <ol class="stages">
         <li
@@ -235,17 +239,55 @@ onBeforeUnmount(() => generation++);
       >
     </article>
     <p v-if="loading" class="muted" role="status">正在读取工作台数据…</p>
+    <section v-if="auth.platform === 'student'" class="student-overview-panel student-task-panel">
+      <header>
+        <h2>接下来要做</h2>
+        <RouterLink :to="projectLink('milestones')">项目里程碑 <Icon name="right" /></RouterLink>
+      </header>
+      <div v-for="item in pendingMilestones" :key="String(item.id)" class="student-overview-row">
+        <Icon :name="item.completed ? 'check' : 'clock'" />
+        <div>
+          <strong>{{ item.name }}</strong
+          ><small>{{ item.completed ? '已完成' : '待完成' }} · {{ display(item.dueDate) }}</small>
+        </div>
+      </div>
+      <p v-if="!pendingMilestones.length" class="muted">
+        {{ loading ? '正在读取里程碑…' : '当前已加载里程碑中没有待办' }}
+      </p>
+    </section>
     <div class="dashboard-columns">
-      <section v-if="auth.platform === 'student'" class="assistant-card">
-        <Icon name="sparkles" />
-        <h2>智能学习助手</h2>
-        <p>围绕已绑定项目提问，或先检索知识资料，将可访问的内容作为回答引用。</p>
-        <div class="assistant-links">
-          <RouterLink v-if="visible('chat')" class="button primary" to="/student/chat"
-            >继续答疑<Icon name="right" /></RouterLink
-          ><RouterLink v-if="visible('search')" class="button" to="/student/search"
-            >检索知识资料</RouterLink
+      <section v-if="auth.platform === 'student'" class="student-tools-section">
+        <div class="section-heading">
+          <h2>让每一步，都更轻松</h2>
+          <span>你的项目学习工具箱</span>
+        </div>
+        <div class="student-tools-grid">
+          <RouterLink v-if="visible('chat')" to="/student/chat" class="student-tool-card tool-ai">
+            <Icon name="sparkles" />
+            <h3>智能答疑</h3>
+            <p>遇到问题不用停下来，让灵感继续。</p>
+            <span>开始一段对话 <Icon name="right" /></span>
+          </RouterLink>
+          <RouterLink
+            v-if="visible('knowledge')"
+            to="/student/knowledge"
+            class="student-tool-card tool-knowledge"
           >
+            <Icon name="file" />
+            <h3>知识资料</h3>
+            <p>从概念到实践，找到你需要的参考。</p>
+            <span>探索知识库 <Icon name="right" /></span>
+          </RouterLink>
+          <RouterLink
+            v-if="visible('posts')"
+            to="/student/posts"
+            class="student-tool-card tool-community"
+          >
+            <Icon name="message" />
+            <h3>交流广场</h3>
+            <p>分享经验，也听听其他人的想法。</p>
+            <span>看看大家在聊什么 <Icon name="right" /></span>
+          </RouterLink>
         </div>
       </section>
       <section v-else class="chart-card card">
@@ -292,22 +334,6 @@ onBeforeUnmount(() => generation++);
       </section>
     </div>
     <template v-if="auth.platform === 'student'">
-      <section class="student-overview-panel">
-        <header>
-          <h2>接下来要做</h2>
-          <RouterLink :to="projectLink('milestones')">项目里程碑 <Icon name="right" /></RouterLink>
-        </header>
-        <div v-for="item in pendingMilestones" :key="String(item.id)" class="student-overview-row">
-          <Icon :name="item.completed ? 'check' : 'clock'" />
-          <div>
-            <strong>{{ item.name }}</strong
-            ><small>{{ item.completed ? '已完成' : '待完成' }} · {{ display(item.dueDate) }}</small>
-          </div>
-        </div>
-        <p v-if="!pendingMilestones.length" class="muted">
-          {{ loading ? '正在读取里程碑…' : '当前已加载里程碑中没有待办' }}
-        </p>
-      </section>
       <section class="student-overview-panel">
         <header>
           <h2>项目交付物</h2>

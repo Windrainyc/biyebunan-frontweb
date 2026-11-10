@@ -1,0 +1,33 @@
+{
+  "date": "2026-11-10",
+  "student": {
+    "url": "https://zhixiang-student-studio-20261109.frostysnail18.chatgpt.site",
+    "source_commit": "d6fa4ae14eeb7fdc1f3ea1ecd98799072cca71b2"
+  },
+  "admin": {
+    "url": "https://zhixiang-admin-studio-20261110.frostysnail18.chatgpt.site",
+    "source_commit": "1c6237ac7b2d060a08cce4e3a9ea34eb69c5c706"
+  },
+  "files": [
+    {
+      "path": "admin/app.js",
+      "sha256": "96951dd52ff2752f5504000dfb0f8c9f09d00f0df9e25feee98651bfeb02b396",
+      "bytes": 67662
+    },
+    {
+      "path": "admin/index.html",
+      "sha256": "505a2bb621011ddb2c05641e88e87f90f1a630fda201d0f86c2ea1ebb9c19602",
+      "bytes": 2433
+    },
+    {
+      "path": "admin/style.css",
+      "sha256": "f009ad645b4e2c56a8f2698e2262fce491bebe059e8784ba25a07c7f8e4f627c",
+      "bytes": 35290
+    },
+    {
+      "path": "student/index.html",
+      "sha256": "7c95b2be2b8c4a6ca6e18691cd93655b0f5ac92fd3b4ae9a302c18a681ad63be",
+      "bytes": 95796
+    }
+  ]
+}

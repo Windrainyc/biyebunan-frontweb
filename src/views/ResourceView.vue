@@ -37,7 +37,11 @@ import Icon from '../components/Icon.vue';
 import KnowledgeCategoryNav from '../components/KnowledgeCategoryNav.vue';
 import ForumSidebar from '../components/ForumSidebar.vue';
 import { formBody, requiresSelection } from '../config/form';
-import AssetCover from '../components/AssetCover.vue';
+import ProjectBoard from '../components/ProjectBoard.vue';
+const projectView = ref('board');
+const adminProjects = computed(
+  () => auth.platform === 'admin' && props.resource.key === 'projects',
+);
 import { knowledgeFieldVisible } from '../config/knowledge-form';
 import SchemaField from '../components/SchemaField.vue';
 let attempt = writeAttempt();
@@ -664,41 +668,40 @@ const hasStatusTabs = computed(
     "
   />
   <section :class="{ 'student-resource': studentCards, ['student-' + resource.key]: studentCards }">
-    <section v-if="isStudentKnowledge" class="student-knowledge-hero">
-      <div class="knowledge-hero-top">
-        <div>
-          <p class="eyebrow">基础知识库</p>
-          <h1>先把问题找对，<br />答案会自己浮现。</h1>
-          <p>从开题、开发到论文与答辩，查找当前可访问的项目资料。</p>
-        </div>
-        <div class="knowledge-result-count">
-          <strong>{{ loading || listFailed ? '—' : total }}</strong
-          ><span>当前筛选结果</span>
-        </div>
+    <section v-if="isStudentKnowledge" class="knowledge-library-intro">
+      <header class="knowledge-library-heading">
+        <h1>知识库</h1>
+        <p>把眼前的问题，变成下一步的答案。</p>
+      </header>
+      <div class="knowledge-guide-layout">
+        <article class="knowledge-guide-feature">
+          <span>实用指南</span>
+          <h2>{{ rows[0]?.title || '从具体问题开始，找到可用的资料。' }}</h2>
+          <p>{{ rows[0]?.summary || '查找项目实践、文档写作与问题排查资料。' }}</p>
+          <button
+            v-if="rows.length && !loading && !listFailed"
+            class="button primary"
+            @click="inspect(rows[0]!)"
+          >
+            开始阅读
+          </button>
+        </article>
+        <aside class="knowledge-guide-helper">
+          <Icon name="sparkles" />
+          <h2>没找到你的问题？</h2>
+          <p>带着项目资料和具体卡点，让 AI 陪你一起拆解。</p>
+          <RouterLink class="text-button" to="/student/chat">问问项目助手 →</RouterLink>
+        </aside>
       </div>
-      <form class="knowledge-hero-search" @submit.prevent="search">
+      <form class="knowledge-library-search" @submit.prevent="search">
         <Icon name="search" /><input
           v-model="q"
           type="search"
           maxlength="100"
           aria-label="搜索知识库内容"
-          placeholder="搜索开题报告、论文模板、答辩问题…"
-        /><button class="button primary" :disabled="loading">搜索</button>
+          placeholder="搜索知识、问题或关键词"
+        /><button class="button" :disabled="loading">搜索</button>
       </form>
-      <div class="knowledge-quick-search">
-        <span>快速查找</span
-        ><button
-          v-for="keyword in ['开题报告', '论文模板', '答辩', 'RAG', '任务书']"
-          :key="keyword"
-          :disabled="loading"
-          @click="
-            q = keyword;
-            search();
-          "
-        >
-          {{ keyword }}
-        </button>
-      </div>
     </section>
     <div v-else-if="!(detail && studentCards && resource.key === 'projects')" class="page-heading">
       <div>
@@ -940,6 +943,23 @@ const hasStatusTabs = computed(
             </button>
           </template>
         </div>
+        <div v-if="adminProjects" class="project-view-toggle" role="group" aria-label="项目视图">
+          <button
+            type="button"
+            class="button"
+            :aria-pressed="projectView === 'board'"
+            @click="projectView = 'board'"
+          >
+            看板</button
+          ><button
+            type="button"
+            class="button"
+            :aria-pressed="projectView === 'list'"
+            @click="projectView = 'list'"
+          >
+            列表与操作
+          </button>
+        </div>
         <div v-if="studentCards" class="student-resource-grid" :aria-busy="loading">
           <article
             v-for="(row, index) in rows"
@@ -949,22 +969,10 @@ const hasStatusTabs = computed(
             <div v-if="resource.key === 'posts'" class="forum-author-avatar" aria-hidden="true">
               {{ row.authorId === auth.user?.id ? '我' : '问' }}
             </div>
-            <div
-              v-if="resource.key === 'knowledge'"
-              class="student-knowledge-cover"
-              :class="`cover-${index % 3}`"
-            >
-              <AssetCover
-                v-if="row.coverAssetId"
-                :asset-id="row.coverAssetId"
-                :alt="String(row.title)"
-              /><span v-else
-                ><Icon :name="row.type === 'VIDEO' ? 'right' : 'book'" />{{
-                  display(row.type)
-                }}</span
-              ><b v-if="!row.coverAssetId">{{
-                String((page - 1) * size + index + 1).padStart(2, '0')
-              }}</b>
+            <div v-if="resource.key === 'knowledge'" class="knowledge-card-symbol">
+              <Icon :name="row.type === 'VIDEO' ? 'right' : 'book'" /><span>{{
+                display(row.type || row.contentType)
+              }}</span>
             </div>
             <div class="student-resource-card-body">
               <div class="student-resource-meta">
@@ -1028,6 +1036,10 @@ const hasStatusTabs = computed(
               loading ? '正在读取数据…' : listFailed ? '读取失败，请重新查询' : '暂无符合条件的数据'
             }}
           </p>
+        </div>
+        <div v-else-if="adminProjects && projectView === 'board'">
+          <p class="muted project-board-scope">看板按当前筛选的本页项目分组，翻页查看其他项目。</p>
+          <ProjectBoard :rows="rows" :loading="loading" :failed="listFailed" @inspect="inspect" />
         </div>
         <div v-else class="table-scroll" :aria-busy="loading">
           <table>
@@ -1313,13 +1325,23 @@ const hasStatusTabs = computed(
       "
       @close="closeDetail"
     />
-    <CreatePage
+    <component
+      :is="adminProjects ? 'div' : CreatePage"
+      :class="{ 'project-detail-drawer-backdrop': adminProjects }"
+      @click.self="adminProjects && closeDetail()"
       v-else-if="detail"
       :title="String(detail.title || detail.name || resource.title)"
       description="记录详情"
       @back="closeDetail"
     >
-      <section class="resource-detail-page" aria-label="记录详情">
+      <section
+        v-dialog="adminProjects ? closeDetail : undefined"
+        :role="adminProjects ? 'dialog' : undefined"
+        :aria-modal="adminProjects ? true : undefined"
+        class="resource-detail-page"
+        :class="{ 'project-drawer-content': adminProjects }"
+        aria-label="记录详情"
+      >
         <div class="resource-modal-heading">
           <h2>{{ resource.title }}详情</h2>
           <button class="modal-close" aria-label="关闭记录详情" @click="closeDetail">
@@ -1410,7 +1432,7 @@ const hasStatusTabs = computed(
           <button class="button" @click="closeDetail">关闭</button>
         </footer>
       </section>
-    </CreatePage>
+    </component>
     <div v-if="projectAction" class="modal-backdrop">
       <section
         class="modal resource-detail-modal"
@@ -1707,7 +1729,7 @@ td {
   min-height: 32px;
   font-size: 12px;
 }
-.resource-detail-page .resource-modal-heading,
+.resource-detail-page:not(.project-drawer-content) .resource-modal-heading,
 .resource-detail-page .resource-detail-footer {
   display: none;
 }

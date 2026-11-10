@@ -62,8 +62,9 @@ async function open(hit: Row) {
 }
 </script>
 <template>
-  <section>
-    <h1>检索知识资料</h1>
+  <section class="student-search-page">
+    <p class="eyebrow">探索 · 学习 · 实践</p>
+    <h1>让好奇心，找到答案。</h1>
     <p class="muted">搜索文档、视频和项目知识。仅检索当前有权访问的已发布内容。</p>
     <form
       class="search-form"

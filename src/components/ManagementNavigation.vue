@@ -67,7 +67,8 @@ function close() {
         <Icon name="close" />
       </button>
       <RouterLink to="/admin" class="management-brand"
-        ><span>知</span><strong>知项</strong><small>管理后台</small></RouterLink
+        ><span>知</span><strong>知项<em>ZHIXIANG STUDIO</em></strong
+        ><small>管理端</small></RouterLink
       >
       <div class="admin-workspace-label">
         <Icon name="grid" />

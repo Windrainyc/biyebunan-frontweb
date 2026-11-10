@@ -164,7 +164,7 @@ async function exit() {
           <Icon name="menu" />
         </button>
         <RouterLink to="/student" class="student-brand"
-          ><span>知</span><strong>知项</strong></RouterLink
+          ><span>知</span><strong>知项<small>让想法发生</small></strong></RouterLink
         >
         <nav class="student-nav" :class="{ open: studentMenuOpen }" aria-label="学生端主导航">
           <RouterLink to="/student" exact-active-class="is-active"

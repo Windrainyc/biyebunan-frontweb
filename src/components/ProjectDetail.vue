@@ -2,7 +2,7 @@
 import CreatePage from './CreatePage.vue';
 import { useCreateRoute } from '../composables/useCreateRoute';
 const deliveryRoute = useCreateRoute('delivery');
-import { onMounted, onBeforeUnmount, ref } from 'vue';
+import { onMounted, onBeforeUnmount, ref, computed, watch } from 'vue';
 import { auth, request, errorText } from '../api/client';
 import { writeAttempt } from '../api/attempt';
 import { display } from '../config/labels';
@@ -28,6 +28,32 @@ const releaseRows = ref<Row[]>([]),
 const deliveryPage = ref(1),
   deliveryTotal = ref(0),
   loading = ref(false);
+const studentVersion = ref('');
+const studentVersions = computed(() => {
+  const groups = new Map<string, { key: string; title: string; files: Row[] }>();
+  for (const file of deliveries.value) {
+    const key = String(file.releaseId || file.id);
+    if (!groups.has(key))
+      groups.set(key, {
+        key,
+        title: file.releaseId
+          ? `第 ${file.releaseNumber} 版`
+          : `${kinds[String(file.kind)] || '历史文件'} · 第 ${file.versionNumber} 版`,
+        files: [],
+      });
+    groups.get(key)!.files.push(file);
+  }
+  return [...groups.values()];
+});
+watch(studentVersions, (groups) => {
+  if (!groups.some((x) => x.key === studentVersion.value))
+    studentVersion.value = groups[0]?.key || '';
+});
+const visibleDeliveries = computed(() =>
+  auth.platform === 'student'
+    ? studentVersions.value.find((x) => x.key === studentVersion.value)?.files || []
+    : deliveries.value,
+);
 const pageSize = 20;
 let loadGeneration = 0;
 onBeforeUnmount(() => {
@@ -238,46 +264,74 @@ onMounted(load);
       >
         暂无可查看的交付版本
       </p>
-      <article v-for="d in deliveries" :key="String(d.id)" class="delivery">
-        <div>
-          <strong>{{ kinds[String(d.kind)] || '交付文件' }}</strong
-          ><span>第{{ d.releaseNumber || d.versionNumber }}版 · {{ display(d.state) }}</span>
-        </div>
-        <p v-if="selectedRelease">
-          {{ fileMetadata[String(d.assetId)]?.filename || '文件信息暂不可用' }}
-          <template v-if="fileMetadata[String(d.assetId)]">
-            ·
-            {{ (Number(fileMetadata[String(d.assetId)]?.size || 0) / 1024).toFixed(1) }}
-            KB</template
-          >
-          · {{ d.releaseId === selectedRelease.id ? '本次更新' : '沿用先前版本' }}
-        </p>
-        <p>{{ d.note }}</p>
-        <button class="button" @click="download(d)">下载文件</button
-        ><a
-          v-if="downloadGrant && downloadGrant.id === d.id"
-          class="button"
-          :href="downloadGrant.url"
-          rel="noopener noreferrer"
-          >保存已授权文件</a
-        ><template v-if="auth.platform === 'admin'"
-          ><button
-            v-if="d.state === 'READY'"
-            class="button"
-            :disabled="busy || !reason"
-            @click="publication(d, true)"
-          >
-            发布版本</button
-          ><button
-            v-if="d.state === 'PUBLISHED'"
-            class="button"
-            :disabled="busy || !reason"
-            @click="publication(d, false)"
-          >
-            撤回版本
-          </button></template
+      <div :class="{ 'student-release-layout': auth.platform === 'student' }">
+        <nav
+          v-if="auth.platform === 'student' && studentVersions.length"
+          class="student-version-nav"
+          aria-label="交付版本"
         >
-      </article>
+          <h3>每一个版本，都算数</h3>
+          <button
+            v-for="version in studentVersions"
+            :key="version.key"
+            class="student-version-button"
+            :class="{ selected: studentVersion === version.key }"
+            :aria-pressed="studentVersion === version.key"
+            @click="studentVersion = version.key"
+          >
+            <strong>{{ version.title }}</strong
+            ><small
+              >{{ version.files.length }} 份文件 · {{ display(version.files[0]?.createdAt) }}</small
+            >
+          </button>
+          <p class="muted">按本页已发布文件归组；更多历史记录请翻页查看。</p>
+        </nav>
+        <div class="version-file-panel">
+          <h3 v-if="auth.platform === 'student' && visibleDeliveries.length">
+            {{ studentVersions.find((x) => x.key === studentVersion)?.title }} · 版本文件
+          </h3>
+          <article v-for="d in visibleDeliveries" :key="String(d.id)" class="delivery">
+            <div>
+              <strong>{{ kinds[String(d.kind)] || '交付文件' }}</strong
+              ><span>第{{ d.releaseNumber || d.versionNumber }}版 · {{ display(d.state) }}</span>
+            </div>
+            <p v-if="selectedRelease">
+              {{ fileMetadata[String(d.assetId)]?.filename || '文件信息暂不可用' }}
+              <template v-if="fileMetadata[String(d.assetId)]">
+                ·
+                {{ (Number(fileMetadata[String(d.assetId)]?.size || 0) / 1024).toFixed(1) }}
+                KB</template
+              >
+              · {{ d.releaseId === selectedRelease.id ? '本次更新' : '沿用先前版本' }}
+            </p>
+            <p>{{ d.note }}</p>
+            <button class="button" @click="download(d)">下载文件</button
+            ><a
+              v-if="downloadGrant && downloadGrant.id === d.id"
+              class="button"
+              :href="downloadGrant.url"
+              rel="noopener noreferrer"
+              >保存已授权文件</a
+            ><template v-if="auth.platform === 'admin'"
+              ><button
+                v-if="d.state === 'READY'"
+                class="button"
+                :disabled="busy || !reason"
+                @click="publication(d, true)"
+              >
+                发布版本</button
+              ><button
+                v-if="d.state === 'PUBLISHED'"
+                class="button"
+                :disabled="busy || !reason"
+                @click="publication(d, false)"
+              >
+                撤回版本
+              </button></template
+            >
+          </article>
+        </div>
+      </div>
       <div v-if="!selectedRelease" class="detail-pagination" aria-label="交付版本分页">
         <span>共 {{ deliveryTotal }} 条 · 第 {{ deliveryPage }} 页</span>
         <button
@@ -437,6 +491,65 @@ label {
   max-width: 380px;
   overflow-wrap: anywhere;
 }
+.student-release-layout {
+  display: grid;
+  grid-template-columns: 245px minmax(0, 1fr);
+  gap: 24px;
+}
+.student-version-nav {
+  padding: 18px;
+  background: #fff;
+  border: 1px solid #e6e8f2;
+  border-radius: 22px;
+}
+.student-version-nav h3 {
+  font-size: 15px;
+  margin: 0 0 18px;
+}
+.student-version-button {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  padding: 16px 12px;
+  margin-bottom: 8px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #4f4b67;
+}
+.student-version-button.selected {
+  background: #eeeafa;
+  color: #665bea;
+}
+.student-version-button small {
+  font-size: 11px;
+  line-height: 1.6;
+}
+.student-version-nav > p {
+  font-size: 12px;
+  line-height: 1.7;
+}
+.student-release-layout .version-file-panel {
+  min-width: 0;
+  padding: 22px;
+  border: 1px solid #e6e8f2;
+  border-radius: 22px;
+  background: #fff;
+}
+.student-release-layout .delivery {
+  border: 1px solid #eeedf5;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 14px 0;
+}
+@media (max-width: 800px) {
+  .student-release-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+}
 </style>
 
 <style scoped>
@@ -491,6 +604,65 @@ label {
   max-width: 380px;
   overflow-wrap: anywhere;
 }
+.student-release-layout {
+  display: grid;
+  grid-template-columns: 245px minmax(0, 1fr);
+  gap: 24px;
+}
+.student-version-nav {
+  padding: 18px;
+  background: #fff;
+  border: 1px solid #e6e8f2;
+  border-radius: 22px;
+}
+.student-version-nav h3 {
+  font-size: 15px;
+  margin: 0 0 18px;
+}
+.student-version-button {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  padding: 16px 12px;
+  margin-bottom: 8px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #4f4b67;
+}
+.student-version-button.selected {
+  background: #eeeafa;
+  color: #665bea;
+}
+.student-version-button small {
+  font-size: 11px;
+  line-height: 1.6;
+}
+.student-version-nav > p {
+  font-size: 12px;
+  line-height: 1.7;
+}
+.student-release-layout .version-file-panel {
+  min-width: 0;
+  padding: 22px;
+  border: 1px solid #e6e8f2;
+  border-radius: 22px;
+  background: #fff;
+}
+.student-release-layout .delivery {
+  border: 1px solid #eeedf5;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 14px 0;
+}
+@media (max-width: 800px) {
+  .student-release-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+}
 </style>
 
 <style scoped>
@@ -537,5 +709,64 @@ label {
 .release-table td:nth-child(2) {
   max-width: 380px;
   overflow-wrap: anywhere;
+}
+.student-release-layout {
+  display: grid;
+  grid-template-columns: 245px minmax(0, 1fr);
+  gap: 24px;
+}
+.student-version-nav {
+  padding: 18px;
+  background: #fff;
+  border: 1px solid #e6e8f2;
+  border-radius: 22px;
+}
+.student-version-nav h3 {
+  font-size: 15px;
+  margin: 0 0 18px;
+}
+.student-version-button {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  padding: 16px 12px;
+  margin-bottom: 8px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #4f4b67;
+}
+.student-version-button.selected {
+  background: #eeeafa;
+  color: #665bea;
+}
+.student-version-button small {
+  font-size: 11px;
+  line-height: 1.6;
+}
+.student-version-nav > p {
+  font-size: 12px;
+  line-height: 1.7;
+}
+.student-release-layout .version-file-panel {
+  min-width: 0;
+  padding: 22px;
+  border: 1px solid #e6e8f2;
+  border-radius: 22px;
+  background: #fff;
+}
+.student-release-layout .delivery {
+  border: 1px solid #eeedf5;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 14px 0;
+}
+@media (max-width: 800px) {
+  .student-release-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
 }
 </style>

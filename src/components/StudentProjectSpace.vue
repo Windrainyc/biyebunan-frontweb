@@ -13,13 +13,13 @@ const props = defineProps<{ project: Row }>();
 const emit = defineEmits<{ back: []; changed: [result: Row]; refresh: [] }>();
 const route = useRoute();
 const tab = ref(
-  ['deliveries', 'qa'].includes(String(route.query.section))
+  ['overview', 'deliveries', 'qa'].includes(String(route.query.section))
     ? String(route.query.section)
-    : 'overview',
+    : 'deliveries',
 );
 const tabs = [
   { key: 'overview', label: '项目概览' },
-  { key: 'deliveries', label: '交付物' },
+  { key: 'deliveries', label: '版本与交付' },
   { key: 'qa', label: '答疑记录' },
 ];
 const stages = [

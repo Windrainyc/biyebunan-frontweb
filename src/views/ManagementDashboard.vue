@@ -73,6 +73,16 @@ const can = (key: string, endpoint = `/${auth.platform}/${key}`) => {
   );
 };
 const todos = computed(() => todoDefinitions.filter((item) => can(item.key, item.endpoint)));
+const quickLinks = computed(() =>
+  [
+    { key: 'orders', title: '订单管理', hint: '跟进订单与服务', icon: 'bag' },
+    { key: 'projects', title: '项目交付', hint: '查看项目与交付', icon: 'folder' },
+    { key: 'contents', title: '知识库内容', hint: '管理内容与发布', icon: 'book' },
+    { key: 'users', title: '用户管理', hint: '查看用户与权限', icon: 'users' },
+  ].filter((item) =>
+    can(item.key, item.key === 'contents' ? '/admin/knowledge' : `/${auth.platform}/${item.key}`),
+  ),
+);
 const total = (keys: string[], money = false) => metricTotal(metrics.value, keys, money);
 const cards = computed(() => [
   {
@@ -255,7 +265,7 @@ watch(() => [...props.visiblePaths].sort().join('|'), load, { immediate: true })
           </AppSelect></label
         ><RouterLink
           v-if="can('statistics') && visiblePaths.includes('/admin/exports')"
-          class="button"
+          class="button primary"
           to="/admin/exports"
           ><Icon name="file" />导出报告</RouterLink
         ><button class="button" :disabled="loading" @click="load" aria-label="刷新总览">
@@ -292,7 +302,12 @@ watch(() => [...props.visiblePaths].sort().join('|'), load, { immediate: true })
           preserveAspectRatio="none"
           aria-hidden="true"
         >
-          <polyline :points="spark(card.key)" fill="none" stroke="#b9c7f5" stroke-width="1.8" />
+          <polyline
+            :points="spark(card.key)"
+            fill="none"
+            :stroke="auth.platform === 'admin' ? 'currentColor' : '#b9c7f5'"
+            stroke-width="1.8"
+          />
         </svg>
       </article>
     </div>
@@ -314,8 +329,8 @@ watch(() => [...props.visiblePaths].sort().join('|'), load, { immediate: true })
           >
             <defs>
               <linearGradient id="orders-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#dce4ff" stop-opacity=".8" />
-                <stop offset="100%" stop-color="#f6f8ff" stop-opacity=".2" />
+                <stop offset="0%" stop-color="#e4dcfa" stop-opacity=".8" />
+                <stop offset="100%" stop-color="#faf8ff" stop-opacity=".2" />
               </linearGradient>
             </defs>
             <line
@@ -329,7 +344,7 @@ watch(() => [...props.visiblePaths].sort().join('|'), load, { immediate: true })
               stroke-dasharray="4 4"
             />
             <polygon :points="`30,170 ${points} 630,170`" fill="url(#orders-fill)" />
-            <polyline :points="points" fill="none" stroke="#4163da" stroke-width="2.5" />
+            <polyline :points="points" fill="none" stroke="#9b83d4" stroke-width="2.5" />
           </svg>
           <ol class="management-chart-labels">
             <li v-for="item in labels" :key="item.day">
@@ -367,7 +382,17 @@ watch(() => [...props.visiblePaths].sort().join('|'), load, { immediate: true })
         /></RouterLink>
         <p v-if="!todos.length" class="panel-empty">当前账户暂无可见待办入口</p>
       </section>
-      <section class="management-panel">
+      <nav v-if="quickLinks.length" class="admin-quick-links" aria-label="常用管理入口">
+        <RouterLink v-for="link in quickLinks" :key="link.key" :to="`/admin/${link.key}`">
+          <Icon :name="link.icon" />
+          <div>
+            <strong>{{ link.title }}</strong
+            ><small>{{ link.hint }}</small>
+          </div>
+          <Icon name="right" />
+        </RouterLink>
+      </nav>
+      <section class="management-panel admin-recent-orders">
         <header>
           <div>
             <h2>最近订单</h2>
