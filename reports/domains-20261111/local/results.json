@@ -1,0 +1,57 @@
+[
+  {
+    "width": 1440,
+    "overflow": false,
+    "runtime": {
+      "endpoints": [
+        {
+          "platform": "student",
+          "origin": "http://127.0.0.1:18870",
+          "probeAllowed": false
+        },
+        {
+          "platform": "admin",
+          "origin": "http://127.0.0.1:18871",
+          "probeAllowed": false
+        },
+        {
+          "platform": "partner",
+          "origin": "http://127.0.0.1:18872",
+          "probeAllowed": false
+        }
+      ],
+      "probesEnabled": false
+    },
+    "footer": "知项网站 · 京ICP备2025156143号-2"
+  },
+  {
+    "width": 390,
+    "overflow": false,
+    "runtime": {
+      "endpoints": [
+        {
+          "platform": "student",
+          "origin": "http://127.0.0.1:18870",
+          "probeAllowed": false
+        },
+        {
+          "platform": "admin",
+          "origin": "http://127.0.0.1:18871",
+          "probeAllowed": false
+        },
+        {
+          "platform": "partner",
+          "origin": "http://127.0.0.1:18872",
+          "probeAllowed": false
+        }
+      ],
+      "probesEnabled": false
+    },
+    "footer": "知项网站 · 京ICP备2025156143号-2"
+  },
+  {
+    "createPage": true,
+    "overflow": false,
+    "errors": []
+  }
+]

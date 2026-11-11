@@ -1,0 +1,22 @@
+[
+  {
+    "platform": "student",
+    "unbound": true,
+    "enter": true,
+    "shiftEnter": true,
+    "deleteCancelAndConfirm": true,
+    "avatars": true,
+    "drawers": true
+  },
+  {
+    "platform": "admin",
+    "orders": [
+      "52689018-6cde-4b70-825d-604a9235cce2",
+      "d3c8093b-a7a8-4546-9aa1-8fa6790eb1c6"
+    ],
+    "automaticProject": true,
+    "completeWithoutPayment": true,
+    "batchArchive": 2,
+    "tabs": true
+  }
+]

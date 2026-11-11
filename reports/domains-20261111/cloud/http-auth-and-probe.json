@@ -1,0 +1,102 @@
+{
+  "results": [
+    {
+      "role": "student",
+      "homepage": 200,
+      "indexMatches": true,
+      "anonymous": 401,
+      "login": 200,
+      "refresh": 200,
+      "wrongOrigin": 403
+    },
+    {
+      "role": "admin",
+      "homepage": 200,
+      "indexMatches": true,
+      "anonymous": 401,
+      "login": 200,
+      "refresh": 200,
+      "wrongOrigin": 403
+    },
+    {
+      "role": "partner",
+      "homepage": 200,
+      "indexMatches": true,
+      "anonymous": 401,
+      "login": 200,
+      "refresh": 200,
+      "wrongOrigin": 403
+    },
+    {
+      "hostname": "partner.biyebunan.com",
+      "probe": "SUCCEEDED",
+      "taskId": "57a00828-dc10-477b-82e0-701e4ceafcaa",
+      "errorCode": null
+    },
+    {
+      "hostname": "admin.biyebunan.com",
+      "probe": "SUCCEEDED",
+      "taskId": "436cb13f-fcbd-4cc9-a8a3-8e2e4b93f0db",
+      "errorCode": null
+    }
+  ],
+  "runtime": {
+    "endpoints": [
+      {
+        "platform": "student",
+        "origin": "https://biyebunan.com",
+        "probeAllowed": true
+      },
+      {
+        "platform": "admin",
+        "origin": "https://admin.biyebunan.com",
+        "probeAllowed": true
+      },
+      {
+        "platform": "partner",
+        "origin": "https://partner.biyebunan.com",
+        "probeAllowed": true
+      }
+    ],
+    "probesEnabled": true
+  },
+  "priorTasks": [
+    {
+      "id": "726a6a1a-c6d0-4f89-a461-7496962465e9",
+      "version": 3,
+      "createdAt": "2026-11-11T02:42:35.511001Z",
+      "updatedAt": "2026-11-11T02:42:36.655768Z",
+      "kind": "PROBE_DOMAIN",
+      "state": "SUCCEEDED",
+      "progress": 100,
+      "resultAssetId": null,
+      "errorCode": null
+    }
+  ],
+  "domainRecords": [
+    {
+      "id": "9105e25f-143a-4182-8b98-6f47110cdb8c",
+      "hostname": "partner.biyebunan.com",
+      "platform": "partner",
+      "status": "ENABLED"
+    },
+    {
+      "id": "215636ca-b294-4813-8822-4893695d8856",
+      "hostname": "admin.biyebunan.com",
+      "platform": "admin",
+      "status": "ENABLED"
+    },
+    {
+      "id": "99a32e8c-5e31-4bc4-899f-e61e294dd0f2",
+      "hostname": "www.biyebunan.com",
+      "platform": "student",
+      "status": "ENABLED"
+    },
+    {
+      "id": "461c929b-7f97-4076-84e2-77efa942a23c",
+      "hostname": "biyebunan.com",
+      "platform": "student",
+      "status": "ENABLED"
+    }
+  ]
+}

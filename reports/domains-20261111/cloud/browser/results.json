@@ -1,0 +1,57 @@
+[
+  {
+    "width": 1440,
+    "overflow": false,
+    "runtime": {
+      "endpoints": [
+        {
+          "platform": "student",
+          "origin": "https://biyebunan.com",
+          "probeAllowed": true
+        },
+        {
+          "platform": "admin",
+          "origin": "https://admin.biyebunan.com",
+          "probeAllowed": true
+        },
+        {
+          "platform": "partner",
+          "origin": "https://partner.biyebunan.com",
+          "probeAllowed": true
+        }
+      ],
+      "probesEnabled": true
+    },
+    "footer": "知项网站 · 京ICP备2025156143号-2"
+  },
+  {
+    "width": 390,
+    "overflow": false,
+    "runtime": {
+      "endpoints": [
+        {
+          "platform": "student",
+          "origin": "https://biyebunan.com",
+          "probeAllowed": true
+        },
+        {
+          "platform": "admin",
+          "origin": "https://admin.biyebunan.com",
+          "probeAllowed": true
+        },
+        {
+          "platform": "partner",
+          "origin": "https://partner.biyebunan.com",
+          "probeAllowed": true
+        }
+      ],
+      "probesEnabled": true
+    },
+    "footer": "知项网站 · 京ICP备2025156143号-2"
+  },
+  {
+    "createPage": true,
+    "overflow": false,
+    "errors": []
+  }
+]

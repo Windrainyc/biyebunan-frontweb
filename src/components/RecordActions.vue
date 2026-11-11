@@ -21,6 +21,7 @@ const selected = ref(''),
   error = ref(''),
   busy = ref(false),
   notice = ref('');
+const taskId = ref('');
 let attempt = writeAttempt();
 const recovery = computed(() =>
   jobRecovery(String(props.record.kind || ''), String(props.record.state || '')),
@@ -32,6 +33,17 @@ const bodySchema = computed(() => schema(operation('POST', selected.value)?.body
 const fields = computed(() =>
   Object.entries(bodySchema.value.properties || {}).map(([key, v]) => {
     const field = { key, ...schema(v) };
+    if (props.resourceKey === 'orders' && key === 'action') {
+      const allowed: Record<string, string[]> = {
+        ACTIVE: ['COMPLETE', 'CANCEL'],
+        COMPLETED: ['ARCHIVE'],
+        DRAFT: ['CONFIRM', 'CANCEL'],
+        CONFIRMED: ['ACTIVATE', 'CANCEL'],
+      };
+      field.enum = field.enum?.filter((value) =>
+        (allowed[String(props.record.status)] || []).includes(String(value)),
+      );
+    }
     if (props.resourceKey === 'comments' && key === 'action')
       field.enum = field.enum?.filter((value) => ['APPROVE', 'HIDE'].includes(String(value)));
     if (props.resourceKey === 'posts' && key === 'action') {
@@ -76,6 +88,7 @@ async function submit() {
         : undefined,
       key: attempt(body),
     });
+    taskId.value = asynchronous ? String(result?.id || '') : '';
     selected.value = '';
     notice.value = asynchronous
       ? `任务已提交，当前状态：${display(result?.state || 'QUEUED')}。请到异步任务页面查看执行结果。`
@@ -107,7 +120,14 @@ watch(busy, (value) => emit('busy', value));
         {{ action.title }}
       </button>
     </div>
-    <p v-if="notice" class="success" role="status">{{ notice }}</p>
+    <p v-if="notice" class="success" role="status">
+      {{ notice }}
+      <RouterLink
+        v-if="resourceKey === 'domains' && taskId"
+        :to="{ path: '/admin/jobs', query: { view: taskId } }"
+        >查看检查结果</RouterLink
+      >
+    </p>
     <form v-if="selected" class="action-form" @submit.prevent="submit">
       <label v-for="field in fields" :key="field.key"
         >{{

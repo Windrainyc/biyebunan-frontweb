@@ -13,7 +13,6 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{ logout: []; retry: [] }>();
 const route = useRoute();
-const sectionNavigation = ref<HTMLDetailsElement | null>(null);
 const opened = ref(false),
   account = ref(false),
   searchOpen = ref(false),
@@ -47,16 +46,12 @@ watch(
     opened.value = false;
     account.value = false;
     searchOpen.value = false;
-    if (sectionNavigation.value && active.value?.key !== 'settings')
-      sectionNavigation.value.open = false;
   },
 );
 function close() {
   opened.value = false;
   account.value = false;
   searchOpen.value = false;
-  if (sectionNavigation.value && active.value?.key !== 'settings')
-    sectionNavigation.value.open = false;
 }
 </script>
 <template>
@@ -202,27 +197,19 @@ function close() {
         </div>
       </div>
     </header>
-    <details
+    <nav
       v-if="platform === 'admin' && active && active.links.length > 1"
-      :open="active.key === 'settings'"
-      ref="sectionNavigation"
-      class="admin-section-navigation"
-      :class="{ 'is-settings': active.key === 'settings' }"
-      aria-label="当前栏目导航"
+      class="admin-section-tabs"
+      aria-label="当前栏目页签"
     >
-      <summary :class="{ 'settings-navigation-title': active.key === 'settings' }">
-        {{ active.key === 'settings' ? '基础配置' : '栏目功能' }}
-        <Icon v-if="active.key !== 'settings'" name="down" />
-      </summary>
-      <p v-if="active.key === 'settings'">基础配置</p>
       <RouterLink
         v-for="link in active.links"
         :key="link.path"
         :to="link.path"
-        active-class="active"
+        :class="{ active: route.path === link.path || route.path.startsWith(link.path + '/') }"
         ><Icon :name="link.icon" />{{ link.title }}</RouterLink
       >
-    </details>
+    </nav>
     <p v-if="platform === 'partner' && error" class="management-nav-error error" role="alert">
       导航加载失败 <button class="button" @click="emit('retry')">重试</button>
     </p>

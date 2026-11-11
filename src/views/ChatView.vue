@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import UserAvatar from '../components/UserAvatar.vue';
 import ChatKnowledgePicker from '../components/ChatKnowledgePicker.vue';
 import AppSelect from '../components/AppSelect.vue';
 import { useRoute } from 'vue-router';
@@ -30,7 +31,7 @@ const source = ref(
 const sourceTitle = String(route.query.title || '已选知识资料').slice(0, 200);
 const materialsOpen = ref(false);
 const wideContext = ref(false);
-const contextMedia = window.matchMedia('(min-width: 1180px)');
+const contextMedia = window.matchMedia('(min-width: 1101px)');
 function syncContextLayout() {
   wideContext.value = contextMedia.matches;
 }
@@ -136,7 +137,7 @@ async function newConversation() {
     run.value = null;
     sequence.value = 0;
     conversationAttempt = writeAttempt();
-    draftNotice.value = '已开启新对话，请选择项目并输入第一个问题。';
+    draftNotice.value = '已开启新对话，可以直接提问，也可以关联项目。';
   } catch (e) {
     error.value = errorText(e);
   } finally {
@@ -288,13 +289,15 @@ async function send() {
   busy.value = true;
   try {
     if (!pending.value) {
-      if (!text.value.trim() || !model.value) throw new Error('请选择可用模型并输入问题');
+      if (!text.value.trim()) throw new Error('请输入问题');
       if (!conversation.value) {
-        if (!project.value) throw new Error('请先选择项目');
         const c = await request<Row>('/student/conversations', {
           method: 'POST',
-          body: { projectId: project.value, title: text.value.slice(0, 40) },
-          key: conversationAttempt({ projectId: project.value, title: text.value.slice(0, 40) }),
+          body: { projectId: project.value || null, title: text.value.slice(0, 40) },
+          key: conversationAttempt({
+            projectId: project.value || null,
+            title: text.value.slice(0, 40),
+          }),
         });
         conversation.value = String(c.id);
         activeConversation.value = c;
@@ -320,7 +323,6 @@ async function send() {
           conversationId: conversation.value,
           clientMessageId: crypto.randomUUID(),
           text: text.value,
-          modelId: model.value,
           sourceVersionIds: sourceIds,
           maxOutputTokens: Math.min(
             2048,
@@ -344,7 +346,11 @@ async function send() {
     error.value = errorText(e);
     busy.value = false;
     // 明确的请求拒绝可修正内容；网络结果不明保留同一clientMessageId重试。
-    if (e instanceof ApiError && [400, 403, 404, 409, 412, 422].includes(e.status))
+    if (
+      e instanceof ApiError &&
+      ([400, 403, 404, 409, 412, 422].includes(e.status) ||
+        ['MODEL_UNAVAILABLE', 'MODEL_PROVIDER_DISABLED'].includes(String(e.problem.code)))
+    )
       pending.value = null;
   }
 }
@@ -372,14 +378,51 @@ onBeforeUnmount(() => {
   historyState.dispose();
   controller?.abort();
 });
+const deleteTarget = ref<Row | null>(null);
+const deleting = ref(false);
+async function deleteConversation() {
+  if (!deleteTarget.value || deleting.value || busy.value || pending.value) return;
+  deleting.value = true;
+  try {
+    const row = deleteTarget.value;
+    await request(`/student/conversations/${row.id}`, {
+      method: 'DELETE',
+      version: Number(row.version),
+      key: crypto.randomUUID(),
+    });
+    conversations.value = conversations.value.filter((item) => item.id !== row.id);
+    catalogs.conversations.total.value = Math.max(0, catalogs.conversations.total.value - 1);
+    if (String(row.id) === conversation.value) await newConversation();
+    deleteTarget.value = null;
+  } catch (e) {
+    error.value = errorText(e);
+  } finally {
+    deleting.value = false;
+  }
+}
+function inputKey(event: KeyboardEvent) {
+  if (event.key === 'Enter' && !event.shiftKey && !event.isComposing && event.keyCode !== 229) {
+    event.preventDefault();
+    if (!busy.value && !pending.value && text.value.trim()) void send();
+  }
+}
+function closePanels(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    materialsOpen.value = false;
+    conversationListOpen.value = false;
+  }
+}
+onMounted(() => window.addEventListener('keydown', closePanels));
+onBeforeUnmount(() => window.removeEventListener('keydown', closePanels));
 </script>
 <template>
-  <header class="qa-reference-heading">
-    <p class="eyebrow">好问题，让进展发生</p>
-    <h1>不用一个人想</h1>
-    <p>连接你的项目资料，把复杂的问题一点点拆开。</p>
-  </header>
-  <section class="qa-chat-layout">
+  <section class="qa-chat-layout" :class="{ 'with-materials': materialsOpen && wideContext }">
+    <button
+      v-if="conversationListOpen"
+      class="qa-history-mask"
+      aria-label="关闭对话列表"
+      @click="conversationListOpen = false"
+    />
     <aside
       class="qa-chat-sidebar"
       :class="{ 'is-open': conversationListOpen }"
@@ -397,16 +440,29 @@ onBeforeUnmount(() => {
         /><button class="text-button" :disabled="busy || !!pending">搜索</button>
       </form>
       <div class="qa-session-list">
-        <button
+        <div
           v-for="item in filteredConversations"
           :key="String(item.id)"
-          :disabled="busy || !!pending"
+          class="qa-session"
           :class="{ selected: String(item.id) === conversation }"
-          @click="chooseConversation(String(item.id))"
         >
-          <strong>{{ item.title }}</strong
-          ><small>{{ display(item.updatedAt || item.createdAt) }}</small>
-        </button>
+          <button
+            class="qa-session-open"
+            :disabled="busy || !!pending"
+            @click="chooseConversation(String(item.id))"
+          >
+            <strong>{{ item.title }}</strong
+            ><small>{{ display(item.updatedAt || item.createdAt) }}</small>
+          </button>
+          <button
+            class="qa-session-delete"
+            :aria-label="`删除对话：${item.title}`"
+            :disabled="busy || !!pending"
+            @click="deleteTarget = item"
+          >
+            <Icon name="trash" />
+          </button>
+        </div>
         <p v-if="!filteredConversations.length" class="muted">
           {{
             catalogs.conversations.loading.value
@@ -448,89 +504,122 @@ onBeforeUnmount(() => {
           >
             对话
           </button>
-          <h1>{{ activeConversation?.title || '知项项目助手' }}</h1>
-          <small>{{ contextProject?.title || '选择项目，开始新的问题' }}</small>
+          <h1>{{ activeConversation?.title || '新的对话' }}</h1>
+          <label class="qa-project"
+            ><span>关联项目</span>
+            <AppSelect
+              v-if="!conversation"
+              v-model="project"
+              :disabled="busy || !!pending"
+              aria-label="关联项目"
+            >
+              <option value="">不关联项目</option>
+              <option v-for="p in projects" :key="String(p.id)" :value="p.id">
+                {{ p.title }}
+              </option> </AppSelect
+            ><span v-else>{{
+              contextProject?.title ||
+              (activeConversation?.projectId ? '当前关联项目' : '不关联项目')
+            }}</span>
+          </label>
+          <button
+            v-if="projects.length < catalogs.projects.total.value || catalogs.projects.error.value"
+            class="text-button"
+            @click="loadCatalog('projects')"
+          >
+            {{ catalogs.projects.error.value ? '重试项目' : '更多项目' }}
+          </button>
         </div>
-        <button v-if="!wideContext" class="button" @click="materialsOpen = true">
-          项目与知识资料 <span v-if="selectedSources.length">{{ selectedSources.length }}</span>
+        <button
+          class="button"
+          :aria-expanded="materialsOpen"
+          @click="materialsOpen = !materialsOpen"
+        >
+          参考资料 <span v-if="selectedSources.length">{{ selectedSources.length }}</span>
         </button>
       </header>
       <div class="qa-messages" :aria-busy="historyLoading">
-        <p v-if="error" class="error" role="alert">{{ error }}</p>
-        <p v-if="draftNotice && !conversation" class="notice" role="status">{{ draftNotice }}</p>
-        <p v-if="historyError" class="error" role="alert">
-          {{ historyError
-          }}<button class="button" :disabled="historyLoading" @click="retryHistory">
-            重试读取消息
-          </button>
-        </p>
-        <p v-if="historyLoading" role="status">正在读取消息…</p>
-        <button
-          v-if="messages.length < historyTotal"
-          class="button"
-          :disabled="historyLoading || busy"
-          @click="history(true)"
-        >
-          加载更早消息
-        </button>
-        <article
-          v-for="message in messages"
-          :key="String(message.id)"
-          class="qa-message"
-          :class="{ mine: message.role === 'USER' }"
-        >
-          <small v-if="message.role !== 'USER'" class="qa-answer-label">知项答疑</small>
-          <p v-if="message.role === 'USER'">{{ message.text }}</p>
-          <MarkdownContent v-else :text="String(message.text || '')" copy-code />
-          <details v-if="citations(message).length" class="qa-citations">
-            <summary>本次参考资料（{{ citations(message).length }}）</summary>
-            <blockquote v-for="(citation, index) in citations(message)" :key="citation.chunkId">
-              <small
-                >[{{ index + 1 }}] 知识版本 {{ citation.versionId.slice(0, 8)
-                }}<template v-if="citation.page > 0"> · 分片 {{ citation.page }}</template></small
-              >
-              <p>{{ citation.quote }}</p>
-            </blockquote>
-            <p class="muted">展示本次提交给模型的原文片段，请结合回答核实。</p>
-          </details>
-        </article>
-        <article v-if="answer" class="qa-message">
-          <small class="qa-answer-label">知项答疑 · 正在回答</small
-          ><MarkdownContent :text="answer" copy-code />
-        </article>
-        <div
-          v-if="!messages.length && !answer && !historyLoading && !historyError"
-          class="qa-empty"
-        >
-          <span class="qa-welcome-icon"><Icon name="sparkles" /></span>
-          <h2>你的想法，我们一起往下走。</h2>
-          <p>选择项目，带上知识资料，让回答更贴近你的任务。</p>
-          <AppSelect
-            v-if="!conversation && !wideContext"
-            v-model="project"
-            :disabled="busy || !!pending"
-            aria-label="选择项目"
-            ><option value="">请选择项目</option>
-            <option v-for="p in projects" :key="String(p.id)" :value="p.id">
-              {{ p.title }}
-            </option></AppSelect
-          >
-          <div class="question-templates">
-            <button
-              v-for="prompt in [
-                '请解释这段代码的作用：',
-                '请帮我分析这个报错，并说明排查步骤：',
-                '请帮我梳理当前项目的实现思路：',
-                '请帮我检查接口和页面的联调步骤：',
-              ]"
-              :key="prompt"
-              type="button"
-              class="button"
-              :disabled="busy || !!pending"
-              @click="text = prompt"
-            >
-              {{ prompt.replace('：', '') }}
+        <div class="qa-thread-inner">
+          <p v-if="error" class="error" role="alert">{{ error }}</p>
+          <p v-if="draftNotice && !conversation" class="notice" role="status">{{ draftNotice }}</p>
+          <p v-if="historyError" class="error" role="alert">
+            {{ historyError
+            }}<button class="button" :disabled="historyLoading" @click="retryHistory">
+              重试读取消息
             </button>
+          </p>
+          <p v-if="historyLoading" role="status">正在读取消息…</p>
+          <button
+            v-if="messages.length < historyTotal"
+            class="button"
+            :disabled="historyLoading || busy"
+            @click="history(true)"
+          >
+            加载更早消息
+          </button>
+          <article
+            v-for="message in messages"
+            :key="String(message.id)"
+            class="qa-message"
+            :class="{ mine: message.role === 'USER' }"
+          >
+            <UserAvatar
+              v-if="message.role === 'USER'"
+              :index="auth.user?.avatarIndex"
+              :asset-id="auth.user?.avatarAssetId"
+              :size="34"
+            />
+            <span v-else class="qa-ai-avatar"><Icon name="sparkles" /></span>
+            <div class="qa-message-content">
+              <small v-if="message.role !== 'USER'" class="qa-answer-label">知项答疑</small>
+              <p v-if="message.role === 'USER'">{{ message.text }}</p>
+              <MarkdownContent v-else :text="String(message.text || '')" copy-code />
+              <details v-if="citations(message).length" class="qa-citations">
+                <summary>本次参考资料（{{ citations(message).length }}）</summary>
+                <blockquote v-for="(citation, index) in citations(message)" :key="citation.chunkId">
+                  <small
+                    >[{{ index + 1 }}] 知识版本 {{ citation.versionId.slice(0, 8)
+                    }}<template v-if="citation.page > 0">
+                      · 分片 {{ citation.page }}</template
+                    ></small
+                  >
+                  <p>{{ citation.quote }}</p>
+                </blockquote>
+                <p class="muted">展示本次提交给模型的原文片段，请结合回答核实。</p>
+              </details>
+            </div>
+          </article>
+          <article v-if="answer" class="qa-message">
+            <span class="qa-ai-avatar"><Icon name="sparkles" /></span>
+            <div class="qa-message-content">
+              <small class="qa-answer-label">知项答疑 · 正在回答</small
+              ><MarkdownContent :text="answer" copy-code />
+            </div>
+          </article>
+          <div
+            v-if="!messages.length && !answer && !historyLoading && !historyError"
+            class="qa-empty"
+          >
+            <span class="qa-welcome-icon"><Icon name="sparkles" /></span>
+            <h2>今天想解决什么问题？</h2>
+            <p>直接提问，或者关联项目，让问题更有上下文。</p>
+            <div class="question-templates">
+              <button
+                v-for="prompt in [
+                  '请解释这段代码的作用：',
+                  '请帮我分析这个报错，并说明排查步骤：',
+                  '请帮我梳理当前项目的实现思路：',
+                  '请帮我检查接口和页面的联调步骤：',
+                ]"
+                :key="prompt"
+                type="button"
+                class="button"
+                :disabled="busy || !!pending"
+                @click="text = prompt"
+              >
+                {{ prompt.replace('：', '') }}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -545,6 +634,7 @@ onBeforeUnmount(() => {
         <form class="qa-composer" @submit.prevent="send">
           <textarea
             v-model="text"
+            @keydown="inputKey"
             rows="2"
             maxlength="16000"
             placeholder="继续提问，或添加知识资料帮助回答…"
@@ -553,35 +643,25 @@ onBeforeUnmount(() => {
           />
           <div class="qa-composer-tools">
             <div>
-              <AppSelect v-model="model" :disabled="busy || !!pending" aria-label="选择模型"
-                ><option value="">请选择模型</option>
-                <option v-for="m in models" :key="String(m.id)" :value="m.id">
-                  {{ m.name }}
-                </option></AppSelect
-              ><button type="button" class="text-button" @click="materialsOpen = true">
+              <button type="button" class="text-button" @click="materialsOpen = true">
                 引用知识
               </button>
             </div>
             <div>
-              <small class="muted">{{ text.length }} / 16000</small
+              <small class="muted">Enter 发送 · Shift+Enter 换行</small
               ><button v-if="busy && run" type="button" class="button" @click="cancel">停止</button
-              ><button
-                class="button primary"
-                :disabled="busy || (!pending && (!model || !text.trim()))"
-              >
+              ><button class="button primary" :disabled="busy || (!pending && !text.trim())">
                 {{ busy ? '处理中…' : pending ? '重试原请求' : '发送' }}
               </button>
             </div>
           </div>
         </form>
-        <p class="qa-composer-hint">
-          回答可能有误，请结合资料核实。关闭页面不会取消正在生成的回答。
-        </p>
+        <p class="qa-composer-hint">AI 回答仅供参考，请结合实际资料核实。</p>
       </div>
     </main>
     <Teleport to="body" :disabled="wideContext"
       ><div
-        v-if="materialsOpen || wideContext"
+        v-if="materialsOpen"
         class="qa-drawer-mask"
         :class="{ 'qa-context-inline': wideContext }"
         @click.self="materialsOpen = false"
@@ -591,45 +671,21 @@ onBeforeUnmount(() => {
           v-dialog="wideContext ? undefined : () => (materialsOpen = false)"
           :role="wideContext ? 'complementary' : 'dialog'"
           :aria-modal="wideContext ? undefined : true"
-          aria-label="项目与知识资料"
+          aria-label="参考资料"
           class="qa-drawer"
         >
           <header>
-            <h2>项目与知识资料</h2>
-            <button v-if="!wideContext" class="text-button" @click="materialsOpen = false">
-              关闭
-            </button>
+            <h2>参考资料</h2>
+            <button class="text-button" @click="materialsOpen = false">关闭</button>
           </header>
-          <h3>当前项目</h3>
-          <p v-if="conversation">{{ contextProject?.title || '当前会话关联项目' }}</p>
-          <AppSelect v-else v-model="project" :disabled="busy || !!pending" aria-label="选择项目"
-            ><option value="">请选择项目</option>
-            <option v-for="p in projects" :key="String(p.id)" :value="p.id">
-              {{ p.title }}
-            </option></AppSelect
-          ><template v-for="name in ['projects', 'models'] as const" :key="name"
-            ><p v-if="catalogs[name].error.value" class="error">{{ catalogs[name].error.value }}</p>
-            <button
-              v-if="
-                catalogs[name].error.value ||
-                catalogs[name].rows.value.length < catalogs[name].total.value
-              "
-              class="text-button"
-              :disabled="catalogs[name].loading.value"
-              @click="loadCatalog(name)"
-            >
-              {{ name === 'projects' ? '加载更多项目' : '加载更多模型' }}
-            </button></template
-          ><label class="qa-auto"
+          <label class="qa-auto"
             ><input
               v-model="autoKnowledge"
               type="checkbox"
               :disabled="busy || !!pending"
             />自动检索相关知识（关键词）</label
           >
-          <p class="muted qa-small">
-            未命中会明确说明；语义检索需另行配置，不产生额外 embedding 调用。
-          </p>
+          <p class="muted qa-small">选择与问题相关的资料，帮助回答更准确。</p>
           <div v-for="item in selectedSources" :key="item.versionId" class="qa-selected">
             <span>{{ item.title }}</span
             ><button
@@ -650,31 +706,73 @@ onBeforeUnmount(() => {
         </aside></div
     ></Teleport>
   </section>
+  <Teleport to="body"
+    ><div
+      v-if="deleteTarget"
+      class="modal-backdrop"
+      @click.self="!deleting && (deleteTarget = null)"
+    >
+      <section
+        class="modal qa-delete-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-label="删除对话"
+        v-dialog="
+          () => {
+            if (!deleting) deleteTarget = null;
+          }
+        "
+      >
+        <h2>删除这段对话？</h2>
+        <p>{{ deleteTarget.title }}</p>
+        <p class="muted">删除后将从你的对话列表隐藏，历史用量和账务记录仍会保留。</p>
+        <div class="actions">
+          <button class="button" :disabled="deleting" @click="deleteTarget = null">取消</button
+          ><button class="button danger" :disabled="deleting" @click="deleteConversation">
+            {{ deleting ? '删除中…' : '删除对话' }}
+          </button>
+        </div>
+      </section>
+    </div></Teleport
+  >
 </template>
 <style scoped>
 .qa-chat-layout {
   display: grid;
-  grid-template-columns: 250px minmax(0, 1fr);
-  height: calc(100dvh - 72px);
-  min-height: 500px;
+  grid-template-columns: 216px minmax(0, 1fr);
+  height: calc(100dvh - 92px);
+  min-height: 0;
   background: white;
+  overflow: hidden;
+  color: #27283e;
+}
+.qa-chat-layout.with-materials {
+  grid-template-columns: 216px minmax(0, 1fr) 288px;
 }
 .qa-chat-sidebar {
-  padding: 24px 16px;
-  background: #f3f5f9;
-  border-right: 1px solid #e5e9ef;
+  padding: 18px 12px;
+  background: #f7f7fc;
+  border-right: 1px solid #e5e4f0;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
   min-height: 0;
+}
+.qa-chat-sidebar > .button {
+  min-height: 42px;
+  background: #7359e9;
+  color: white;
+  justify-content: center;
 }
 .qa-chat-sidebar form {
   display: flex;
-  gap: 6px;
+  gap: 4px;
+  min-width: 0;
 }
 .qa-chat-sidebar form > button {
   flex-shrink: 0;
   white-space: nowrap;
+  padding: 6px;
 }
 .qa-chat-sidebar input {
   width: 100%;
@@ -683,41 +781,64 @@ onBeforeUnmount(() => {
 .qa-session-list {
   flex: 1;
   overflow: auto;
+  min-height: 0;
 }
-.qa-session-list > button {
-  display: block;
-  width: 100%;
+.qa-session {
+  display: flex;
+  align-items: center;
+  border-radius: 10px;
+  margin-bottom: 5px;
+  min-height: 54px;
+  padding: 6px;
+}
+.qa-session.selected {
+  background: #eae4fa;
+  color: #5f48b7;
+}
+.qa-session-open {
+  flex: 1;
+  min-width: 0;
   text-align: left;
-  margin: 7px 0;
+  padding: 6px;
   border: 0;
   background: transparent;
-  padding: 12px;
-  border-radius: 8px;
-  color: #26334a;
+  color: inherit;
 }
-.qa-session-list > button.selected {
-  background: white;
-  color: #315cde;
-}
-.qa-session-list strong {
+.qa-session strong {
+  display: block;
   font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-weight: 500;
-  display: block;
-  overflow-wrap: anywhere;
 }
-.qa-session-list small {
-  display: block;
+.qa-session small {
   font-size: 11px;
-  color: #788398;
-  margin-top: 4px;
+  color: #9290a5;
+}
+.qa-session-delete {
+  border: 0;
+  background: transparent;
+  padding: 7px;
+  opacity: 0;
+  color: inherit;
+}
+.qa-session:hover .qa-session-delete,
+.qa-session.selected .qa-session-delete,
+.qa-session:focus-within .qa-session-delete {
+  opacity: 1;
 }
 .qa-quota {
-  border-top: 1px solid #e5e9ef;
-  padding-top: 14px;
+  padding: 16px 10px 0;
+  border-top: 1px solid #e4e3ed;
   font-size: 12px;
 }
 .qa-quota h3 {
   font-size: 12px;
+}
+.qa-quota-summary strong {
+  font-size: 18px;
+  color: #6a5c96;
 }
 .qa-chat-main {
   display: flex;
@@ -726,141 +847,219 @@ onBeforeUnmount(() => {
   min-height: 0;
 }
 .qa-chat-bar {
-  padding: 16px 30px;
-  border-bottom: 1px solid #e5e9ef;
+  min-height: 70px;
+  flex-shrink: 0;
+  padding: 10px 30px;
   display: flex;
-  justify-content: space-between;
-  gap: 12px;
   align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #f0eef5;
+  gap: 10px;
+}
+.qa-chat-bar > div {
+  display: flex;
+  gap: 22px;
+  align-items: center;
+  min-width: 0;
 }
 .qa-chat-bar h1 {
-  font-weight: 600;
-  font-size: 16px;
+  font-size: 14px;
+  font-weight: 650;
   line-height: 1.5;
   margin: 0;
-  overflow-wrap: anywhere;
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.qa-chat-bar small {
+.qa-chat-bar > .button {
+  white-space: nowrap;
   font-size: 12px;
-  color: #788398;
 }
-.qa-chat-bar > button {
-  flex-shrink: 0;
+.qa-project {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #656477;
+  min-width: 0;
+}
+.qa-project :deep(.app-select) {
+  width: 230px;
+  max-width: 100%;
+  font-size: 12px;
+}
+.qa-project > span:last-child {
+  max-width: 230px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .qa-messages {
   flex: 1;
-  min-height: 100px;
+  min-height: 0;
   overflow: auto;
-  padding: 30px max(28px, calc((100% - 800px) / 2));
+  scroll-behavior: smooth;
+  padding: 24px 20px 12px;
+}
+.qa-thread-inner {
+  max-width: 1100px;
+  margin: auto;
+  min-height: 100%;
+}
+.qa-thread-inner:has(.qa-empty) {
+  height: 100%;
 }
 .qa-message {
-  margin-bottom: 28px;
+  display: flex;
+  gap: 12px;
+  margin: 0 0 26px;
+  align-items: flex-start;
+  font-size: 14px;
   line-height: 1.9;
-  font-size: 15px;
   overflow-wrap: anywhere;
 }
 .qa-message.mine {
-  background: #f0f3fa;
-  border-radius: 14px 14px 3px 14px;
-  max-width: 85%;
-  width: fit-content;
-  margin-left: auto;
-  padding: 12px 17px;
+  flex-direction: row-reverse;
 }
-.qa-message.mine p {
+.qa-message-content {
+  max-width: min(calc(100% - 46px), 800px);
+  min-width: 0;
+}
+.mine .qa-message-content {
+  max-width: min(calc(100% - 46px), 560px);
+}
+.mine p {
   margin: 0;
+  padding: 13px 18px;
+  background: #f2edff;
+  border-radius: 16px 4px 16px 16px;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.85;
+}
+.qa-ai-avatar {
+  display: grid;
+  place-items: center;
+  background: #7359e9;
+  color: white;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  flex-shrink: 0;
+}
+.qa-ai-avatar :deep(.zx-icon) {
+  color: white;
 }
 .qa-answer-label {
   display: block;
-  color: #355ee8;
-  margin-bottom: 12px;
   font-size: 12px;
+  color: #7258d5;
+  font-weight: 650;
+  margin: 3px 0 10px;
 }
 .qa-message :deep(.reading-prose) {
-  font-size: 15px;
+  font-size: 14px;
+  line-height: 1.9;
 }
 .qa-message :deep(pre) {
-  background: #fafbfd;
-  color: #354460;
-  border: 1px solid #e5e9ef;
-  border-radius: 8px;
+  max-width: 100%;
+  overflow: auto;
   font-size: 13px;
 }
 .qa-citations {
   font-size: 12px;
-  color: #45649b;
-  margin-top: 16px;
+  color: #7c748e;
+  margin-top: 14px;
 }
 .qa-citations blockquote {
   margin: 10px 0;
   padding: 12px;
-  background: #f7f9fc;
-  border-left: 2px solid #cad6ec;
-}
-.qa-citations p {
-  white-space: pre-wrap;
+  background: #f7f5fc;
+  border-left: 2px solid #d5caee;
 }
 .qa-composer-wrap {
-  padding: 12px max(28px, calc((100% - 850px) / 2)) 15px;
+  padding: 12px 20px 10px;
   background: white;
   flex-shrink: 0;
 }
 .qa-composer {
-  border: 1px solid #d7deeb;
-  border-radius: 12px;
-  padding: 12px;
-  box-shadow: 0 4px 18px #17223805;
+  max-width: 1100px;
+  margin: auto;
+  border: 1px solid #dcd5ef;
+  border-radius: 15px;
+  box-shadow: 0 4px 18px #42346d08;
+  padding: 13px 16px;
+}
+.qa-composer:focus-within {
+  border-color: #a592e9;
+  box-shadow: 0 0 0 3px #f6f2ff;
 }
 .qa-composer textarea {
+  display: block;
   border: 0;
-  resize: vertical;
+  outline: 0;
   width: 100%;
-  min-height: 65px;
-  max-height: 150px;
-  padding: 4px;
+  resize: none;
+  min-height: 64px;
+  max-height: 160px;
+  line-height: 1.7;
   box-shadow: none;
+  padding: 0;
 }
 .qa-composer-tools {
   display: flex;
-  justify-content: space-between;
-  gap: 8px;
   align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 .qa-composer-tools > div {
   display: flex;
-  gap: 10px;
+  gap: 14px;
   align-items: center;
-  min-width: 0;
-}
-.qa-composer-tools :deep(.app-select) {
-  max-width: 200px;
-  font-size: 12px;
 }
 .qa-composer-tools small {
   font-size: 11px;
 }
+.qa-composer-tools .primary {
+  height: 34px;
+  background: #7359e9;
+}
 .qa-composer-hint {
   text-align: center;
-  font-size: 11px;
-  color: #788398;
-  margin: 7px 0 0;
+  color: #aaa6b5;
+  font-size: 10px;
+  margin: 9px 0 0;
+}
+.qa-small {
+  font-size: 12px;
 }
 .qa-empty {
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
   text-align: center;
-  padding: 35px 0;
+  padding: 40px 0;
 }
 .qa-empty h2 {
-  font-size: 26px;
-  font-family: inherit;
+  font-size: 28px;
+  font-weight: 600;
+  margin: 16px 0 8px;
 }
 .qa-empty p {
+  color: #9890a8;
   font-size: 13px;
-  color: #788398;
 }
-.qa-empty :deep(.app-select) {
-  max-width: 360px;
-  margin: 18px auto;
+.qa-welcome-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: #7359e9;
+  color: white;
 }
 .question-templates {
   display: flex;
@@ -871,62 +1070,93 @@ onBeforeUnmount(() => {
 }
 .question-templates button {
   font-size: 12px;
-}
-.qa-mobile {
-  display: none;
-}
-.qa-small {
-  font-size: 12px;
+  padding: 9px 14px;
 }
 .qa-drawer-mask {
   position: fixed;
-  inset: 0;
-  background: #17223830;
+  inset: 68px 0 0;
+  background: #27203533;
   z-index: 1000;
   display: flex;
   justify-content: flex-end;
 }
 .qa-drawer {
-  background: white;
-  width: min(390px, 100%);
-  height: 100dvh;
+  width: min(320px, 90vw);
+  height: 100%;
   overflow: auto;
-  padding: 26px;
-  box-shadow: -12px 0 32px #17223809;
+  padding: 20px;
+  background: #fdfcff;
 }
 .qa-drawer header {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  align-items: center;
+  gap: 10px;
 }
 .qa-drawer h2 {
-  font-size: 18px;
+  font-size: 14px;
+  margin: 0;
 }
-.qa-drawer h3 {
-  font-size: 15px;
-  margin-top: 24px;
+.qa-context-inline {
+  position: static;
+  background: none;
+  min-width: 0;
+  min-height: 0;
+  border-left: 1px solid #ece8f4;
+  z-index: auto;
 }
-.qa-drawer :deep(.app-select) {
-  width: 100%;
+.qa-context-inline .qa-drawer {
+  width: 288px;
 }
 .qa-auto {
   display: flex;
-  gap: 8px;
-  margin: 24px 0 8px;
   align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  margin: 20px 0 8px;
 }
 .qa-selected {
   display: flex;
+  gap: 8px;
   justify-content: space-between;
+  font-size: 12px;
   padding: 10px 0;
-  gap: 10px;
-  border-bottom: 1px solid #e5e9ef;
+  border-bottom: 1px solid #eeeaf5;
 }
-@media (max-width: 800px) {
+.qa-mobile,
+.qa-history-mask {
+  display: none;
+}
+.qa-delete-dialog {
+  max-width: 390px;
+  padding: 24px;
+}
+.qa-delete-dialog .actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+@media (min-width: 1600px) {
+  .qa-thread-inner,
+  .qa-composer {
+    max-width: 1280px;
+  }
+}
+@media (max-width: 1100px) {
+  .qa-chat-bar {
+    padding: 10px 20px;
+  }
+  .qa-chat-bar > div {
+    gap: 10px;
+  }
+  .qa-project :deep(.app-select) {
+    width: 180px;
+  }
+}
+@media (max-width: 700px) {
   .qa-chat-layout {
-    grid-template-columns: 1fr;
-    height: calc(100dvh - 72px);
-    min-height: 450px;
+    grid-template-columns: minmax(0, 1fr);
+    height: calc(100dvh - 80px);
   }
   .qa-chat-sidebar {
     display: none;
@@ -934,69 +1164,96 @@ onBeforeUnmount(() => {
   .qa-chat-sidebar.is-open {
     display: flex;
     position: fixed;
-    inset: 72px 25% 0 0;
-    z-index: 100;
-    background: #f3f5f9;
-    box-shadow: 15px 0 30px #17223830;
+    inset: 56px auto 0 0;
+    width: 275px;
+    z-index: 1002;
+    box-shadow: 20px 0 60px #30204a25;
+  }
+  .qa-history-mask {
+    display: block;
+    position: fixed;
+    inset: 56px 0 0;
+    border: 0;
+    background: #27203533;
+    z-index: 1001;
   }
   .qa-mobile {
-    display: inline-flex;
-    margin-right: 8px;
+    display: flex;
+    padding: 6px;
   }
   .qa-chat-bar {
-    padding: 12px 16px;
+    min-height: 82px;
+    padding: 10px 14px;
+    align-items: flex-start;
+  }
+  .qa-chat-bar > div {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr);
+    gap: 4px 8px;
   }
   .qa-chat-bar h1 {
-    font-size: 14px;
-    display: inline;
+    font-size: 13px;
   }
-  .qa-chat-bar small {
+  .qa-project {
+    grid-column: 2;
+    font-size: 11px;
+  }
+  .qa-project > span:first-child {
     display: none;
   }
-  .qa-chat-bar > button {
-    font-size: 12px;
+  .qa-project :deep(.app-select) {
+    width: 160px;
+    font-size: 11px;
+  }
+  .qa-chat-bar > .button {
+    font-size: 11px;
     padding: 6px 8px;
   }
   .qa-messages {
-    padding: 22px 20px;
+    padding: 20px 14px 8px;
+  }
+  .qa-message {
+    gap: 8px;
+    font-size: 13px;
+  }
+  .qa-message-content,
+  .mine .qa-message-content {
+    max-width: calc(100% - 42px);
+  }
+  .qa-message :deep(.reading-prose) {
+    font-size: 13px;
+  }
+  .mine p {
+    padding: 10px 13px;
   }
   .qa-composer-wrap {
-    padding: 8px 12px 12px;
+    padding: 8px 12px;
   }
-  .qa-composer-tools {
-    flex-wrap: wrap;
+  .qa-composer {
+    padding: 10px 12px;
+    border-radius: 12px;
   }
-  .qa-composer-tools :deep(.app-select) {
-    max-width: 170px;
+  .qa-composer textarea {
+    font-size: 13px;
+    min-height: 57px;
+  }
+  .qa-composer-tools > div {
+    gap: 6px;
   }
   .qa-composer-tools small {
-    display: none;
-  }
-  .qa-composer-tools button {
-    font-size: 12px;
+    font-size: 9px;
   }
   .qa-composer-hint {
-    font-size: 10px;
+    font-size: 9px;
   }
   .qa-empty h2 {
-    font-size: 22px;
+    font-size: 23px;
   }
-}
-.qa-context-inline {
-  position: static;
-  z-index: auto;
-  min-width: 0;
-  min-height: 0;
-  background: white;
-  border-left: 1px solid #e6e8f2;
-}
-.qa-context-inline .qa-drawer {
-  width: 100%;
-  height: 100%;
-  padding: 22px 18px;
-  box-shadow: none;
-}
-.qa-context-inline h2 {
-  font-size: 16px;
+  .qa-session-delete {
+    opacity: 1;
+  }
+  .qa-drawer-mask {
+    top: 56px;
+  }
 }
 </style>

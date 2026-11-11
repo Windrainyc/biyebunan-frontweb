@@ -570,10 +570,6 @@ body .student-workspace .empty-project {
     grid-template-columns: 1fr;
   }
 }
-body .student-workspace .page:has(.qa-chat-layout) {
-  max-width: 1392px;
-  padding: 34px 36px 46px;
-}
 
 .student-project-space > header {
   display: flex;
@@ -1604,49 +1600,6 @@ body .student-workspace .student-search-page .search-result h2 {
   font-size: 18px;
 }
 /* 现行答疑使用 qa-*；旧 student-chat-* 不作为本轮实现依据。 */
-body .student-workspace .qa-chat-layout {
-  grid-template-columns: 215px minmax(0, 1fr);
-  height: 600px;
-  min-height: 600px;
-  border: 1px solid #e6e8f2;
-  border-radius: 22px;
-  overflow: hidden;
-}
-body .student-workspace .qa-chat-sidebar {
-  padding: 22px 16px;
-  background: #f5f5fb;
-  border-color: #e6e8f2;
-}
-body .student-workspace .qa-session-list > button.selected {
-  background: #dedff1;
-  color: #3c3d67;
-}
-body .student-workspace .qa-chat-bar {
-  padding: 20px 25px;
-  border-color: #e6e8f2;
-}
-body .student-workspace .qa-chat-bar h1 {
-  font-size: 18px;
-  letter-spacing: 0;
-}
-body .student-workspace .qa-messages {
-  padding: 30px 29px;
-}
-body .student-workspace .qa-message.mine {
-  background: #eeebff;
-  color: #343052;
-}
-body .student-workspace .qa-composer {
-  border-color: #d9d3ed;
-  border-radius: 14px;
-  box-shadow: none;
-}
-body .student-workspace .qa-empty h2 {
-  font: 650 26px/1.5 var(--serif);
-}
-body .student-workspace .qa-empty p {
-  color: #687089;
-}
 body .student-workspace .forum-page {
   max-width: none;
   color: #262840;
@@ -1712,20 +1665,6 @@ body .student-workspace .forum-search input {
   }
 }
 @media (max-width: 800px) {
-  body .student-workspace .qa-chat-layout {
-    grid-template-columns: minmax(0, 1fr);
-    height: calc(100dvh - 140px);
-    min-height: 480px;
-  }
-  body .student-workspace .qa-chat-sidebar.is-open {
-    top: 88px;
-  }
-  body .student-workspace .qa-chat-bar {
-    padding: 16px;
-  }
-  body .student-workspace .qa-messages {
-    padding: 20px 16px;
-  }
   body .student-workspace .forum-grid {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1745,9 +1684,6 @@ body .student-workspace .forum-search input {
   }
   body .student-workspace .student-nav {
     top: 72px;
-  }
-  body .student-workspace .page:has(.qa-chat-layout) {
-    padding: 16px 14px 24px;
   }
   body .student-workspace .dashboard {
     grid-template-columns: minmax(0, 1fr);
@@ -1811,15 +1747,9 @@ body .student-workspace .forum-search input {
     min-width: 0;
     width: 100%;
   }
-  body .student-workspace .qa-chat-sidebar.is-open {
-    top: 72px;
-  }
 }
 
 @media (min-width: 1180px) {
-  body .student-workspace .qa-chat-layout {
-    grid-template-columns: 215px minmax(0, 1fr) 260px;
-  }
 }
 .student-workspace .project-detail-layout:has(.student-release-layout) {
   grid-template-columns: minmax(0, 1fr);
@@ -2307,110 +2237,6 @@ body .student-workspace .student-release-layout .delivery.student-file-row {
   grid-column: 2/4;
   margin-top: 10px;
 }
-.qa-reference-heading {
-  margin: 0 0 26px;
-}
-.qa-reference-heading h1 {
-  font-size: 30px;
-  margin: 8px 0;
-  line-height: 1.5;
-}
-.qa-reference-heading > p:last-child {
-  font-size: 12px;
-  color: #696a89;
-  margin: 8px 0 0;
-}
-body .student-workspace .qa-chat-bar {
-  padding: 16px 25px;
-  min-height: 60px;
-}
-.student-workspace .qa-chat-bar h1 {
-  font-size: 13px;
-  font-weight: 500;
-}
-.student-workspace .qa-chat-bar small {
-  font-size: 10px;
-}
-body .student-workspace .qa-chat-sidebar > .button {
-  background: #29283e;
-  color: white;
-  border-color: #29283e;
-  font-size: 12px;
-}
-body .student-workspace .qa-session-list strong {
-  font-size: 11px;
-  font-weight: 500;
-}
-.student-workspace .qa-session-list small {
-  font-size: 9px;
-}
-body .student-workspace .qa-empty {
-  padding: 40px 0 20px;
-}
-.qa-welcome-icon {
-  display: inline-grid;
-  place-items: center;
-  background: #eeeaff;
-  color: #8562d8;
-  width: 59px;
-  height: 59px;
-  border-radius: 18px;
-  font-size: 30px;
-}
-body .student-workspace .qa-empty h2 {
-  font-size: 24px;
-  margin: 18px 0 10px;
-}
-.student-workspace .qa-empty p {
-  font-size: 12px;
-}
-body .student-workspace .question-templates {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 9px;
-  margin-top: 28px;
-  width: 100%;
-}
-.student-workspace .question-templates button {
-  text-align: left;
-  justify-content: space-between;
-  font-size: 11px;
-  padding: 12px;
-  min-height: 45px;
-  background: white;
-  border-color: #dfd7f7;
-}
-body .student-workspace .qa-quota-summary strong {
-  font-size: 20px;
-  color: #89749c;
-}
-.qa-quota-summary span,
-.qa-quota-summary p {
-  font-size: 10px;
-  color: #77718b;
-}
-.qa-quota-summary p {
-  margin: 8px 0;
-}
-.qa-quota a {
-  font-size: 10px;
-}
-body .student-workspace .qa-context-inline .qa-drawer {
-  padding: 24px 20px;
-  background: #faf9ff;
-  font-size: 11px;
-}
-.student-workspace .qa-context-inline h2 {
-  font-size: 13px;
-  margin: 0 0 16px;
-}
-.student-workspace .qa-context-inline h3 {
-  font-size: 12px;
-}
-.student-workspace .qa-context-inline p {
-  font-size: 10px;
-  line-height: 1.8;
-}
 @media (max-width: 850px) {
   body .student-workspace .student-nav {
     position: static;
@@ -2439,7 +2265,6 @@ body .student-workspace .qa-context-inline .qa-drawer {
 }
 @media (max-width: 600px) {
   body .student-workspace .knowledge-library-heading h1,
-  .qa-reference-heading h1,
   body .student-workspace .project-reference-heading h1 {
     font-size: 27px;
   }
@@ -2538,32 +2363,6 @@ body .student-workspace .qa-context-inline .qa-drawer {
   .student-workspace .student-file-row > button {
     padding: 7px;
     font-size: 10px;
-  }
-  .qa-reference-heading {
-    margin-bottom: 20px;
-  }
-  .qa-reference-heading > p:last-child {
-    font-size: 11px;
-  }
-  body .student-workspace .qa-chat-layout {
-    height: 650px;
-    min-height: 600px;
-  }
-  body .student-workspace .qa-empty {
-    padding: 20px 0;
-  }
-  .student-workspace .qa-empty h2 {
-    font-size: 20px;
-  }
-  .student-workspace .question-templates button {
-    font-size: 10px;
-    padding: 10px;
-  }
-  .student-workspace .qa-chat-bar {
-    padding: 16px;
-  }
-  .student-workspace .qa-empty p {
-    font-size: 11px;
   }
 }
 /* 交流广场：采用原型的横幅、独立讨论卡和右侧阅读区。 */
@@ -2918,28 +2717,6 @@ body .student-workspace .project-reference-banner > .button {
   border-color: #35304f;
   color: white;
 }
-body .student-workspace .qa-chat-bar {
-  padding: 12px 25px;
-  min-height: 60px;
-}
-body .student-workspace .qa-chat-bar h1 {
-  font-size: 13px;
-  margin: 0;
-  font-weight: 600;
-}
-body .student-workspace .qa-chat-bar small {
-  font-size: 10px;
-}
-body .student-workspace .qa-empty {
-  padding: 20px 0 10px;
-}
-body .student-workspace .qa-empty p {
-  font-size: 12px;
-  margin: 0;
-}
-body .student-workspace .question-templates {
-  margin-top: 22px;
-}
 body .student-workspace .community-column {
   display: flex;
   flex-direction: column;
@@ -2993,35 +2770,41 @@ body .student-workspace .community-card {
 body .student-workspace .button .ali-icon {
   color: inherit;
 }
-body .student-workspace .question-templates button {
-  white-space: normal;
-  min-width: 0;
-  line-height: 1.6;
-  overflow-wrap: anywhere;
-}
-body .student-workspace .qa-context-inline h2 {
-  font-size: 13px;
-}
-.student-workspace .qa-context-inline h3 {
-  font-size: 12px;
-}
 @media (max-width: 600px) {
-  body .student-workspace .qa-empty h2 {
-    font-size: 20px;
-  }
-  body .student-workspace .question-templates button {
-    font-size: 10px;
-    min-height: 48px;
-    padding: 8px;
-  }
-  body .student-workspace .qa-chat-layout {
-    height: 680px;
-  }
   body .student-workspace .community-card.welcome {
     display: block;
   }
   .student-workspace .pagination > .app-select {
     width: 112px;
     max-width: 112px;
+  }
+}
+
+/* 已确认答疑原型：铺满导航下方可用空间。 */
+body .student-workspace .page:has(.qa-chat-layout) {
+  max-width: none;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}
+body .student-workspace:has(.qa-chat-layout) .student-header {
+  height: 68px;
+}
+body .student-workspace:has(.qa-chat-layout) .student-header-inner {
+  max-width: none;
+  padding: 0 28px;
+}
+body:has(.qa-chat-layout) .site-registration {
+  height: 24px;
+  padding: 3px 12px;
+  font-size: 10px;
+  line-height: 18px;
+}
+@media (max-width: 700px) {
+  body .student-workspace:has(.qa-chat-layout) .student-header {
+    height: 56px;
+  }
+  body .student-workspace:has(.qa-chat-layout) .student-header-inner {
+    padding: 0 16px;
   }
 }

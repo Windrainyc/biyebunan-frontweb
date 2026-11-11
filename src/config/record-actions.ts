@@ -33,7 +33,10 @@ for (const [key, path] of Object.entries({
   'storage-configs': 'storages',
   domains: 'domains',
 })) {
-  (definitions[key] ||= []).push({ path: `${path}/{id}/test`, title: '验证连接配置' });
+  (definitions[key] ||= []).push({
+    path: `${path}/{id}/test`,
+    title: key === 'domains' ? '检查域名连接' : '验证连接配置',
+  });
 }
 (definitions['model-keys'] ||= []).push({ path: 'model-keys/{id}/rotate', title: '更换模型密钥' });
 
@@ -45,6 +48,12 @@ export function recordActions(resourceKey: string, record: Row) {
       if (
         resourceKey === 'jobs' &&
         !jobRecovery(String(record.kind || ''), String(record.state || '')).retry
+      )
+        return false;
+      if (
+        resourceKey === 'orders' &&
+        d.path.endsWith('/transition') &&
+        ['ARCHIVED', 'CANCELLED'].includes(String(record.status))
       )
         return false;
       if (resourceKey === 'reports' && record.state !== 'OPEN') return false;
@@ -63,7 +72,8 @@ export function recordActions(resourceKey: string, record: Row) {
         return false;
       if (
         d.path.endsWith('/receipt') &&
-        (record.receiptStatus !== 'UNCONFIRMED' || record.status !== 'CONFIRMED')
+        (record.receiptStatus !== 'UNCONFIRMED' ||
+          !['CONFIRMED', 'ACTIVE', 'COMPLETED'].includes(String(record.status)))
       )
         return false;
       const o = operation(d.method || 'POST', d.path);

@@ -226,7 +226,7 @@ export const values: Record<string, string> = {
   OWNED: '名下数据',
   DRAFT: '草稿',
   CONFIRMED: '已确认',
-  ACTIVE: '进行中',
+  ACTIVE: '启动中',
   COMPLETED: '已完成',
   CANCELLED: '已取消',
   ARCHIVED: '已归档',
@@ -315,7 +315,8 @@ export const values: Record<string, string> = {
   BILLING_RECONCILIATION: '账务核对',
   EXPORT_ORDERS: '订单导出',
   EXPORT_PROJECTS: '项目导出',
-  PROVIDER_RECONCILIATION_UNAVAILABLE: '原调用缺少用量或不收费证据，预占保持待核对；请核查原始记录，不要重新生成（PROVIDER_RECONCILIATION_UNAVAILABLE）',
+  PROVIDER_RECONCILIATION_UNAVAILABLE:
+    '原调用缺少用量或不收费证据，预占保持待核对；请核查原始记录，不要重新生成（PROVIDER_RECONCILIATION_UNAVAILABLE）',
   EXPORT_USAGE: '用量导出',
   EXPORT_AUDIT: '审计导出',
   PROBE_MODEL: '模型探测',

@@ -148,9 +148,8 @@ async function exit() {
       'student-workspace': platform === 'student',
       'admin-workspace': platform === 'admin',
       'partner-workspace': platform === 'partner',
-      'has-section-nav':
+      'has-section-tabs':
         platform === 'admin' && !!managementSection && managementSection.links.length > 1,
-      'has-settings-nav': platform === 'admin' && managementSection?.key === 'settings',
     }"
   >
     <header v-if="platform === 'student'" class="student-header">

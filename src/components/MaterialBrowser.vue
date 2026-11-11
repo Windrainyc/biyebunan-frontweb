@@ -190,7 +190,7 @@ watch(
     <header v-if="!picker" class="material-heading">
       <div>
         <h1>素材管理</h1>
-        <p class="muted">集中管理图片、视频、文档及其他文件，扫描通过后可在知识库中复用。</p>
+        <p class="muted">集中管理图片、视频、文档及其他文件，完整性校验通过后可在知识库中复用。</p>
       </div>
       <RouterLink class="button" to="/admin/material-categories">管理分类</RouterLink>
     </header>
@@ -385,7 +385,7 @@ watch(
         </div>
       </article>
       <p v-if="!rows.length" class="muted">
-        暂无{{ picker ? '可选的已通过扫描' : '' }}素材，可调整筛选或上传文件。
+        暂无{{ picker ? '可选的已完成校验' : '' }}素材，可调整筛选或上传文件。
       </p>
     </div>
     <footer class="material-toolbar">

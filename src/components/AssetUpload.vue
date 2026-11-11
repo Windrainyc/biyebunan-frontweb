@@ -61,9 +61,9 @@ async function poll() {
       message.value = '文件未通过安全校验，请更换文件';
       busy.value = false;
     } else {
-      message.value = '文件已上传，等待校验与安全扫描';
+      message.value = '文件已上传，正在校验完整性';
       if (++scanChecks >= 20) {
-        message.value = '文件已保存，扫描仍在排队，可稍后检查状态';
+        message.value = '文件已保存，校验仍在排队，可稍后检查状态';
         busy.value = false;
       } else timer = setTimeout(poll, 3000);
     }
@@ -206,13 +206,13 @@ async function upload() {
     </div>
     <progress
       v-if="busy"
-      :value="message.includes('扫描') ? undefined : progress"
+      :value="message.includes('校验') ? undefined : progress"
       max="100"
       :aria-label="message"
     />
     <p v-if="error" class="error" role="alert">{{ error }}</p>
     <div v-if="!compact || selected" class="upload-footer">
-      <small>文件通过安全扫描后才可关联使用</small
+      <small>文件校验完成后即可关联使用</small
       ><button
         type="button"
         class="button primary"
@@ -225,7 +225,7 @@ async function upload() {
             : asset?.state === 'READY'
               ? '可使用'
               : asset && ['QUARANTINED', 'UPLOADING'].includes(String(asset.state))
-                ? '检查扫描状态'
+                ? '检查处理状态'
                 : '确认上传'
         }}
       </button>

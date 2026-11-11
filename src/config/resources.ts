@@ -135,7 +135,7 @@ export function resources(platform: Platform): Resource[] {
         '域名配置',
         p + '/domains',
         'globe',
-        ['hostname', 'platform', 'certificateRef', 'status'],
+        ['name', 'hostname', 'platform', 'certificateRef', 'status'],
         '基础数据',
       ),
       resource(

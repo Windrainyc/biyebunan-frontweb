@@ -2645,9 +2645,9 @@
       "additionalProperties": false,
       "properties": {
         "projectId": {
-          "type": "string",
-          "description": "资源标识",
-          "format": "uuid"
+          "type": ["string", "null"],
+          "format": "uuid",
+          "description": "可不关联项目；关联时校验当前订单归属"
         },
         "title": {
           "type": "string",
@@ -2655,7 +2655,7 @@
           "maxLength": 200
         }
       },
-      "required": ["projectId", "title"]
+      "required": ["title"]
     },
     "Conversation": {
       "type": "object",
@@ -2681,9 +2681,9 @@
           "format": "date-time"
         },
         "projectId": {
-          "type": "string",
-          "description": "资源标识",
-          "format": "uuid"
+          "type": ["string", "null"],
+          "format": "uuid",
+          "description": "可不关联项目；关联时校验当前订单归属"
         },
         "title": {
           "type": "string",
@@ -2762,8 +2762,9 @@
         },
         "modelId": {
           "type": "string",
-          "description": "资源标识",
-          "format": "uuid"
+          "format": "uuid",
+          "deprecated": true,
+          "description": "兼容旧客户端输入，服务端忽略此值并统一选择启用模型"
         },
         "sourceVersionIds": {
           "type": "array",
@@ -2786,7 +2787,6 @@
         "conversationId",
         "clientMessageId",
         "text",
-        "modelId",
         "sourceVersionIds",
         "maxOutputTokens"
       ]
@@ -6819,6 +6819,41 @@
     }
   },
   "operations": {
+    "GET /admin/domains/runtime": {
+      "operationId": "get_admin_domains_runtime",
+      "summary": "查询正在运行的三端入口与域名检查设置",
+      "permission": "domains:read",
+      "body": null,
+      "parameters": [],
+      "response": {
+        "type": "object",
+        "required": ["endpoints", "probesEnabled"],
+        "properties": {
+          "probesEnabled": {
+            "type": "boolean"
+          },
+          "endpoints": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["platform", "origin", "probeAllowed"],
+              "properties": {
+                "platform": {
+                  "type": "string",
+                  "enum": ["student", "admin", "partner"]
+                },
+                "origin": {
+                  "type": "string"
+                },
+                "probeAllowed": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "GET /admin/schools": {
       "operationId": "get_admin_schools",
       "summary": "分页查询院校",

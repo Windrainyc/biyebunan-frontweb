@@ -1,0 +1,41 @@
+[
+  {
+    "origin": "https://biyebunan.com",
+    "exit": 0,
+    "headers": [
+      "HTTP/1.1 200 OK",
+      "Access-Control-Allow-Origin: https://biyebunan.com",
+      "Access-Control-Allow-Credentials: true",
+      "Access-Control-Allow-Methods: PUT, GET, HEAD",
+      "Access-Control-Allow-Headers: content-type, x-oss-date, x-oss-content-sha256",
+      "Access-Control-Expose-Headers: ETag, x-oss-version-id, Content-Length, Content-Range",
+      "Access-Control-Max-Age: 300"
+    ]
+  },
+  {
+    "origin": "https://admin.biyebunan.com",
+    "exit": 0,
+    "headers": [
+      "HTTP/1.1 200 OK",
+      "Access-Control-Allow-Origin: https://admin.biyebunan.com",
+      "Access-Control-Allow-Credentials: true",
+      "Access-Control-Allow-Methods: PUT, GET, HEAD",
+      "Access-Control-Allow-Headers: content-type, x-oss-date, x-oss-content-sha256",
+      "Access-Control-Expose-Headers: ETag, x-oss-version-id, Content-Length, Content-Range",
+      "Access-Control-Max-Age: 300"
+    ]
+  },
+  {
+    "origin": "https://partner.biyebunan.com",
+    "exit": 0,
+    "headers": [
+      "HTTP/1.1 200 OK",
+      "Access-Control-Allow-Origin: https://partner.biyebunan.com",
+      "Access-Control-Allow-Credentials: true",
+      "Access-Control-Allow-Methods: PUT, GET, HEAD",
+      "Access-Control-Allow-Headers: content-type, x-oss-date, x-oss-content-sha256",
+      "Access-Control-Expose-Headers: ETag, x-oss-version-id, Content-Length, Content-Range",
+      "Access-Control-Max-Age: 300"
+    ]
+  }
+]

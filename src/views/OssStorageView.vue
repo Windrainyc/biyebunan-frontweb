@@ -186,7 +186,7 @@ onBeforeUnmount(() => {
           <li>HTTPS 传输、OSS 托管 AES256 加密</li>
           <li>开启版本控制，固定下载文件版本</li>
           <li>每次下载先校验业务权限，签名 60 秒有效</li>
-          <li>浏览器直传 OSS，上传后隔离扫描</li>
+          <li>浏览器直传 OSS，素材上传后校验完整性</li>
           <li>学生下载授权按账号和来源限流，签名有效期内仍可被转发</li>
         </ul>
         <div class="oss-state">

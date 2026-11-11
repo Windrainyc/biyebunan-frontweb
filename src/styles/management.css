@@ -2765,3 +2765,54 @@ body .workspace.admin-workspace .admin-resource-orders td:not(:first-child),
 body .workspace.admin-workspace .admin-resource-users td {
   white-space: nowrap;
 }
+
+/* 栏目导航统一横向页签；小屏仅页签区域横滚。 */
+.admin-section-tabs {
+  position: fixed;
+  top: 72px;
+  left: 222px;
+  right: 0;
+  height: 54px;
+  z-index: 35;
+  display: flex;
+  gap: 6px;
+  padding: 0 30px;
+  background: white;
+  border-bottom: 1px solid #e9e5f2;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.admin-section-tabs a {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 12px 15px;
+  color: #898199;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  font-size: 13px;
+  text-decoration: none;
+}
+.admin-section-tabs a.active {
+  color: #7359e9;
+  border-color: #7359e9;
+  background: #faf8ff;
+}
+body .admin-workspace.has-section-tabs .workspace-body {
+  padding-top: 126px;
+}
+@media (max-width: 800px) {
+  .admin-section-tabs {
+    left: 0;
+    top: 62px;
+    height: 50px;
+    padding: 0 12px;
+  }
+  .admin-section-tabs a {
+    padding: 10px 12px;
+  }
+  body .admin-workspace.has-section-tabs .workspace-body {
+    padding-top: 112px;
+  }
+}

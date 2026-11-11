@@ -2,6 +2,8 @@
 import { listLocation, positivePage } from '../config/list-location';
 import PartnerStudentOrders from '../components/PartnerStudentOrders.vue';
 import AppSelect from '../components/AppSelect.vue';
+import DomainRuntime from '../components/DomainRuntime.vue';
+import { domainUrl } from '../config/domain-access';
 import { useRoute, useRouter, onBeforeRouteLeave, onBeforeRouteUpdate } from 'vue-router';
 import RequirementAttachments from '../components/RequirementAttachments.vue';
 import WorkflowPage from '../components/WorkflowPage.vue';
@@ -38,6 +40,51 @@ import KnowledgeCategoryNav from '../components/KnowledgeCategoryNav.vue';
 import ForumSidebar from '../components/ForumSidebar.vue';
 import { formBody, requiresSelection } from '../config/form';
 import ProjectBoard from '../components/ProjectBoard.vue';
+const selectedOrders = ref<string[]>([]);
+const archiveOpen = ref(false),
+  archiving = ref(false),
+  archiveNotice = ref('');
+const canArchiveOrders = computed(
+  () =>
+    auth.platform === 'admin' &&
+    props.resource.key === 'orders' &&
+    auth.permissions.includes('post_admin_orders_id_transition'),
+);
+const completedRows = computed(() => rows.value.filter((row) => row.status === 'COMPLETED'));
+const archiveSnapshot = ref<Row[]>([]);
+function prepareArchive() {
+  archiveSnapshot.value = completedRows.value
+    .filter((row) => selectedOrders.value.includes(String(row.id)))
+    .map((row) => ({ ...row, archiveKey: crypto.randomUUID() }));
+  archiveOpen.value = archiveSnapshot.value.length > 0;
+}
+async function archiveOrders() {
+  if (archiving.value) return;
+  archiving.value = true;
+  let done = 0;
+  const failures: string[] = [];
+  for (const row of archiveSnapshot.value) {
+    try {
+      await request(`/admin/orders/${row.id}/transition`, {
+        method: 'POST',
+        version: row.version,
+        key: String(row.archiveKey),
+        body: { action: 'ARCHIVE', reason: '管理员批量归档已完成订单' },
+      });
+      done++;
+    } catch (e) {
+      failures.push(`${row.orderNo}: ${errorText(e)}`);
+    }
+  }
+  archiveNotice.value =
+    `已归档 ${done} 条。` +
+    (failures.length
+      ? `未成功 ${failures.length} 条：${failures.join('；')} 请刷新核对后重选。`
+      : '');
+  archiveOpen.value = false;
+  archiving.value = false;
+  await load();
+}
 const projectView = ref('board');
 const adminProjects = computed(
   () => auth.platform === 'admin' && props.resource.key === 'projects',
@@ -264,6 +311,7 @@ const extraFields = computed(() =>
     .map((p) => ({ key: p.name, ...schema(p.schema) })),
 );
 const statusOptions = computed(() => {
+  if (props.resource.key === 'orders') return ['ACTIVE', 'COMPLETED', 'ARCHIVED'];
   const pageSchema = schema(listOp.value?.response);
   const rowSchema = schema(schema(pageSchema.properties?.items).items);
   return (
@@ -349,6 +397,7 @@ const properties = computed(() =>
     }),
 );
 async function load() {
+  selectedOrders.value = [];
   const generation = ++loadGeneration;
   loading.value = true;
   listFailed.value = false;
@@ -845,6 +894,7 @@ const hasStatusTabs = computed(
         ><small>当前页账户状态</small>
       </article>
     </div>
+    <DomainRuntime v-if="resource.key === 'domains' && auth.platform === 'admin'" />
     <p v-if="notice" role="status" class="notice">{{ notice }}</p>
     <p v-if="error" class="error" role="alert">{{ error }}</p>
     <div
@@ -956,6 +1006,27 @@ const hasStatusTabs = computed(
             </form>
           </details>
         </details>
+        <div v-if="canArchiveOrders" class="order-batch-bar">
+          <button
+            class="button"
+            :disabled="loading || archiving"
+            @click="
+              status = 'COMPLETED';
+              search();
+            "
+          >
+            查看已完成订单
+          </button>
+          <button
+            class="button"
+            :disabled="!selectedOrders.length || archiving"
+            @click="prepareArchive"
+          >
+            归档所选（{{ selectedOrders.length }}）
+          </button>
+          <small class="muted">仅归档本页勾选的已完成订单</small>
+          <p v-if="archiveNotice" role="status">{{ archiveNotice }}</p>
+        </div>
         <form v-if="!isStudentKnowledge" class="filters" @submit.prevent="search">
           <input
             v-if="queryNames.has('q')"
@@ -1225,6 +1296,21 @@ const hasStatusTabs = computed(
           <table>
             <thead>
               <tr>
+                <th v-if="canArchiveOrders">
+                  <input
+                    type="checkbox"
+                    aria-label="选择本页已完成订单"
+                    :checked="
+                      completedRows.length > 0 && selectedOrders.length === completedRows.length
+                    "
+                    :disabled="!completedRows.length || archiving"
+                    @change="
+                      selectedOrders = ($event.target as HTMLInputElement).checked
+                        ? completedRows.map((row) => String(row.id))
+                        : []
+                    "
+                  />
+                </th>
                 <th v-for="column in tableColumns" :key="column">
                   {{ label(column) }}
                 </th>
@@ -1233,6 +1319,15 @@ const hasStatusTabs = computed(
             </thead>
             <tbody>
               <tr v-for="(row, index) in rows" :key="row.id || index">
+                <td v-if="canArchiveOrders">
+                  <input
+                    v-model="selectedOrders"
+                    type="checkbox"
+                    :value="String(row.id)"
+                    :aria-label="`选择订单 ${row.orderNo}`"
+                    :disabled="row.status !== 'COMPLETED' || archiving"
+                  />
+                </td>
                 <td v-for="column in tableColumns" :key="column">
                   <div
                     v-if="
@@ -1274,6 +1369,14 @@ const hasStatusTabs = computed(
                       String(row.displayName || '用').slice(0, 1)
                     }}</span
                     ><strong>{{ row.displayName }}</strong></span
+                  ><a
+                    v-else-if="
+                      resource.key === 'domains' && column === 'hostname' && domainUrl(row.hostname)
+                    "
+                    :href="domainUrl(row.hostname)"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >{{ row.hostname }}</a
                   ><template v-else>{{ display(row[column]) }}</template>
                 </td>
                 <td class="actions">
@@ -1324,7 +1427,7 @@ const hasStatusTabs = computed(
                 </td>
               </tr>
               <tr v-if="!rows.length">
-                <td :colspan="tableColumns.length + 1" class="empty">
+                <td :colspan="tableColumns.length + 1 + (canArchiveOrders ? 1 : 0)" class="empty">
                   {{
                     loading
                       ? '正在读取数据…'
@@ -1423,6 +1526,11 @@ const hasStatusTabs = computed(
               }}
             </p>
           </div>
+          <p v-if="resource.key === 'domains'" class="muted">
+            域名只填写主机名，例如 admin.biyebunan.com，不含
+            https://、端口或路径。证书引用填写部署别名，例如
+            biyebunan.com，不要粘贴证书私钥。变更已启用记录的域名、平台或证书引用前请先停用。
+          </p>
           <div class="form-grid">
             <div
               v-for="field in properties"
@@ -1681,8 +1789,48 @@ const hasStatusTabs = computed(
       </section>
     </div>
   </section>
+  <Teleport to="body"
+    ><div v-if="archiveOpen" class="modal-backdrop">
+      <section
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="批量归档订单"
+        v-dialog="
+          () => {
+            if (!archiving) archiveOpen = false;
+          }
+        "
+      >
+        <h2>归档所选订单</h2>
+        <p>
+          将归档
+          {{ archiveSnapshot.length }}
+          条已完成订单，保留项目、交付和收款记录。逐条处理，遇到冲突会列出未成功的订单。
+        </p>
+        <div class="actions">
+          <button class="button" :disabled="archiving" @click="archiveOpen = false">取消</button
+          ><button class="button primary" :disabled="archiving" @click="archiveOrders">
+            {{ archiving ? '归档中…' : '确认归档' }}
+          </button>
+        </div>
+      </section>
+    </div></Teleport
+  >
 </template>
 <style scoped>
+.order-batch-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+.order-batch-bar p {
+  flex-basis: 100%;
+  overflow-wrap: anywhere;
+}
+
 .order-cell {
   display: grid;
   gap: 5px;
