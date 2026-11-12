@@ -1,0 +1,15 @@
+{
+  "viewports": [
+    1440,
+    390
+  ],
+  "defaultEnabled": true,
+  "listDisable": true,
+  "editPreservesStatus": true,
+  "statusFieldRemoved": true,
+  "visualFixtureImages": "用户提供的两张原图；仅浏览器网络拦截，不上传",
+  "posterAspectPreserved": true,
+  "closeAndEscape": true,
+  "posterOnly": true,
+  "errors": []
+}

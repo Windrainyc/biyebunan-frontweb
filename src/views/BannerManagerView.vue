@@ -26,7 +26,7 @@ const blank = (): Banner => ({
   posterAssetId: null,
   body: '',
   sortOrder: 0,
-  status: 'DISABLED',
+  status: 'ENABLED',
 });
 const form = ref<Banner>(blank());
 const baseline = ref(JSON.stringify(blank()));
@@ -156,11 +156,11 @@ onMounted(load);
       <div class="banner-fields">
         <label
           >横幅配图<MaterialField v-model="form.coverAssetId" kind="image" /><small
-            >建议横向图片，展示在横幅右侧；可不选。</small
+            >建议上传3:1横幅，将完整展示为首页活动图片；可不选。</small
           ></label
         ><label
           >弹窗海报<MaterialField v-model="form.posterAssetId" kind="image" /><small
-            >点击横幅后按原比例显示完整海报。</small
+            >建议上传2:3竖版海报，弹窗按原比例完整显示。</small
           ></label
         >
       </div>
@@ -173,12 +173,7 @@ onMounted(load);
             min="0"
             max="9999"
             required
-          /><small>数字越小越靠前；首页最多展示前十条启用横幅。</small></label
-        ><label
-          >展示状态<select v-model="form.status">
-            <option value="DISABLED">停用</option>
-            <option value="ENABLED">启用</option>
-          </select></label
+          /><small>数字越小越靠前；新建默认启用，可在列表停用。</small></label
         >
       </div>
       <footer>

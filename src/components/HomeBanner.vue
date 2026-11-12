@@ -26,16 +26,24 @@ onBeforeUnmount(() => controller.abort());
 <template>
   <div v-if="failed" class="banner-error">活动暂不可用 <button @click="load">重试</button></div>
   <section v-if="current && !hidden" class="home-banner" aria-label="首页活动">
-    <button class="banner-open" @click="detail = current">
-      <div class="banner-copy">
-        <small>知项 · 精选活动</small><strong>{{ current.title }}</strong
-        ><span v-if="current.subtitle">{{ current.subtitle }}</span>
-      </div>
-      <span class="banner-cta">查看详情 →</span>
+    <button
+      class="banner-open"
+      :class="{ 'has-art': current.coverAssetId }"
+      :aria-label="'查看活动：' + current.title"
+      @click="detail = current"
+    >
       <div v-if="current.coverAssetId" class="banner-cover">
         <AssetCover :asset-id="current.coverAssetId" :alt="current.title" />
-      </div></button
-    ><button class="banner-dismiss" aria-label="关闭首页活动" @click="hidden = true">×</button>
+      </div>
+      <template v-else
+        ><div class="banner-copy">
+          <small>知项 · 精选活动</small><strong>{{ current.title }}</strong
+          ><span v-if="current.subtitle">{{ current.subtitle }}</span>
+        </div>
+        <span class="banner-cta">查看详情 →</span></template
+      >
+    </button>
+    <button class="banner-dismiss" aria-label="关闭首页活动" @click="hidden = true">×</button>
     <div v-if="items.length > 1" class="banner-pages">
       <button
         v-for="(item, i) in items"
@@ -103,20 +111,38 @@ onBeforeUnmount(() => controller.abort());
   padding: 8px 16px;
   white-space: nowrap;
 }
+.banner-open.has-art {
+  height: auto;
+  min-height: 0;
+  display: block;
+  padding: 0;
+}
 .banner-cover {
-  width: 180px;
-  height: 100px;
-  border-radius: 9px;
-  overflow: hidden;
-  margin-right: 8px;
+  width: 100%;
+  background: #f3ecfb;
+}
+.banner-cover :deep(img) {
+  width: 100%;
+  height: auto;
+  max-height: 320px;
+  object-fit: contain;
+  border-radius: 0;
+}
+.banner-cover :deep(.cover-placeholder) {
+  padding: 40px;
+  text-align: center;
 }
 .banner-dismiss {
   position: absolute;
   right: 8px;
   top: 5px;
   border: 0;
-  background: transparent;
-  color: #9585ae;
+  background: #ffffffdf;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  line-height: 24px;
+  color: #73648e;
   font-size: 22px;
   padding: 2px 7px;
 }
@@ -169,8 +195,8 @@ onBeforeUnmount(() => controller.abort());
     font-size: 11px;
     padding: 5px 9px;
   }
-  .banner-cover {
-    display: none;
+  .banner-cover :deep(img) {
+    max-height: none;
   }
   .banner-pages {
     left: 16px;

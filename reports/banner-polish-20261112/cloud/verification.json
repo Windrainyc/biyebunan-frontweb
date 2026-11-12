@@ -1,0 +1,33 @@
+{
+  "actualCloudData": true,
+  "readOnly": true,
+  "viewports": [
+    1440,
+    390
+  ],
+  "posterSizes": [
+    {
+      "natural": [
+        1024,
+        1536
+      ],
+      "rendered": [
+        458,
+        687
+      ]
+    },
+    {
+      "natural": [
+        1024,
+        1536
+      ],
+      "rendered": [
+        340,
+        510
+      ]
+    }
+  ],
+  "statusRemoved": true,
+  "closeAndEscape": true,
+  "scriptErrors": []
+}
