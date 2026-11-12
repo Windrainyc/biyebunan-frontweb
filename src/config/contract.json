@@ -1814,7 +1814,7 @@
           "maxLength": 200
         }
       },
-      "required": ["displayName", "roleIds", "status", "reason"]
+      "required": ["displayName", "roleIds", "status"]
     },
     "UserCreate": {
       "type": "object",

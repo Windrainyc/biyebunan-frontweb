@@ -384,6 +384,7 @@ const properties = computed(() =>
     .filter(
       ([key, v]) =>
         !v.readOnly &&
+        !(key === 'reason' && props.resource.key === 'users' && editing.value) &&
         !(key === 'orderNo' && props.resource.key === 'orders' && !editing.value) &&
         !(key === 'status' && hasStatusAction.value) &&
         !(key === 'schoolId' && props.resource.key === 'majors'),
