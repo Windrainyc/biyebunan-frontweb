@@ -59,6 +59,19 @@ async function insertEmoji(emoji: string) {
   input?.focus();
   input?.setSelectionRange(start + emoji.length, start + emoji.length);
 }
+const threadedComments = computed(() => {
+  const rows = comments.value;
+  const roots = rows.filter((c) => !c.parentId);
+  const children = (id: unknown) =>
+    rows
+      .filter((c) => c.parentId === id)
+      .sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)));
+  const result: Row[] = [];
+  for (const root of roots) result.push(root, ...children(root.id));
+  for (const child of rows.filter((c) => c.parentId && !rows.some((p) => p.id === c.parentId)))
+    result.push(child);
+  return result;
+});
 const attempt = writeAttempt();
 const deleting = ref<Row | null>(null);
 const replyInput = ref<HTMLTextAreaElement | null>(null);
@@ -238,10 +251,20 @@ onBeforeUnmount(() => {
     </p>
     <p v-if="loading" class="muted" role="status">正在读取回复…</p>
     <p v-if="notice" class="success" role="status">{{ notice }}</p>
-    <article v-for="comment in comments" :key="String(comment.id)" class="comment">
+    <article
+      v-for="comment in threadedComments"
+      :key="String(comment.id)"
+      class="comment"
+      :class="{ 'comment-child': !!comment.parentId }"
+    >
       <span
         >{{ comment.authorId === auth.user?.id ? '我的回复' : '社区成员' }} ·
         {{ display(comment.createdAt) }}</span
+      >
+      <small v-if="comment.parentId" class="reply-context"
+        >↳ 回复{{
+          comments.some((p) => p.id === comment.parentId) ? '上方评论' : '另一页的评论'
+        }}</small
       >
       <MarkdownContent :text="String(comment.body || '')" />
       <span v-if="comment.state !== 'PUBLISHED' && comment.state !== 'VISIBLE'">{{
@@ -307,7 +330,7 @@ onBeforeUnmount(() => {
       <textarea
         ref="replyInput"
         v-model="body"
-        rows="3"
+        rows="2"
         maxlength="5000"
         required
         aria-label="回复正文"
@@ -391,13 +414,35 @@ h3 small {
   color: #8290a5;
 }
 .comment {
-  padding: 20px 0;
+  padding: 14px 0;
   border-bottom: 1px solid #e2e6ef;
   font-size: 14px;
 }
 .comment span {
   font-size: 12px;
   color: #748096;
+}
+.comment-child {
+  margin-left: 28px;
+  padding: 12px 16px;
+  background: #f8f7fc;
+  border-left: 2px solid #e3ddf3;
+  border-bottom: 0;
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 8px;
+}
+.reply-context {
+  display: block;
+  color: #9690a8;
+  font-size: 11px;
+  margin-top: 5px;
+}
+.comment :deep(.reading-prose p) {
+  margin: 6px 0;
+  line-height: 1.65;
+}
+.comment :deep(.reading-prose) {
+  margin: 0;
 }
 .comment p {
   white-space: pre-wrap;
@@ -485,7 +530,7 @@ form {
   border-color: #a89ae7;
 }
 .forum-replies textarea {
-  min-height: 82px;
+  min-height: 52px;
   padding: 4px;
   border: 0;
   border-radius: 0;

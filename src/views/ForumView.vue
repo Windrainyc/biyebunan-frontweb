@@ -834,9 +834,9 @@ onBeforeUnmount(() => {
   margin-bottom: 22px;
 }
 .forum-article {
-  max-width: 920px;
+  max-width: 1160px;
   margin: auto;
-  padding: 32px 40px;
+  padding: 26px 32px;
 }
 .forum-article h1 {
   font-size: 26px;
