@@ -421,7 +421,13 @@ onBeforeUnmount(() => {
           }}
         </p>
         <ForumBody :text="String(post.body || '')" :asset-ids="post.assetIds" />
-        <div class="article-actions">
+        <div
+          v-if="
+            studentPostActions(post, auth.user?.id).edit ||
+            studentPostActions(post, auth.user?.id).remove
+          "
+          class="article-actions"
+        >
           <button
             v-if="
               studentPostActions(post, auth.user?.id).edit &&
@@ -442,11 +448,13 @@ onBeforeUnmount(() => {
             删除帖子
           </button>
         </div>
-        <RecordActions resource-key="posts" :record="post" @changed="changed" /><ForumDetail
-          :post="post"
+        <RecordActions
+          compact
+          class="post-quick-actions"
+          resource-key="posts"
+          :record="post"
           @changed="changed"
-          @replied="loadCommunity"
-        /></article
+        /><ForumDetail :post="post" @changed="changed" @replied="loadCommunity" /></article
     ></template>
     <CompactDialog v-if="deleting" title="删除帖子" :busy="busy" @back="deleting = false"
       ><p>确认删除这篇帖子？删除后不再向其他同学展示。</p>
@@ -834,6 +842,16 @@ onBeforeUnmount(() => {
   font-size: 26px;
   line-height: 1.5;
   overflow-wrap: anywhere;
+}
+.forum-article :deep(.post-quick-actions .action-buttons .button) {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 4px 0;
+  color: #9290a3;
+}
+.forum-article :deep(.post-quick-actions) {
+  margin: 12px 0 20px;
 }
 .article-meta {
   color: #8b97a8;

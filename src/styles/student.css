@@ -2787,13 +2787,6 @@ body .student-workspace .page:has(.qa-chat-layout) {
   padding: 0;
   margin: 0;
 }
-body .student-workspace:has(.qa-chat-layout) .student-header {
-  height: 68px;
-}
-body .student-workspace:has(.qa-chat-layout) .student-header-inner {
-  max-width: none;
-  padding: 0 28px;
-}
 body:has(.qa-chat-layout) .site-registration {
   height: 24px;
   padding: 3px 12px;
@@ -2801,10 +2794,4 @@ body:has(.qa-chat-layout) .site-registration {
   line-height: 18px;
 }
 @media (max-width: 700px) {
-  body .student-workspace:has(.qa-chat-layout) .student-header {
-    height: 56px;
-  }
-  body .student-workspace:has(.qa-chat-layout) .student-header-inner {
-    padding: 0 16px;
-  }
 }

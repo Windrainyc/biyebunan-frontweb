@@ -740,7 +740,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', closePanels));
 .qa-chat-layout {
   display: grid;
   grid-template-columns: 216px minmax(0, 1fr);
-  height: calc(100dvh - 92px);
+  height: calc(100dvh - 112px);
   min-height: 0;
   background: white;
   overflow: hidden;
@@ -1074,7 +1074,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', closePanels));
 }
 .qa-drawer-mask {
   position: fixed;
-  inset: 68px 0 0;
+  inset: 88px 0 0;
   background: #27203533;
   z-index: 1000;
   display: flex;
@@ -1156,7 +1156,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', closePanels));
 @media (max-width: 700px) {
   .qa-chat-layout {
     grid-template-columns: minmax(0, 1fr);
-    height: calc(100dvh - 80px);
+    height: calc(100dvh - 112px);
   }
   .qa-chat-sidebar {
     display: none;
@@ -1164,7 +1164,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', closePanels));
   .qa-chat-sidebar.is-open {
     display: flex;
     position: fixed;
-    inset: 56px auto 0 0;
+    inset: 88px auto 0 0;
     width: 275px;
     z-index: 1002;
     box-shadow: 20px 0 60px #30204a25;
@@ -1172,7 +1172,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', closePanels));
   .qa-history-mask {
     display: block;
     position: fixed;
-    inset: 56px 0 0;
+    inset: 88px 0 0;
     border: 0;
     background: #27203533;
     z-index: 1001;
@@ -1253,7 +1253,22 @@ onBeforeUnmount(() => window.removeEventListener('keydown', closePanels));
     opacity: 1;
   }
   .qa-drawer-mask {
-    top: 56px;
+    top: 88px;
+  }
+}
+</style>
+
+<style scoped>
+@media (max-width: 600px) {
+  .qa-chat-layout {
+    height: calc(100dvh - 96px);
+  }
+  .qa-chat-sidebar.is-open {
+    top: 72px;
+  }
+  .qa-history-mask,
+  .qa-drawer-mask {
+    top: 72px;
   }
 }
 </style>

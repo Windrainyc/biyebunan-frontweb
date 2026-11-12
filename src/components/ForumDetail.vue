@@ -16,6 +16,49 @@ const comments = ref<Row[]>([]),
   parent = ref<Row | null>(null),
   error = ref(''),
   busy = ref(false);
+const emojiOpen = ref(false);
+const emojis = [
+  '😀',
+  '😊',
+  '😄',
+  '🥳',
+  '😎',
+  '🤔',
+  '😂',
+  '🥹',
+  '😭',
+  '😅',
+  '👍',
+  '👏',
+  '🙌',
+  '🤝',
+  '🙏',
+  '💪',
+  '❤️',
+  '💜',
+  '🎉',
+  '✨',
+  '🔥',
+  '💡',
+  '📚',
+  '🎓',
+  '✅',
+  '👀',
+  '🚀',
+  '🌟',
+  '💯',
+  '☕',
+];
+async function insertEmoji(emoji: string) {
+  const input = replyInput.value;
+  const start = input?.selectionStart ?? body.value.length;
+  const end = input?.selectionEnd ?? start;
+  if (body.value.length - (end - start) + emoji.length > 5000) return;
+  body.value = body.value.slice(0, start) + emoji + body.value.slice(end);
+  await nextTick();
+  input?.focus();
+  input?.setSelectionRange(start + emoji.length, start + emoji.length);
+}
 const attempt = writeAttempt();
 const deleting = ref<Row | null>(null);
 const replyInput = ref<HTMLTextAreaElement | null>(null);
@@ -171,7 +214,7 @@ onBeforeUnmount(() => {
 });
 </script>
 <template>
-  <section>
+  <section class="forum-replies">
     <template v-if="attachments.length">
       <h3>帖子附件</h3>
       <div v-for="(id, index) in attachments" :key="id" class="comment">
@@ -186,8 +229,8 @@ onBeforeUnmount(() => {
         >
       </div>
     </template>
-    <h3>
-      交流回复 <small v-if="!loading && !readError">{{ total }} 条</small>
+    <h3 class="discussion-heading">
+      评论 <small v-if="!loading && !readError">{{ total }} 条</small>
     </h3>
     <p v-if="error" class="error" role="alert">{{ error }}</p>
     <p v-if="readError" class="error" role="alert">
@@ -201,7 +244,9 @@ onBeforeUnmount(() => {
         {{ display(comment.createdAt) }}</span
       >
       <MarkdownContent :text="String(comment.body || '')" />
-      <span>{{ display(comment.state) }}</span>
+      <span v-if="comment.state !== 'PUBLISHED' && comment.state !== 'VISIBLE'">{{
+        display(comment.state)
+      }}</span>
       <RecordActions
         v-if="auth.platform === 'admin'"
         resource-key="comments"
@@ -210,15 +255,15 @@ onBeforeUnmount(() => {
       />
       <button
         v-if="auth.platform === 'student' && comment.authorId === auth.user?.id"
-        class="button"
+        class="comment-action danger"
         :disabled="busy"
         @click="deleting = comment"
       >
-        删除我的回复
+        删除
       </button>
       <button
         v-if="auth.platform === 'student' && post.state === 'PUBLISHED' && !comment.parentId"
-        class="button"
+        class="comment-action"
         @click="reply(comment)"
       >
         回复
@@ -232,7 +277,7 @@ onBeforeUnmount(() => {
     <p v-if="!loading && !readError && !comments.length" class="muted">
       暂无回复，分享你的思路吧。
     </p>
-    <div class="pagination">
+    <div v-if="total > 20" class="pagination">
       <button
         class="button"
         :disabled="loading || busy || !!readError || page === 1"
@@ -262,12 +307,35 @@ onBeforeUnmount(() => {
       <textarea
         ref="replyInput"
         v-model="body"
-        rows="4"
+        rows="3"
         maxlength="5000"
         required
         aria-label="回复正文"
         placeholder="写下你的思路或补充信息"
       />
+      <div class="emoji-picker" @keydown.esc="emojiOpen = false">
+        <button
+          type="button"
+          class="emoji-toggle"
+          :aria-expanded="emojiOpen"
+          aria-label="选择表情"
+          @click="emojiOpen = !emojiOpen"
+        >
+          ☺ <span>表情</span>
+        </button>
+        <div v-if="emojiOpen" class="emoji-grid" role="group" aria-label="常用表情">
+          <button
+            v-for="emoji in emojis"
+            :key="emoji"
+            type="button"
+            :aria-label="`插入${emoji}`"
+            @mousedown.prevent
+            @click="insertEmoji(emoji)"
+          >
+            {{ emoji }}
+          </button>
+        </div>
+      </div>
       <div class="reply-submit">
         <span>{{ body.length }} / 5000</span
         ><button class="button primary" :disabled="busy || !body.trim()">
@@ -275,15 +343,6 @@ onBeforeUnmount(() => {
         </button>
       </div>
     </form>
-    <template
-      v-if="
-        auth.platform === 'student' &&
-        post.authorId === auth.user?.id &&
-        ['PENDING', 'PUBLISHED'].includes(String(post.state))
-      "
-    >
-      ></template
-    >
   </section>
 </template>
 <style scoped>
@@ -332,7 +391,7 @@ h3 small {
   color: #8290a5;
 }
 .comment {
-  padding: 16px;
+  padding: 20px 0;
   border-bottom: 1px solid #e2e6ef;
   font-size: 14px;
 }
@@ -346,6 +405,121 @@ h3 small {
 }
 form {
   display: grid;
-  gap: 14px;
+  gap: 10px;
+}
+.emoji-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  border: 0;
+  background: transparent;
+  color: #827b96;
+  font-size: 20px;
+  cursor: pointer;
+}
+.emoji-toggle span {
+  font-size: 12px;
+}
+.emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 4px;
+  margin-top: 8px;
+  padding: 10px;
+  background: white;
+  border: 1px solid #ece8f4;
+  border-radius: 10px;
+  max-width: 400px;
+}
+.emoji-grid button {
+  border: 0;
+  background: transparent;
+  font-size: 22px;
+  padding: 5px;
+  min-width: 0;
+  cursor: pointer;
+  border-radius: 6px;
+}
+.emoji-grid button:hover {
+  background: #f0ecff;
+}
+@media (max-width: 600px) {
+  .emoji-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+.forum-replies {
+  border-top: 1px solid #eeedf4;
+  padding-top: 22px;
+}
+.discussion-heading {
+  margin: 0 0 18px;
+  font-size: 17px;
+}
+.comment-action {
+  border: 0;
+  background: transparent;
+  color: #817a9b;
+  font-size: 12px;
+  min-height: 28px;
+  padding: 3px 0;
+  margin: 8px 18px 0 0;
+  box-shadow: none;
+  cursor: pointer;
+}
+.comment-action:hover {
+  color: #6854dc;
+}
+.comment-action.danger:hover {
+  color: #c65365;
+}
+.forum-replies form {
+  margin-top: 22px;
+  padding: 14px;
+  border: 1px solid #e7e4f0;
+  border-radius: 12px;
+  background: #faf9fd;
+}
+.forum-replies form:focus-within {
+  border-color: #a89ae7;
+}
+.forum-replies textarea {
+  min-height: 82px;
+  padding: 4px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  resize: vertical;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.7;
+  box-shadow: none;
+}
+.forum-replies textarea:focus {
+  outline: none;
+  box-shadow: none;
+}
+.reply-submit .primary {
+  min-height: 34px;
+  padding: 7px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+.reply-submit .primary:disabled {
+  opacity: 0.5;
+}
+.forum-replies > .muted {
+  padding: 12px 0;
+  font-size: 13px;
+  color: #9691a5;
+}
+@media (max-width: 600px) {
+  .forum-replies {
+    padding-top: 18px;
+  }
+  .forum-replies form {
+    padding: 12px;
+  }
 }
 </style>
