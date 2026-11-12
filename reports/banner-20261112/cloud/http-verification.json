@@ -1,0 +1,17 @@
+{
+  "student": {
+    "indexMatches": true,
+    "anonymousAuth": "401",
+    "sha256": "1160d724d9083669e1e7ec3f38abce3c7e7d409f8579fed38a132b6c494a1b5c"
+  },
+  "admin": {
+    "indexMatches": true,
+    "anonymousAuth": "401",
+    "sha256": "e5a16deb91b9c59fb8f9249614339fd5fcd52a37ea64f11d698824a695bf28c0"
+  },
+  "partner": {
+    "indexMatches": true,
+    "anonymousAuth": "401",
+    "sha256": "1ea4075d5b46bc0bf5694394c29f6f25bf2b1170b845ca88120024624e8f611d"
+  }
+}

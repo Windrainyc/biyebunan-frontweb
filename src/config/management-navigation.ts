@@ -58,6 +58,7 @@ const sections = [
     group: '运营与系统',
     keys: [
       'profile',
+      'banners',
       'service-packages',
       'schools',
       'majors',

@@ -27,6 +27,7 @@ function page(loader: () => Promise<{ default: Component }>) {
 const OssStorageView = page(() => import('./OssStorageView.vue'));
 const ManagedModelsView = page(() => import('./ManagedModelsView.vue'));
 const ManagementDashboard = page(() => import('./ManagementDashboard.vue'));
+const BannerManagerView = page(() => import('./BannerManagerView.vue'));
 const DashboardView = page(() => import('./DashboardView.vue'));
 const KnowledgeSearchView = page(() => import('./KnowledgeSearchView.vue'));
 const ExportView = page(() => import('./ExportView.vue'));
@@ -234,6 +235,8 @@ async function exit() {
           v-else-if="platform !== 'student' && route.params.resource === 'exports'"
         /><ChatAuditView
           v-else-if="platform === 'admin' && route.params.resource === 'chat-audit'"
+        /><BannerManagerView
+          v-else-if="platform === 'admin' && route.params.resource === 'banners'"
         /><ProfileView v-else-if="route.params.resource === 'profile'" /><OrderBindingView
           v-else-if="platform === 'student' && route.params.resource === 'bind-order'"
         /><ActivityView

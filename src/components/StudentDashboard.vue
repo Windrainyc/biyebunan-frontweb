@@ -4,6 +4,7 @@ import { auth } from '../api/client';
 import { display } from '../config/labels';
 import type { Row } from '../types/api';
 import Icon from './Icon.vue';
+import HomeBanner from './HomeBanner.vue';
 import orbit from '../assets/project-orbit.svg';
 const props = defineProps<{
   project?: Row;
@@ -75,6 +76,7 @@ const weekday = new Intl.DateTimeFormat('zh-CN', {
       {{ error }} <button @click="$emit('refresh')">重试</button>
     </p>
     <p v-if="loading" class="loading" role="status">正在读取工作台数据…</p>
+    <HomeBanner />
     <div class="dashboard-top">
       <article class="hero">
         <div class="hero-top">

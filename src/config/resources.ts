@@ -24,6 +24,15 @@ export function resources(platform: Platform): Resource[] {
   if (platform === 'admin')
     return [
       resource(
+        'banners',
+        '首页横幅',
+        p + '/banners',
+        'image',
+        ['title', 'sortOrder', 'status'],
+        '基础数据',
+        '配置首页横幅和活动详情',
+      ),
+      resource(
         'service-packages',
         '服务套餐',
         p + '/service-packages',

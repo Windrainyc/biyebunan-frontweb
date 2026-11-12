@@ -1,5 +1,5 @@
 {
-  "version": "1.0.37",
+  "version": "1.0.38",
   "schemas": {
     "OssView": {
       "type": "object",
@@ -6829,6 +6829,127 @@
           "type": "string"
         }
       }
+    },
+    "Banner": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "资源标识",
+          "format": "uuid"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "UTC 时间",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "UTC 时间",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ENABLED", "DISABLED"]
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 80,
+          "minLength": 1
+        },
+        "subtitle": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "coverAssetId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "posterAssetId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "body": {
+          "type": "string",
+          "maxLength": 20000
+        },
+        "sortOrder": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9999
+        }
+      },
+      "required": ["title", "sortOrder", "status"]
+    },
+    "BannerWrite": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["ENABLED", "DISABLED"]
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 80,
+          "minLength": 1
+        },
+        "subtitle": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "coverAssetId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "posterAssetId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "body": {
+          "type": "string",
+          "maxLength": 20000
+        },
+        "sortOrder": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9999
+        }
+      },
+      "required": ["title", "sortOrder", "status"]
+    },
+    "BannerPage": {
+      "additionalProperties": false,
+      "properties": {
+        "items": {
+          "items": {
+            "$ref": "#/components/schemas/Banner"
+          },
+          "type": "array"
+        },
+        "page": {
+          "maximum": 9223372036854775807,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "size": {
+          "maximum": 9223372036854775807,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "total": {
+          "maximum": 9223372036854775807,
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": ["items", "page", "size", "total"],
+      "type": "object"
     }
   },
   "operations": {
@@ -22136,6 +22257,335 @@
         }
       ],
       "response": null
+    },
+    "GET /admin/banners": {
+      "operationId": "get_admin_banners",
+      "summary": "分页查询首页横幅",
+      "permission": "banners:read",
+      "body": null,
+      "parameters": [
+        {
+          "description": "",
+          "in": "query",
+          "name": "page",
+          "required": false,
+          "schema": {
+            "default": 1,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        {
+          "description": "",
+          "in": "query",
+          "name": "size",
+          "required": false,
+          "schema": {
+            "default": 20,
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        {
+          "description": "",
+          "in": "query",
+          "name": "q",
+          "required": false,
+          "schema": {
+            "description": "",
+            "maxLength": 100,
+            "type": "string"
+          }
+        },
+        {
+          "description": "状态取值遵循返回资源定义；未知状态 400",
+          "in": "query",
+          "name": "status",
+          "required": false,
+          "schema": {
+            "description": "",
+            "maxLength": 200,
+            "type": "string"
+          }
+        },
+        {
+          "description": "稳定排序附加 id 同序",
+          "in": "query",
+          "name": "sort",
+          "required": false,
+          "schema": {
+            "enum": ["createdAt:desc", "createdAt:asc", "updatedAt:desc"],
+            "type": "string"
+          }
+        },
+        {
+          "description": "可选关联 ID；服务端生成可信 traceId",
+          "in": "header",
+          "name": "X-Request-ID",
+          "required": false,
+          "schema": {
+            "description": "",
+            "maxLength": 128,
+            "type": "string"
+          }
+        }
+      ],
+      "response": {
+        "$ref": "#/components/schemas/BannerPage"
+      }
+    },
+    "POST /admin/banners": {
+      "operationId": "post_admin_banners",
+      "summary": "新增首页横幅",
+      "permission": "banners:write",
+      "body": {
+        "$ref": "#/components/schemas/BannerWrite"
+      },
+      "parameters": [
+        {
+          "description": "",
+          "in": "header",
+          "name": "Idempotency-Key",
+          "required": true,
+          "schema": {
+            "description": "",
+            "maxLength": 128,
+            "minLength": 16,
+            "type": "string"
+          }
+        },
+        {
+          "description": "可选关联 ID；服务端生成可信 traceId",
+          "in": "header",
+          "name": "X-Request-ID",
+          "required": false,
+          "schema": {
+            "description": "",
+            "maxLength": 128,
+            "type": "string"
+          }
+        }
+      ],
+      "response": {
+        "$ref": "#/components/schemas/Banner"
+      }
+    },
+    "DELETE /admin/banners/{id}": {
+      "operationId": "delete_admin_banners_id",
+      "summary": "删除首页横幅",
+      "permission": "banners:write",
+      "body": null,
+      "parameters": [
+        {
+          "description": "",
+          "in": "path",
+          "name": "id",
+          "required": true,
+          "schema": {
+            "description": "资源标识",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        {
+          "description": "",
+          "in": "header",
+          "name": "Idempotency-Key",
+          "required": true,
+          "schema": {
+            "description": "",
+            "maxLength": 128,
+            "minLength": 16,
+            "type": "string"
+          }
+        },
+        {
+          "description": "GET 返回的强 ETag，如 \"3\"",
+          "in": "header",
+          "name": "If-Match",
+          "required": true,
+          "schema": {
+            "description": "",
+            "pattern": "^\"[0-9]+\"$",
+            "type": "string"
+          }
+        },
+        {
+          "description": "可选关联 ID；服务端生成可信 traceId",
+          "in": "header",
+          "name": "X-Request-ID",
+          "required": false,
+          "schema": {
+            "description": "",
+            "maxLength": 128,
+            "type": "string"
+          }
+        }
+      ],
+      "response": null
+    },
+    "GET /admin/banners/{id}": {
+      "operationId": "get_admin_banners_id",
+      "summary": "读取首页横幅",
+      "permission": "banners:read",
+      "body": null,
+      "parameters": [
+        {
+          "description": "",
+          "in": "path",
+          "name": "id",
+          "required": true,
+          "schema": {
+            "description": "资源标识",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        {
+          "description": "可选关联 ID；服务端生成可信 traceId",
+          "in": "header",
+          "name": "X-Request-ID",
+          "required": false,
+          "schema": {
+            "description": "",
+            "maxLength": 128,
+            "type": "string"
+          }
+        }
+      ],
+      "response": {
+        "$ref": "#/components/schemas/Banner"
+      }
+    },
+    "PUT /admin/banners/{id}": {
+      "operationId": "put_admin_banners_id",
+      "summary": "编辑首页横幅",
+      "permission": "banners:write",
+      "body": {
+        "$ref": "#/components/schemas/BannerWrite"
+      },
+      "parameters": [
+        {
+          "description": "",
+          "in": "path",
+          "name": "id",
+          "required": true,
+          "schema": {
+            "description": "资源标识",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        {
+          "description": "",
+          "in": "header",
+          "name": "Idempotency-Key",
+          "required": true,
+          "schema": {
+            "description": "",
+            "maxLength": 128,
+            "minLength": 16,
+            "type": "string"
+          }
+        },
+        {
+          "description": "GET 返回的强 ETag，如 \"3\"",
+          "in": "header",
+          "name": "If-Match",
+          "required": true,
+          "schema": {
+            "description": "",
+            "pattern": "^\"[0-9]+\"$",
+            "type": "string"
+          }
+        },
+        {
+          "description": "可选关联 ID；服务端生成可信 traceId",
+          "in": "header",
+          "name": "X-Request-ID",
+          "required": false,
+          "schema": {
+            "description": "",
+            "maxLength": 128,
+            "type": "string"
+          }
+        }
+      ],
+      "response": {
+        "$ref": "#/components/schemas/Banner"
+      }
+    },
+    "POST /admin/banners/{id}/status": {
+      "operationId": "post_admin_banners_id_status",
+      "summary": "启停首页横幅",
+      "permission": "banners:write",
+      "body": {
+        "$ref": "#/components/schemas/StateChange"
+      },
+      "parameters": [
+        {
+          "description": "",
+          "in": "path",
+          "name": "id",
+          "required": true,
+          "schema": {
+            "description": "资源标识",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        {
+          "description": "",
+          "in": "header",
+          "name": "Idempotency-Key",
+          "required": true,
+          "schema": {
+            "description": "",
+            "maxLength": 128,
+            "minLength": 16,
+            "type": "string"
+          }
+        },
+        {
+          "description": "GET 返回的强 ETag，如 \"3\"",
+          "in": "header",
+          "name": "If-Match",
+          "required": true,
+          "schema": {
+            "description": "",
+            "pattern": "^\"[0-9]+\"$",
+            "type": "string"
+          }
+        },
+        {
+          "description": "可选关联 ID；服务端生成可信 traceId",
+          "in": "header",
+          "name": "X-Request-ID",
+          "required": false,
+          "schema": {
+            "description": "",
+            "maxLength": 128,
+            "type": "string"
+          }
+        }
+      ],
+      "response": {
+        "$ref": "#/components/schemas/Banner"
+      }
+    },
+    "GET /student/banners": {
+      "operationId": "get_student_banners",
+      "summary": "学生首页启用横幅，最多十条",
+      "permission": "get_student_banners",
+      "body": null,
+      "parameters": [],
+      "response": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Banner"
+        }
+      }
     }
   }
 }
