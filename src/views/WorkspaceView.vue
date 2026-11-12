@@ -29,6 +29,7 @@ const ManagedModelsView = page(() => import('./ManagedModelsView.vue'));
 const ManagementDashboard = page(() => import('./ManagementDashboard.vue'));
 const BannerManagerView = page(() => import('./BannerManagerView.vue'));
 const DashboardView = page(() => import('./DashboardView.vue'));
+const KnowledgeLibraryView = page(() => import('./KnowledgeLibraryView.vue'));
 const KnowledgeSearchView = page(() => import('./KnowledgeSearchView.vue'));
 const ExportView = page(() => import('./ExportView.vue'));
 const ChatAuditView = page(() => import('./ChatAuditView.vue'));
@@ -271,6 +272,12 @@ async function exit() {
             selected?.key === 'posts' &&
             !route.params.action &&
             !route.query.edit
+          "
+        />
+        <KnowledgeLibraryView
+          v-else-if="
+            (platform === 'admin' && selected?.key === 'contents') ||
+            (platform === 'student' && selected?.key === 'knowledge')
           "
         />
         <ResourceView

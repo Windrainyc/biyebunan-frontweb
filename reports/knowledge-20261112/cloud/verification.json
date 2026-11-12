@@ -1,0 +1,16 @@
+{
+  "viewports": [
+    1440,
+    390
+  ],
+  "decodedCovers": 2,
+  "video": {
+    "time": 1.465687,
+    "width": 1920,
+    "height": 1080,
+    "paused": false
+  },
+  "videoRetainedAfter61Seconds": true,
+  "adminEditReadOnly": true,
+  "errors": []
+}

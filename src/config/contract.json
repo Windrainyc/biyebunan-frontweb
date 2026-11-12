@@ -15876,6 +15876,16 @@
       },
       "parameters": [
         {
+          "name": "publish",
+          "in": "query",
+          "required": false,
+          "description": "为true时保存并直接发布，额外要求post_admin_knowledge_id_publish权限；已发布更新为原子操作。",
+          "schema": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        {
           "name": "Idempotency-Key",
           "in": "header",
           "required": true,
@@ -15944,6 +15954,16 @@
         "$ref": "#/components/schemas/ContentWrite"
       },
       "parameters": [
+        {
+          "name": "publish",
+          "in": "query",
+          "required": false,
+          "description": "为true时保存并直接发布，额外要求post_admin_knowledge_id_publish权限；已发布更新为原子操作。",
+          "schema": {
+            "type": "boolean",
+            "default": false
+          }
+        },
         {
           "name": "id",
           "in": "path",

@@ -1,249 +1,205 @@
 <script setup lang="ts">
-import { watch, onBeforeUnmount, ref } from 'vue';
+import { ref, watch, onBeforeUnmount } from 'vue';
 import { auth, request, errorText } from '../api/client';
-import { writeAttempt } from '../api/attempt';
-import type { Row, Page } from '../types/api';
-import { display } from '../config/labels';
-import KnowledgeReader from './KnowledgeReader.vue';
-import KnowledgeHistory from './KnowledgeHistory.vue';
+import { videoPlayback, type MediaGrant } from '../api/video-playback';
+import type { Row } from '../types/api';
 import AssetCover from './AssetCover.vue';
-import AssetUpload from './AssetUpload.vue';
 import MarkdownContent from './MarkdownContent.vue';
-const props = defineProps<{ content: Row; readonly?: boolean }>(),
-  emit = defineEmits<{ changed: [] }>();
-const items = ref<Row[]>([]),
-  page = ref(1),
-  total = ref(0),
+const props = defineProps<{ content: Row; readonly?: boolean }>();
+defineEmits<{ changed: [] }>();
+const video = ref(''),
   error = ref(''),
-  video = ref(''),
-  busy = ref(false);
-const attempt = writeAttempt();
-const loading = ref(false),
+  busy = ref(false),
   downloadUrl = ref('');
+const player = ref<HTMLVideoElement>();
 let generation = 0,
-  downloadGeneration = 0;
+  position = 0;
 let downloadTimer: ReturnType<typeof setTimeout> | undefined;
-onBeforeUnmount(() => {
-  generation++;
-  downloadGeneration++;
-  clearTimeout(downloadTimer);
-});
-async function load() {
+async function play() {
   const current = ++generation;
-  loading.value = true;
+  position = player.value?.currentTime || position;
+  busy.value = true;
   error.value = '';
-  items.value = [];
-  total.value = 0;
   try {
-    const data = await request<Page<Row>>(
-      `/${auth.platform}/knowledge/${props.content.id}/versions`,
-      { query: { page: page.value, size: 20 } },
-    );
+    const grant = await videoPlayback(auth.platform, String(props.content.assetId));
     if (current !== generation) return;
-    items.value = data.items;
-    total.value = data.total;
+    const url = new URL(grant.url);
+    if (!['https:', 'http:'].includes(url.protocol) || Date.parse(grant.expiresAt) <= Date.now())
+      throw Error('视频授权已过期，请重试');
+    video.value = url.href;
+    // 签名限制后续请求，不应在60秒后移除正在播放的元素。
   } catch (e) {
     if (current === generation) error.value = errorText(e);
   } finally {
-    if (current === generation) loading.value = false;
+    if (current === generation) busy.value = false;
   }
 }
-async function attach(asset: Row) {
-  busy.value = true;
-  try {
-    const c = await request<Row>(`/admin/knowledge/${props.content.id}`);
-    const body = {
-      title: c.title,
-      categoryId: c.categoryId,
-      tagIds: c.tagIds,
-      type: c.type,
-      assetId: asset.id,
-      coverAssetId: c.coverAssetId || null,
-      markdown: c.markdown || '',
-      audience: c.audience,
-      projectId: c.projectId || null,
-    };
-    await request(`/admin/knowledge/${props.content.id}`, {
-      method: 'PUT',
-      body,
-      version: c.version,
-      key: attempt(body),
-    });
-    emit('changed');
-    await load();
-  } catch (e) {
-    error.value = errorText(e);
-  } finally {
-    busy.value = false;
-  }
+function restorePosition() {
+  if (player.value && position > 0)
+    player.value.currentTime = Math.min(position, player.value.duration || position);
 }
-async function download(asset: unknown, play = false) {
-  const current = ++downloadGeneration;
+function mediaError() {
+  position = player.value?.currentTime || position;
+  error.value =
+    player.value?.error?.code === 4
+      ? '浏览器无法播放此视频格式，请下载原文件查看。'
+      : '视频加载中断，点击重新加载视频后可继续播放。';
+}
+async function download() {
   error.value = '';
-  downloadUrl.value = '';
-  video.value = '';
-  clearTimeout(downloadTimer);
+  const current = generation;
   try {
-    const grant = await request<{ url: string; expiresAt: string }>(
-      `/${auth.platform}/assets/${asset}/download`,
-      {
-        method: 'POST',
-        query: play ? { variant: 'PLAYBACK' } : {},
-      },
+    const grant = await request<MediaGrant>(
+      `/${auth.platform}/assets/${props.content.assetId}/download`,
+      { method: 'POST' },
     );
-    const url = new URL(grant.url);
-    if (!['http:', 'https:'].includes(url.protocol)) throw new Error('文件地址无效');
-    if (current !== downloadGeneration) return;
-    const remaining = Date.parse(grant.expiresAt) - Date.now();
-    if (!Number.isFinite(remaining) || remaining <= 0)
-      throw new Error('文件授权已过期，请重新获取');
-    if (play) video.value = url.toString();
-    else downloadUrl.value = url.toString();
-    downloadTimer = setTimeout(() => {
-      downloadUrl.value = '';
-      video.value = '';
-    }, remaining);
+    if (current !== generation) return;
+    const url = new URL(grant.url),
+      remaining = Date.parse(grant.expiresAt) - Date.now();
+    if (!['https:', 'http:'].includes(url.protocol) || remaining <= 0)
+      throw Error('文件授权已过期，请重试');
+    downloadUrl.value = url.href;
+    clearTimeout(downloadTimer);
+    downloadTimer = setTimeout(() => (downloadUrl.value = ''), remaining);
   } catch (e) {
-    if (current === downloadGeneration) error.value = errorText(e);
+    if (current === generation) error.value = errorText(e);
   }
 }
 watch(
   () => [props.content.id, props.content.version],
   () => {
-    page.value = 1;
-    downloadGeneration++;
-    clearTimeout(downloadTimer);
-    downloadUrl.value = '';
+    generation++;
+    position = 0;
     video.value = '';
-    items.value = [];
-    load();
+    error.value = '';
+    downloadUrl.value = '';
+    clearTimeout(downloadTimer);
+    if (props.content.type === 'VIDEO' && props.content.assetId) void play();
   },
   { immediate: true },
 );
+onBeforeUnmount(() => {
+  generation++;
+  clearTimeout(downloadTimer);
+});
 </script>
 <template>
-  <KnowledgeHistory v-if="auth.platform === 'admin'" :content-id="String(content.id)" />
-  <div
-    v-if="content.coverAssetId"
-    style="height: 220px; border-radius: 12px; overflow: hidden; margin-bottom: 16px"
-  >
-    <AssetCover :asset-id="content.coverAssetId" :alt="String(content.title)" />
-  </div>
-  <section>
-    <p v-if="error" class="error" role="alert">
-      {{ error }} <button class="button" @click="load">重新加载版本</button>
-    </p>
-    <KnowledgeReader
-      v-if="content.markdown && auth.platform === 'student'"
-      :text="String(content.markdown)"
-    /><MarkdownContent v-else-if="content.markdown" :text="String(content.markdown)" />
-    <template v-if="content.assetId"
-      ><button class="button" @click="download(content.assetId)">下载资料</button
-      ><button
-        v-if="content.type === 'VIDEO'"
-        class="button"
-        @click="download(content.assetId, true)"
-      >
-        播放视频
-      </button></template
-    ><video
-      v-if="video"
-      :src="video"
-      controls
-      preload="metadata"
-      style="width: 100%; margin-top: 16px"
-    />
-    <p v-if="downloadUrl">
-      <a :href="downloadUrl" rel="noopener noreferrer" class="button">保存已授权资料</a>
-    </p>
-    <details class="knowledge-version-history" :open="!readonly && auth.platform === 'admin'">
-      <summary>
-        内容版本<span>{{ loading ? '读取中…' : '共' + total + '个版本' }}</span>
-      </summary>
-      <p v-if="loading" class="muted" role="status">正在读取内容版本…</p>
-      <article v-for="item in items" :key="String(item.id)" class="version">
-        <strong>第{{ item.versionNumber }}版 · {{ display(item.state) }}</strong
-        ><span>{{ display(item.createdAt) }}</span>
-        <MarkdownContent v-if="item.markdown" :text="String(item.markdown)" />
-        <button v-if="item.assetId" class="button" @click="download(item.assetId)">
-          下载版本文件
-        </button>
-      </article>
-      <p v-if="!loading && !error && !items.length" class="muted">暂无已发布版本</p>
-      <div class="pagination">
-        <button
-          class="button"
-          :disabled="loading || page === 1"
-          @click="
-            page--;
-            load();
-          "
-        >
-          上一页</button
-        ><span>第{{ page }}页 · 共{{ total }}条</span
-        ><button
-          class="button"
-          :disabled="loading || page * 20 >= total"
-          @click="
-            page++;
-            load();
-          "
-        >
-          下一页
-        </button>
+  <div class="knowledge-content">
+    <section
+      v-if="content.type === 'VIDEO' && content.assetId"
+      class="knowledge-player"
+      aria-label="作品视频"
+    >
+      <video
+        v-if="video"
+        ref="player"
+        :src="video"
+        controls
+        playsinline
+        preload="metadata"
+        @loadedmetadata="restorePosition"
+        @error="mediaError"
+      />
+      <div v-else class="video-loading">
+        {{ busy ? '正在加载视频…' : '视频暂不可播放'
+        }}<button v-if="!busy" class="button" @click="play">重新加载视频</button>
       </div>
-    </details>
-    <template
-      v-if="
-        !readonly &&
-        auth.platform === 'admin' &&
-        content.state !== 'PUBLISHED' &&
-        content.type !== 'MARKDOWN'
-      "
-      ><h3>上传内容文件</h3>
-      <AssetUpload owner-type="KNOWLEDGE" :owner-id="String(content.id)" @ready="attach"
-    /></template>
-  </section>
+    </section>
+    <div v-else-if="content.coverAssetId" class="knowledge-content-cover">
+      <AssetCover :asset-id="content.coverAssetId" :alt="String(content.title)" />
+    </div>
+    <p v-if="error" class="error" role="alert">
+      {{ error }}
+      <button v-if="content.type === 'VIDEO'" class="text-button" :disabled="busy" @click="play">
+        重新加载视频
+      </button>
+    </p>
+    <MarkdownContent v-if="content.markdown" :text="String(content.markdown)" copy-code />
+    <section v-if="content.assetId" class="knowledge-file">
+      <span>{{ content.type === 'VIDEO' ? '作品视频原文件' : '相关资料' }}</span>
+      <button class="button" @click="download">下载原文件</button>
+      <a v-if="downloadUrl" :href="downloadUrl" rel="noopener noreferrer" class="button primary"
+        >保存文件</a
+      >
+    </section>
+    <p v-if="!content.markdown && !content.assetId" class="muted">暂未提供正文或文件。</p>
+  </div>
 </template>
 <style scoped>
-.knowledge-version-history {
-  border-top: 1px solid #e6ebf3;
-  margin-top: 28px;
-  padding-top: 20px;
+.knowledge-content {
+  min-width: 0;
 }
-.knowledge-version-history summary {
-  cursor: pointer;
-  font-size: 14px;
-  color: #34486a;
-  padding-bottom: 16px;
-}
-.knowledge-version-history summary span {
-  margin-left: 12px;
-  font-size: 12px;
-  color: #8a96a9;
-}
-.pagination {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  margin: 16px 0;
-  font-size: 12px;
-}
-.version {
-  padding: 18px;
-  border: 1px solid #e2e6ef;
+.knowledge-player {
+  background: #201f2b;
   border-radius: 10px;
-  margin-bottom: 12px;
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+.knowledge-player video {
+  width: 100%;
+  max-height: 560px;
+  min-height: 180px;
+  object-fit: contain;
+  display: block;
+}
+.video-loading {
+  aspect-ratio: 16/9;
+  display: flex;
+  gap: 16px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #ded8ed;
+  font-size: 14px;
+}
+.knowledge-content-cover {
+  height: auto;
+  max-height: 440px;
+  overflow: hidden;
+  border-radius: 10px;
+  margin-bottom: 26px;
+  background: #f4f2f8;
+}
+.knowledge-content-cover :deep(img) {
+  height: auto;
+  max-height: 440px;
+  object-fit: contain;
+}
+.knowledge-file {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 18px;
+  background: #f6f4f9;
+  border: 1px solid #e9e4ef;
+  border-radius: 8px;
+  margin-top: 28px;
   font-size: 13px;
 }
-.version span {
-  display: block;
-  margin-top: 8px;
-  font-size: 12px;
-  color: #748096;
+.knowledge-file > span {
+  flex: 1;
 }
-button {
-  margin-right: 8px;
+.knowledge-content :deep(.reading-prose) {
+  font-size: 15px;
+  line-height: 1.95;
+}
+.knowledge-content :deep(pre) {
+  overflow-x: auto;
+}
+.knowledge-content :deep(img) {
+  max-width: 100%;
+}
+@media (max-width: 600px) {
+  .knowledge-player video {
+    max-height: 360px;
+    min-height: 0;
+  }
+  .knowledge-file {
+    padding: 14px;
+  }
+  .knowledge-content :deep(.reading-prose) {
+    font-size: 14px;
+  }
 }
 </style>

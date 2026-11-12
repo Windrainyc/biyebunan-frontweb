@@ -1,0 +1,14 @@
+{
+  "student": {
+    "httpsIndexMatches": true,
+    "anonymousAuth": "401"
+  },
+  "admin": {
+    "httpsIndexMatches": true,
+    "anonymousAuth": "401"
+  },
+  "partner": {
+    "httpsIndexMatches": true,
+    "anonymousAuth": "401"
+  }
+}
