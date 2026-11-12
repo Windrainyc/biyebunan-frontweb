@@ -1,0 +1,23 @@
+[
+  {
+    "role": "student",
+    "host": "biyebunan.com",
+    "status": 200,
+    "indexSha256": "d70a4945dc3404fec55aeebda074c62dc655f6453ac4c94324b07eb4adf28dbf",
+    "anonymousAuth": 401
+  },
+  {
+    "role": "admin",
+    "host": "admin.biyebunan.com",
+    "status": 200,
+    "indexSha256": "234d79b792359e0298f871fb5a388afa4db971fb372bf0bc5c82881c7efa674a",
+    "anonymousAuth": 401
+  },
+  {
+    "role": "partner",
+    "host": "partner.biyebunan.com",
+    "status": 200,
+    "indexSha256": "0551d16a1d5a4998f85a27da58a6f0fd6f574aab91a9ef0689ea36c96148385a",
+    "anonymousAuth": 401
+  }
+]
