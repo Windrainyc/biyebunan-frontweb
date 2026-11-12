@@ -116,8 +116,8 @@ async function save() {
   try {
     const body = {
       displayName: name.value.trim(),
-      schoolId: school.value,
-      majorId: major.value,
+      schoolId: auth.platform === 'admin' ? null : school.value,
+      majorId: auth.platform === 'admin' ? null : major.value,
       avatarIndex: avatarIndex.value,
       avatarAssetId: avatarAssetId.value,
     };
@@ -155,7 +155,12 @@ onBeforeUnmount(() => {
 <template>
   <section class="account-page">
     <header class="account-heading account-welcome">
-      <UserAvatar :index="auth.user?.avatarIndex" :asset-id="auth.user?.avatarAssetId" :size="88" />
+      <UserAvatar
+        :variant="auth.platform"
+        :index="auth.user?.avatarIndex"
+        :asset-id="auth.user?.avatarAssetId"
+        :size="88"
+      />
       <div>
         <h1>你好，{{ auth.user?.displayName }}</h1>
         <p class="muted">让成长，有迹可循。</p>
@@ -185,9 +190,17 @@ onBeforeUnmount(() => {
           </div>
           <div>
             <dt>账户类型</dt>
-            <dd>{{ auth.platform === 'student' ? '学生账户' : '中介账户' }}</dd>
+            <dd>
+              {{
+                auth.platform === 'admin'
+                  ? '管理员账户'
+                  : auth.platform === 'student'
+                    ? '学生账户'
+                    : '中介账户'
+              }}
+            </dd>
           </div>
-          <div>
+          <div v-if="auth.platform !== 'admin'">
             <dt>院校 / 专业</dt>
             <dd>
               <ReferenceName field="schoolId" :value="profile?.schoolId" /> /
@@ -245,9 +258,14 @@ onBeforeUnmount(() => {
       @back="closeEditor"
     >
       <form v-if="profile" id="profile-edit-form" @submit.prevent="save">
-        <div v-if="auth.platform === 'student'" class="avatar-editor">
+        <div v-if="auth.platform !== 'partner'" class="avatar-editor">
           <div class="avatar-edit-heading">
-            <UserAvatar :index="avatarIndex" :asset-id="avatarAssetId" :size="72" />
+            <UserAvatar
+              :variant="auth.platform"
+              :index="avatarIndex"
+              :asset-id="avatarAssetId"
+              :size="72"
+            />
             <div>
               <h3>个人头像</h3>
               <p class="account-hint">选择卡通头像，或上传不超过5MB的PNG、JPEG、WebP图片。</p>
@@ -266,7 +284,7 @@ onBeforeUnmount(() => {
                 avatarAssetId = null;
               "
             >
-              <UserAvatar :index="i - 1" :size="46" />
+              <UserAvatar :variant="auth.platform" :index="i - 1" :size="46" />
             </button>
           </div>
           <button
@@ -291,7 +309,7 @@ onBeforeUnmount(() => {
         <fieldset :disabled="busy" class="profile-fields">
           <label>姓名 <input v-model="name" maxlength="200" required /></label>
           <label>手机号 <input :value="String(profile.phoneMasked)" readonly /></label>
-          <div>
+          <div v-if="auth.platform !== 'admin'">
             <p>院校 <span aria-hidden="true" class="danger">*</span></p>
             <ReferenceField
               v-model="school"
@@ -302,7 +320,7 @@ onBeforeUnmount(() => {
               @update:model-value="major = ''"
             />
           </div>
-          <div>
+          <div v-if="auth.platform !== 'admin'">
             <p>专业 <span aria-hidden="true" class="danger">*</span></p>
             <ReferenceField
               v-if="school"
@@ -342,7 +360,7 @@ onBeforeUnmount(() => {
             type="submit"
             form="profile-edit-form"
             class="button primary"
-            :disabled="busy || avatarUploading || conflict || !school || !major || !name.trim()"
+            :disabled="busy || avatarUploading || conflict || (auth.platform !== 'admin' && (!school || !major)) || !name.trim()"
           >
             {{ busy ? '保存中…' : '保存资料' }}
           </button>

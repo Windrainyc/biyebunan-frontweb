@@ -42,7 +42,11 @@ async function removeComment() {
     busy.value = false;
   }
 }
-const attachments = computed(() => (props.post.assetIds as string[] | undefined) || []);
+const attachments = computed(() =>
+  ((props.post.assetIds as string[] | undefined) || []).filter(
+    (id) => !String(props.post.body).includes('[[asset:' + id + ']]'),
+  ),
+);
 const downloadGrant = ref<{ id: string; url: string } | null>(null);
 let downloadGeneration = 0;
 let downloadTimer: ReturnType<typeof setTimeout> | undefined;
@@ -277,10 +281,9 @@ onBeforeUnmount(() => {
         post.authorId === auth.user?.id &&
         ['PENDING', 'PUBLISHED'].includes(String(post.state))
       "
-      ><details class="forum-attachments-editor">
-        <summary>补充帖子附件</summary>
-        <AssetUpload owner-type="FORUM" :owner-id="String(post.id)" @ready="attach" /></details
-    ></template>
+    >
+      ></template
+    >
   </section>
 </template>
 <style scoped>

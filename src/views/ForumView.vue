@@ -6,7 +6,7 @@ import { writeAttempt } from '../api/attempt';
 import type { Row, Page } from '../types/api';
 import UserAvatar from '../components/UserAvatar.vue';
 import Icon from '../components/Icon.vue';
-import MarkdownContent from '../components/MarkdownContent.vue';
+import ForumBody from '../components/ForumBody.vue';
 import ForumDetail from '../components/ForumDetail.vue';
 import RecordActions from '../components/RecordActions.vue';
 import CompactDialog from '../components/CompactDialog.vue';
@@ -420,7 +420,7 @@ onBeforeUnmount(() => {
             post.state === 'LOCKED' ? '已锁定' : post.state === 'PENDING' ? '待审核' : '公开讨论'
           }}
         </p>
-        <MarkdownContent :text="String(post.body || '')" />
+        <ForumBody :text="String(post.body || '')" :asset-ids="post.assetIds" />
         <div class="article-actions">
           <button
             v-if="

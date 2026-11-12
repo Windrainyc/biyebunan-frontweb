@@ -39,6 +39,7 @@ const ActivityView = page(() => import('./ActivityView.vue'));
 const StatisticsView = page(() => import('./StatisticsView.vue'));
 const ChatView = page(() => import('./ChatView.vue'));
 const MaterialBrowser = page(() => import('../components/MaterialBrowser.vue'));
+const PostEditorView = page(() => import('./PostEditorView.vue'));
 const ForumView = page(() => import('./ForumView.vue'));
 const ResourceView = page(() => import('./ResourceView.vue'));
 import Icon from '../components/Icon.vue';
@@ -233,9 +234,7 @@ async function exit() {
           v-else-if="platform !== 'student' && route.params.resource === 'exports'"
         /><ChatAuditView
           v-else-if="platform === 'admin' && route.params.resource === 'chat-audit'"
-        /><ProfileView
-          v-else-if="platform !== 'admin' && route.params.resource === 'profile'"
-        /><OrderBindingView
+        /><ProfileView v-else-if="route.params.resource === 'profile'" /><OrderBindingView
           v-else-if="platform === 'student' && route.params.resource === 'bind-order'"
         /><ActivityView
           v-else-if="platform === 'admin' && route.params.resource === 'activity'"
@@ -256,6 +255,13 @@ async function exit() {
           v-else-if="platform === 'student' && route.params.resource === 'chat'"
         /><MaterialBrowser
           v-else-if="platform === 'admin' && selected?.key === 'materials'"
+        /><PostEditorView
+          v-else-if="
+            platform === 'student' &&
+            selected?.key === 'posts' &&
+            (route.params.action || route.query.edit)
+          "
+          :key="String(route.query.edit || 'new')"
         /><ForumView
           v-else-if="
             platform === 'student' &&

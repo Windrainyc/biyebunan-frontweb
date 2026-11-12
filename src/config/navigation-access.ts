@@ -41,7 +41,7 @@ export function utilityNavigation(platform: Platform, permissions: readonly stri
       icon: 'users',
       method: 'GET',
       endpoint: `/${platform}/me`,
-      platforms: ['student', 'partner'],
+      platforms: ['admin', 'student', 'partner'],
     },
     {
       key: 'bind-order',

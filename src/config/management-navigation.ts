@@ -57,6 +57,7 @@ const sections = [
     icon: 'settings',
     group: '运营与系统',
     keys: [
+      'profile',
       'service-packages',
       'schools',
       'majors',

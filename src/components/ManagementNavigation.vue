@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import UserAvatar from './UserAvatar.vue';
 import BrandLogo from './BrandLogo.vue';
 import NotificationBell from './NotificationBell.vue';
 import { computed, ref, watch } from 'vue';
@@ -109,10 +110,16 @@ function close() {
         <div>一个更从容的工作台<small>连接项目、内容和每一位用户</small></div>
       </div>
       <div class="admin-sidebar-footer">
-        <span class="management-avatar">{{ auth.user?.displayName?.slice(0, 1) }}</span>
+        <RouterLink to="/admin/profile" aria-label="修改个人资料"
+          ><UserAvatar
+            variant="admin"
+            :index="auth.user?.avatarIndex"
+            :asset-id="auth.user?.avatarAssetId"
+            :size="40"
+        /></RouterLink>
         <div>
           <strong>{{ auth.user?.displayName }}</strong
-          ><small>管理员</small>
+          ><small><RouterLink to="/admin/profile">修改个人资料</RouterLink></small>
         </div>
         <button aria-label="退出登录" @click="emit('logout')"><Icon name="logout" /></button>
       </div>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref, watch } from 'vue';
+import { onBeforeUnmount, ref, watch, nextTick } from 'vue';
 import { createSHA256 } from 'hash-wasm';
 import { requireOssUploadTarget } from '../api/upload-target';
 import { auth, request, errorText } from '../api/client';
@@ -40,36 +40,68 @@ const busy = ref(false),
 watch(busy, (value) => emit('busy', value));
 let activeUpload: XMLHttpRequest | undefined;
 let scanChecks = 0;
+let generation = 0;
+let uploadId = '';
 let aborted = false,
   timer: ReturnType<typeof setTimeout> | undefined;
 onBeforeUnmount(() => {
   if (localPreview.value) URL.revokeObjectURL(localPreview.value);
+  void cancel();
+  emit('busy', false);
   aborted = true;
   clearTimeout(timer);
   activeUpload?.abort();
 });
-async function poll() {
-  if (aborted || !asset.value?.id) return;
+async function revoke(id: string) {
+  if (!id) return;
   try {
-    asset.value = await request<Row>(`/${auth.platform}/assets/${asset.value.id}`);
-    if (aborted) return;
-    if (asset.value.state === 'READY') {
-      message.value = '文件校验通过，可用于业务关联';
+    await request(`/${auth.platform}/uploads/${id}/cancel`, { method: 'POST' });
+  } catch (e) {
+    if (!aborted) error.value = '已停止传输，但服务端取消未确认：' + errorText(e);
+  }
+}
+async function cancel() {
+  if (!busy.value && !['UPLOADING', 'QUARANTINED'].includes(String(asset.value?.state))) return;
+  const focused = document.activeElement;
+  const dialog = focused instanceof HTMLElement ? focused.closest('[role=dialog]') : null;
+  generation++;
+  clearTimeout(timer);
+  activeUpload?.abort();
+  const id = uploadId;
+  uploadId = '';
+  asset.value = null;
+  busy.value = false;
+  progress.value = 0;
+  message.value = '上传已取消';
+  await nextTick();
+  if (dialog?.isConnected) dialog.querySelector<HTMLButtonElement>('button[aria-label=关闭]')?.focus();
+  await revoke(id);
+}
+async function poll(current = generation) {
+  if (aborted || current !== generation || !asset.value?.id) return;
+  try {
+    const next = await request<Row>(`/${auth.platform}/assets/${asset.value.id}`);
+    if (aborted || current !== generation) return;
+    asset.value = next;
+    if (next.state === 'READY') {
+      message.value = '文件已就绪';
       busy.value = false;
-      emit('ready', asset.value);
-    } else if (asset.value.state === 'REJECTED') {
-      message.value = '文件未通过安全校验，请更换文件';
+      emit('ready', next);
+    } else if (next.state === 'REJECTED') {
+      message.value = '文件未通过安全检查，请更换文件';
       busy.value = false;
     } else {
-      message.value = '文件已上传，正在校验完整性';
+      message.value = '文件已上传，正在处理';
       if (++scanChecks >= 20) {
-        message.value = '文件已保存，校验仍在排队，可稍后检查状态';
+        message.value = '文件已保存，可稍后检查处理状态';
         busy.value = false;
-      } else timer = setTimeout(poll, 3000);
+      } else timer = setTimeout(() => poll(current), 3000);
     }
   } catch (e) {
-    error.value = errorText(e);
-    busy.value = false;
+    if (current === generation && !aborted) {
+      error.value = errorText(e);
+      busy.value = false;
+    }
   }
 }
 async function upload() {
@@ -90,16 +122,18 @@ async function upload() {
     error.value = '文件不能超过2GB';
     return;
   }
+  const current = ++generation;
+  uploadId = '';
   busy.value = true;
   error.value = '';
-  message.value = '正在计算文件校验值';
+  message.value = '正在准备文件';
   progress.value = 0;
   try {
     const hash = await createSHA256();
     hash.init();
     const chunk = 4 * 1024 * 1024;
     for (let offset = 0; offset < file.size; offset += chunk) {
-      if (aborted) return;
+      if (aborted || current !== generation) return;
       hash.update(new Uint8Array(await file.slice(offset, offset + chunk).arrayBuffer()));
       progress.value = Math.min(100, Math.round(((offset + chunk) / file.size) * 100));
     }
@@ -120,6 +154,11 @@ async function upload() {
         mimeType: file.type || 'application/octet-stream',
       },
     });
+    if (aborted || current !== generation) {
+      await revoke(grant.uploadId);
+      return;
+    }
+    uploadId = grant.uploadId;
     const uploadUrl = requireOssUploadTarget(grant.url, grant.method);
     message.value = '正在直传文件';
     progress.value = 0;
@@ -145,11 +184,18 @@ async function upload() {
       };
       xhr.send(file);
     });
-    asset.value = await request<Row>(`/${auth.platform}/uploads/${grant.uploadId}/complete`, {
+    if (aborted || current !== generation) return;
+    const completed = await request<Row>(`/${auth.platform}/uploads/${grant.uploadId}/complete`, {
       method: 'POST',
     });
-    await poll();
+    if (aborted || current !== generation) {
+      await revoke(grant.uploadId);
+      return;
+    }
+    asset.value = completed;
+    await poll(current);
   } catch (e) {
+    if (aborted || current !== generation) return;
     error.value = errorText(e);
     busy.value = false;
   }
@@ -212,7 +258,8 @@ async function upload() {
     />
     <p v-if="error" class="error" role="alert">{{ error }}</p>
     <div v-if="!compact || selected" class="upload-footer">
-      <small>文件校验完成后即可关联使用</small
+      <button v-if="busy || ['UPLOADING', 'QUARANTINED'].includes(String(asset?.state))" type="button" class="button" @click="cancel">取消上传</button
+      ><small>上传完成后即可关联使用</small
       ><button
         type="button"
         class="button primary"

@@ -4,7 +4,12 @@ import { useEditor, EditorContent } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
 import { Markdown } from '@tiptap/markdown';
 import { requiresMarkdownSource } from '../config/editor-markdown';
-const props = defineProps<{ modelValue: unknown; maxLength?: number; required?: boolean }>();
+const props = defineProps<{
+  modelValue: unknown;
+  maxLength?: number;
+  required?: boolean;
+  label?: string;
+}>();
 const emit = defineEmits<{ 'update:modelValue': [string] }>();
 const value = computed(() => String(props.modelValue ?? ''));
 const source = ref(requiresMarkdownSource(value.value));
@@ -64,7 +69,7 @@ onBeforeUnmount(() => editor.value?.destroy());
 <template>
   <div class="knowledge-editor">
     <div class="editor-top">
-      <span>知识正文</span
+      <span>{{ label || '知识正文' }}</span
       ><button
         type="button"
         class="button"

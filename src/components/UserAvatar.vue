@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AssetCover from './AssetCover.vue';
-defineProps<{ index?: number; assetId?: unknown; size?: number }>();
+defineProps<{ index?: number; assetId?: unknown; size?: number; variant?: string }>();
 </script>
 <template>
   <span
@@ -8,7 +8,9 @@ defineProps<{ index?: number; assetId?: unknown; size?: number }>();
     :style="{
       width: `${size || 44}px`,
       height: `${size || 44}px`,
-      backgroundPosition: `${((index || 0) % 5) * 25}% ${(index || 0) > 4 ? 100 : 0}%`,
+      backgroundImage: variant === 'admin' ? `url('/avatars/admins.png')` : undefined,
+      backgroundSize: variant === 'admin' ? '500% 500%' : undefined,
+      backgroundPosition: `${((index || 0) % 5) * 25}% ${variant === 'admin' ? ((index || 0) > 4 ? 65 : 13) : (index || 0) > 4 ? 100 : 0}%`,
     }"
     ><AssetCover v-if="assetId" :asset-id="assetId" alt="个人头像"
   /></span>
