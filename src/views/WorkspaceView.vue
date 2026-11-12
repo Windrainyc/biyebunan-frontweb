@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BrandLogo from '../components/BrandLogo.vue';
 import UserAvatar from '../components/UserAvatar.vue';
 import NotificationBell from '../components/NotificationBell.vue';
 import { computed, ref, defineAsyncComponent, watch, onMounted, onUnmounted } from 'vue';
@@ -163,8 +164,7 @@ async function exit() {
           <Icon name="menu" />
         </button>
         <RouterLink to="/student" class="student-brand"
-          ><span><Icon name="sparkles" /></span
-          ><strong>知项<small>让想法发生</small></strong></RouterLink
+          ><BrandLogo /><strong>知项<small>让想法发生</small></strong></RouterLink
         >
         <nav class="student-nav" :class="{ open: studentMenuOpen }" aria-label="学生端主导航">
           <RouterLink

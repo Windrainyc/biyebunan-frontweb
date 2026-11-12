@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BrandLogo from '../components/BrandLogo.vue';
 import { computed, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { login, errorText } from '../api/client';
@@ -32,7 +33,7 @@ async function submit() {
     :class="{ 'student-login': platform === 'student', 'management-login': platform !== 'student' }"
   >
     <section class="login-intro">
-      <span class="brand-mark">知</span>
+      <BrandLogo class="brand-mark" />
       <h1 v-if="platform === 'student'">每一点好奇，<br />都值得向前一步。</h1>
       <h1 v-else-if="platform === 'admin'">有序运营，<br />让每次交付值得信赖。</h1>
       <h1 v-else>每个项目，<br />都有清晰的下一步。</h1>
@@ -174,13 +175,8 @@ async function submit() {
   color: #c6d0e6;
 }
 .brand-mark {
-  background: #2c4bdb;
-  width: 56px;
-  height: 56px;
-  display: grid;
-  place-items: center;
-  font-size: 28px;
-  border-radius: 16px;
+  width: 64px;
+  height: 64px;
 }
 .login-card {
   align-self: center;

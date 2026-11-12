@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BrandLogo from './BrandLogo.vue';
 import NotificationBell from './NotificationBell.vue';
 import { computed, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
@@ -67,7 +68,7 @@ function close() {
         <Icon name="close" />
       </button>
       <RouterLink to="/admin" class="management-brand"
-        ><span>知</span><strong>知项<em>ZHIXIANG STUDIO</em></strong
+        ><BrandLogo /><strong>知项<em>ZHIXIANG STUDIO</em></strong
         ><small>管理端</small></RouterLink
       >
       <div class="admin-workspace-label">
@@ -157,7 +158,7 @@ function close() {
         </template>
         <template v-else>
           <RouterLink to="/partner" class="management-brand"
-            ><span>知</span><strong>知项</strong><small>中介协作</small></RouterLink
+            ><BrandLogo /><strong>知项</strong><small>中介协作</small></RouterLink
           >
           <nav class="partner-primary" :class="{ open: opened }" aria-label="中介主导航">
             <RouterLink
