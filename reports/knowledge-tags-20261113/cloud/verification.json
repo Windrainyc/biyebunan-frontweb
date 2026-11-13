@@ -1,0 +1,25 @@
+{
+  "result": [
+    {
+      "width": 1440,
+      "select": 250,
+      "category": 250,
+      "left": 1133,
+      "categoryLeft": 1133,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "select": 320,
+      "category": 320,
+      "left": 35,
+      "categoryLeft": 35,
+      "overflow": false
+    }
+  ],
+  "fuzzySearch": true,
+  "selectRemove": true,
+  "newTagPromptVisible": true,
+  "cloudWrites": false,
+  "errors": []
+}
