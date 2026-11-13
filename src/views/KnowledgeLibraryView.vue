@@ -14,6 +14,8 @@ import MaterialField from '../components/MaterialField.vue';
 import ContentOutline from '../components/ContentOutline.vue';
 import CompactDialog from '../components/CompactDialog.vue';
 import AppSelect from '../components/AppSelect.vue';
+import KnowledgeTags from '../components/KnowledgeTags.vue';
+const tagsPending = ref(false);
 import { display } from '../config/labels';
 const route = useRoute(),
   router = useRouter(),
@@ -199,7 +201,7 @@ async function mediaChanged(id: unknown) {
   }
 }
 async function save(publish: boolean) {
-  if (busy.value || !formElement.value?.reportValidity()) return;
+  if (busy.value || tagsPending.value || !formElement.value?.reportValidity()) return;
   if (!form.value.categoryId) {
     error.value = '请选择分类';
     return;
@@ -363,7 +365,8 @@ async function act() {
             >所属项目
             <ReferenceField v-model="form.projectId" field="projectId" required dropdown /></label
           ><label
-            >内容标签 <ReferenceField v-model="form.tagIds" field="tagIds" multiple dropdown
+            >内容标签
+            <KnowledgeTags v-model="form.tagIds" :disabled="busy" @pending="tagsPending = $event"
           /></label>
         </aside>
       </div>
@@ -379,14 +382,14 @@ async function act() {
             v-if="canSave && form.state !== 'PUBLISHED'"
             type="submit"
             class="button"
-            :disabled="busy"
+            :disabled="busy || tagsPending"
           >
             保存草稿</button
           ><button
             v-if="canSave && canPublish"
             type="button"
             class="button primary"
-            :disabled="busy"
+            :disabled="busy || tagsPending"
             @click="save(true)"
           >
             {{ busy ? '保存中…' : form.state === 'PUBLISHED' ? '更新发布' : '发布' }}
@@ -961,7 +964,13 @@ async function act() {
 .kb-settings > label:not(:first-child) {
   margin-top: 20px;
 }
-.kb-settings :deep(.reference-field) {
+.kb-settings :deep(.app-select) {
+  display: flex;
+  width: 100%;
+  margin-top: 8px;
+  min-height: 40px;
+}
+.kb-settings :deep(.reference) {
   margin-top: 8px;
 }
 .kb-settings :deep(.material-field-actions) > span {

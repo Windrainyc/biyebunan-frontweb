@@ -1,0 +1,12 @@
+{
+  "createTag": true,
+  "fuzzyMatch": true,
+  "selectExisting": true,
+  "remove": true,
+  "aligned": true,
+  "viewports": [
+    1440,
+    390
+  ],
+  "errors": []
+}
