@@ -119,13 +119,13 @@ onBeforeUnmount(() => controller.abort());
 }
 .banner-cover {
   width: 100%;
+  aspect-ratio: 3 / 1;
   background: #f3ecfb;
 }
 .banner-cover :deep(img) {
   width: 100%;
-  height: auto;
-  max-height: 320px;
-  object-fit: contain;
+  height: 100%;
+  object-fit: cover;
   border-radius: 0;
 }
 .banner-cover :deep(.cover-placeholder) {
@@ -194,9 +194,6 @@ onBeforeUnmount(() => controller.abort());
   .banner-cta {
     font-size: 11px;
     padding: 5px 9px;
-  }
-  .banner-cover :deep(img) {
-    max-height: none;
   }
   .banner-pages {
     left: 16px;

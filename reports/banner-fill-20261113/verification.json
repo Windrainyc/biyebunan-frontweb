@@ -1,0 +1,18 @@
+[
+  {
+    "viewport": 1440,
+    "width": 1318,
+    "height": 439,
+    "imageWidth": 1318,
+    "imageHeight": 439,
+    "fit": "cover"
+  },
+  {
+    "viewport": 390,
+    "width": 360,
+    "height": 120,
+    "imageWidth": 360,
+    "imageHeight": 120,
+    "fit": "cover"
+  }
+]

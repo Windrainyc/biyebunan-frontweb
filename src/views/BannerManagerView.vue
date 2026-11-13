@@ -156,7 +156,7 @@ onMounted(load);
       <div class="banner-fields">
         <label
           >横幅配图<MaterialField v-model="form.coverAssetId" kind="image" /><small
-            >建议上传3:1横幅，将完整展示为首页活动图片；可不选。</small
+            >统一设计尺寸：2160 × 720 像素（3:1）。图片铺满横幅，其他比例会居中裁切；重要文字避开右上角关闭按钮。可不选。</small
           ></label
         ><label
           >弹窗海报<MaterialField v-model="form.posterAssetId" kind="image" /><small
