@@ -106,7 +106,7 @@ onBeforeUnmount(() => {
       </div>
     </section>
     <div v-else-if="content.coverAssetId" class="knowledge-content-cover">
-      <AssetCover :asset-id="content.coverAssetId" :alt="String(content.title)" />
+      <AssetCover :width="1600" :asset-id="content.coverAssetId" :alt="String(content.title)" />
     </div>
     <p v-if="error" class="error" role="alert">
       {{ error }}

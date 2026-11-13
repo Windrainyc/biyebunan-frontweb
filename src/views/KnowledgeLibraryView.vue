@@ -347,7 +347,7 @@ async function act() {
         <aside class="kb-settings">
           <label>封面</label>
           <div v-if="form.coverAssetId" class="kb-editor-cover">
-            <AssetCover :asset-id="form.coverAssetId" alt="内容封面预览" />
+            <AssetCover :width="800" :asset-id="form.coverAssetId" alt="内容封面预览" />
           </div>
           <MaterialField v-model="form.coverAssetId" kind="image" />
           <p class="muted">封面按原比例完整展示，不裁切。</p>
@@ -468,6 +468,7 @@ async function act() {
                 <div class="kb-table-title">
                   <button class="kb-thumb" :aria-label="'预览 ' + row.title" @click="open(row)">
                     <AssetCover
+                      :width="240"
                       v-if="row.coverAssetId"
                       :asset-id="row.coverAssetId"
                       :alt="String(row.title)"
@@ -516,6 +517,7 @@ async function act() {
         <article v-for="row in rows" :key="String(row.id)" class="kb-card">
           <button class="kb-card-cover" :aria-label="'查看 ' + row.title" @click="open(row)">
             <AssetCover
+              :width="800"
               v-if="row.coverAssetId"
               :asset-id="row.coverAssetId"
               :alt="String(row.title)"

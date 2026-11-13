@@ -1,0 +1,82 @@
+{
+  "results": [
+    {
+      "role": "admin",
+      "grants": [
+        {
+          "status": 200,
+          "variant": "COVER_240"
+        },
+        {
+          "status": 200,
+          "variant": "COVER_240"
+        }
+      ],
+      "images": [
+        {
+          "width": 240,
+          "height": 80,
+          "decoded": true
+        },
+        {
+          "width": 240,
+          "height": 120,
+          "decoded": true
+        }
+      ]
+    },
+    {
+      "role": "student",
+      "grants": [
+        {
+          "status": 200,
+          "variant": "COVER_800"
+        },
+        {
+          "status": 200,
+          "variant": "COVER_800"
+        }
+      ],
+      "images": [
+        {
+          "width": 800,
+          "height": 267,
+          "decoded": true
+        },
+        {
+          "width": 800,
+          "height": 400,
+          "decoded": true
+        }
+      ]
+    }
+  ],
+  "sizes": [
+    {
+      "variant": "ORIGINAL",
+      "status": 200,
+      "bytes": 2033619,
+      "elapsedMs": 1188
+    },
+    {
+      "variant": "COVER_240",
+      "status": 200,
+      "bytes": 4352,
+      "elapsedMs": 152
+    },
+    {
+      "variant": "COVER_800",
+      "status": 200,
+      "bytes": 22736,
+      "elapsedMs": 207
+    },
+    {
+      "variant": "COVER_1600",
+      "status": 200,
+      "bytes": 55428,
+      "elapsedMs": 358
+    }
+  ],
+  "errors": [],
+  "cloudWrites": false
+}
