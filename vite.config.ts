@@ -1,10 +1,11 @@
+import { publicSearch } from './public-search';
 import { defineConfig, loadEnv } from 'vite';
 import vue from '@vitejs/plugin-vue';
 /** 三个平台独立Origin；代理保留原始Origin，后端执行CSRF检查。 */
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   return {
-    plugins: [vue()],
+    plugins: [vue(), publicSearch(mode)],
     server: {
       host: '127.0.0.1',
       port: Number(env.VITE_PORT || 18770),
